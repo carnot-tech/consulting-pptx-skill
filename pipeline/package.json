@@ -1,0 +1,20 @@
+{
+  "name": "consulting-slide-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generate original, editable consulting slide decks from a SlideSpec (HTML preview + native editable PPTX).",
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "validate": "node scripts/validate_spec.mjs",
+    "render": "node scripts/render_spec_to_html.mjs",
+    "qa": "node scripts/qa_html_deck.mjs",
+    "export": "node scripts/export_spec_to_editable_pptx.mjs",
+    "shots": "node scripts/render_html_screenshots.mjs"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1",
+    "playwright": "^1.60.0"
+  },
+  "notes": "Run `npm run setup` once (installs deps + Chromium)."
+}

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<title>自由記述デッキ パーツテンプレート 16:9</title>
+<!--
+  ============================================================
+  自由記述（freeform）デッキのパーツ集（16:9・1パーツ=1スライド）
+  38型パイプラインの「型」に収まらないデッキは、このファイルをコピーして
+  不要な section を消し、「NN」を差し替えて自由に組む。
+  規約の正典: references/slide-rules.md（作成前に必読）
+  ★ 各スライドの h1 は「そのパーツが何の型か」を表示しているだけ。**見本タイトルは意図的に置いていない**
+    （テンプレートのタイトルに引っ張られない）。
+    実デッキでは h1 を必ずストーリーラインから起こした主張文に差し替える（slide-rules §2.8）。
+  納品前: check_deck.py で FAIL 0 → PDF化して全ページ目視。
+  配色はニュートラルな暖色系プレースホルダー：自ブランドの色に差し替えて使う。
+  ============================================================
+-->
+<style>
+@page{size:338.67mm 190.5mm;margin:0}
+html,body{margin:0;background:#e9e6df;font-family:"Yu Gothic","YuGothic","Hiragino Sans",sans-serif;color:#241a10}
+.s{width:338.67mm;height:190.5mm;background:#FFFFFF;position:relative;margin:8mm auto;box-sizing:border-box;padding:9mm 16mm 0 16mm;overflow:hidden;page-break-after:always;display:flex;flex-direction:column;align-items:stretch}
+.bar{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.5px solid #241a10;padding-bottom:2.2mm;margin-top:3mm;flex:0 0 auto}
+.logo{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:600;font-size:18pt;color:#241a10}
+.date{font-size:7.5pt;letter-spacing:.15em;color:#8a7c6c}
+h1{margin:4.5mm 0 0 0;font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:22pt;line-height:1.3;color:#241a10;font-weight:600;flex:0 0 auto;white-space:nowrap}
+.c{margin-top:6mm;flex:1;min-height:0;display:flex;flex-direction:column;gap:5mm;margin-bottom:19mm}
+.c>.grid{flex:1;grid-auto-rows:1fr;min-height:0}
+.c>.grid.fix{flex:0 0 auto}
+.foot{position:absolute;left:16mm;right:16mm;bottom:5mm;padding-top:2.5mm;border-top:1px solid #c7b69e;display:flex;justify-content:space-between;font-size:7.5pt;color:#8a7c6c}
+.foot b{color:#241a10;font-size:8.5pt}
+.src{font-size:7.5pt;color:#8a7c6c;flex:0 0 auto}
+.grid{display:grid;gap:4mm}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:#f1ebe0;border:0;display:flex;flex-direction:column;box-sizing:border-box}
+.hd{display:flex;align-items:baseline;gap:2.5mm;padding:3.5mm 4mm 2.5mm 4mm;border-bottom:1px solid #e3dccf}
+.no{font-size:14pt;font-weight:700;color:#6b4a2b;line-height:1}
+.h{font-size:11pt;font-weight:700;color:#241a10;line-height:1.3}
+.bd{padding:3.5mm 4.5mm;font-size:10pt;line-height:1.7;color:#4a3d30;flex:1}
+.ref{font-size:8pt;color:#6b4a2b;font-weight:700;margin-left:auto;white-space:nowrap}
+.rows .r{display:grid;grid-template-columns:44mm 1fr;gap:6mm;padding:4mm 0;border-top:1px solid #c7b69e;font-size:10.5pt;line-height:1.6}
+.rows .r:first-child{border-top:0}
+.rows .l{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:700;font-size:11.5pt;color:#6b4a2b}
+.c>.rows{flex:1;display:flex;flex-direction:column}
+.c>.rows .r{flex:1;align-items:center}
+.stat{background:#241a10;color:#fff;padding:4mm 5mm}
+.stat.l{background:#f1ebe0;color:#241a10}
+.stat .lb{font-size:7.5pt;letter-spacing:.1em;font-weight:700;color:#d8c8ab}
+.stat.l .lb{color:#8a7c6c}
+.stat .v{font-size:22pt;font-weight:700;margin:1mm 0}
+.stat .cp{font-size:7.5pt;color:#d8c8ab;line-height:1.6}
+.stat.l .cp{color:#8a7c6c}
+table{border-collapse:collapse;width:100%;font-size:10pt;flex:0 0 auto}
+th{background:none;text-align:left;padding:2.5mm;font-size:11.5pt;font-weight:700;color:#241a10;border-bottom:1.8px solid #241a10}
+td{padding:4mm 2.5mm;border-bottom:1px solid #c7b69e;vertical-align:middle;line-height:1.65;color:#4a3d30}
+td.b{font-weight:700;color:#241a10}
+tr:last-child td{border-bottom:0}
+td.ax{font-size:11pt;font-weight:700;color:#6b4a2b;font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;border-right:1.8px solid #241a10}
+th.ax{border-right:1.8px solid #241a10}
+.c>table{flex:1 1 0;height:0}
+/* 表を縦に伸ばすと余剰高さが見出し行にも配分され見出しが沈む（slide-rules §4.21） */
+.c>table tr:first-child,.side .sb table tr:first-child{height:1px}
+.side .sb table{flex:1 1 0;height:0}
+.chev{display:flex;gap:0;flex:0 0 auto}
+.chev .cv{flex:1;position:relative;background:#efe8da;border:0;padding:5mm 4mm 5mm 9mm;clip-path:polygon(0 0,calc(100% - 6mm) 0,100% 50%,calc(100% - 6mm) 100%,0 100%,6mm 50%);display:flex;flex-direction:column}
+.chev .cv:first-child{clip-path:polygon(0 0,calc(100% - 6mm) 0,100% 50%,calc(100% - 6mm) 100%,0 100%);padding-left:5mm}
+.chev .n{font-size:12pt;font-weight:700;color:#6b4a2b}
+.chev .t{font-size:10.5pt;font-weight:700;margin:1mm 0 1.5mm 0;color:#241a10}
+.chev .x{font-size:9pt;line-height:1.55;color:#4a3d30}
+.two{display:grid;grid-template-columns:1.5fr auto 1fr;gap:6mm;flex:1;min-height:0;align-items:stretch}
+.two>div:first-child,.two>div:last-child{display:flex;flex-direction:column;min-height:0}
+.two>div:first-child table{flex:1}
+.two>div:last-child ul{flex:1;display:flex;flex-direction:column;justify-content:center}
+.two .colh{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:11.5pt;font-weight:700;color:#6b4a2b;border-bottom:1.8px solid #241a10;padding:2.5mm 0 1.5mm 0;margin-bottom:3mm}
+.two ul{margin:0;padding-left:4.5mm;font-size:10pt;line-height:1.8;color:#4a3d30}
+.two li{margin-bottom:2.5mm}
+.tri{align-self:center;width:0;height:0;border-top:5mm solid transparent;border-bottom:5mm solid transparent;border-left:6mm solid #c9a97e}
+.cover .big{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:34pt;font-weight:700;color:#241a10;margin-top:38mm;line-height:1.25}
+.cover .sub{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:15pt;font-weight:700;color:#6b4a2b;margin-top:3mm}
+.cover .rule{width:32mm;height:1mm;background:#6b4a2b;margin:8mm 0 4mm 0}
+.chap .cno{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:15pt;font-weight:700;color:#6b4a2b;margin-top:55mm;letter-spacing:.2em}
+.chap .cbig{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:30pt;font-weight:700;color:#241a10;margin-top:4mm}
+.toc{margin-top:4mm}
+.toc .ti{display:grid;grid-template-columns:14mm 1fr 14mm;gap:4mm;padding:3.6mm 0;border-bottom:1px solid #c7b69e;font-size:11.5pt;align-items:baseline}
+.toc .ti .tn{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:700;color:#6b4a2b}
+.toc .ti .tp{text-align:right;color:#8a7c6c;font-size:9pt}
+.legend{display:flex;gap:6mm;justify-content:flex-end;font-size:8pt;color:#4a3d30;flex:0 0 auto}
+.legend span{display:flex;align-items:center;gap:1.5mm}
+.legend i{width:4mm;height:4mm;display:inline-block}
+.legend .li-a{background:#efe8da}
+.legend .li-b{background:#241a10}
+@media print{html,body{background:#fff}.s{margin:0!important;transform:none!important}.fitwrap{width:auto!important;height:auto!important;margin:0!important}}
+/* ── 追加パーツ用 ── */
+.axh{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:11.5pt;font-weight:700;color:#241a10;border-bottom:1.8px solid #241a10;padding:0 0 1.5mm 0;margin-bottom:3.5mm;flex:0 0 auto;display:flex;justify-content:space-between;align-items:baseline}
+.axh .u{font-family:"Yu Gothic",sans-serif;font-size:8.5pt;font-weight:400;color:#8a7c6c}
+.note{font-size:8pt;letter-spacing:.08em;font-weight:700;color:#6b4a2b;border-bottom:1px solid #c9a97e;align-self:flex-start;padding-bottom:.8mm;flex:0 0 auto}
+/* 左サイドの主張パネル */
+.side{display:grid;grid-template-columns:62mm 1fr;gap:0;flex:1;min-height:0}
+.side .sp{background:#241a10;color:#fff;padding:6mm 6mm;display:flex;flex-direction:column}
+.side .sp .cn{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:26pt;font-weight:700;color:#c9a97e;line-height:1}
+.side .sp .ct{font-size:9.5pt;font-weight:700;letter-spacing:.08em;color:#d8c8ab;margin-top:1.5mm}
+.side .sp .cm{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:14pt;font-weight:700;line-height:1.55;margin-top:auto}
+.side .sb{padding:0 0 0 8mm;display:flex;flex-direction:column;min-height:0}
+/* レバー矢印表 */
+.lev{width:100%;border-collapse:collapse;font-size:10pt}
+.lev th{font-size:11.5pt}
+.lev td{padding:3mm 2.5mm}
+.lev .ar{height:5.5mm;display:flex;align-items:center;color:#fff;font-size:9pt;font-weight:700;padding-left:3mm;clip-path:polygon(0 0,calc(100% - 4mm) 0,100% 50%,calc(100% - 4mm) 100%,0 100%)}
+.lev .up{background:#6b4a2b}.lev .dn{background:#b9b3a9;color:#241a10}
+/* 状態ヒートマップ */
+.hm{width:100%;border-collapse:collapse;font-size:9.5pt}
+.hm th{font-size:10.5pt;padding:2mm}
+.hm td{padding:2.2mm 2.5mm;border-bottom:1px solid #e3dccf}
+.hm .cell{display:block;height:5mm}
+.hm .v4{background:#241a10}.hm .v3{background:#6b4a2b}.hm .v2{background:#c9a97e}.hm .v1{background:#efe8da}.hm .v0{background:#e6e3de}
+/* ハーベイボール */
+.hb{width:4.6mm;height:4.6mm;display:inline-block;border:1px solid #241a10;border-radius:50%;position:relative;vertical-align:-.7mm}
+.hb i{position:absolute;inset:0;background:#241a10;border-radius:50%}
+.hb.q1 i{clip-path:polygon(50% 50%,50% 0,100% 0,100% 50%)}
+.hb.q2 i{clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%)}
+.hb.q3 i{clip-path:polygon(50% 0,100% 0,100% 100%,0 100%,0 50%)}
+.hb.q4 i{clip-path:none}
+.hb.q0 i{display:none}
+/* ドットマトリクス */
+.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:.9mm;width:26mm}
+.dots i{width:2.1mm;height:2.1mm;background:#e0dbd2;display:block}
+.dots i.on{background:#6b4a2b}
+.dotcol{display:flex;flex-direction:column;align-items:center;gap:2.5mm}
+.dotcol .dv{font-size:15pt;font-weight:700;color:#241a10}
+.dotcol .dl{font-size:9pt;color:#4a3d30;text-align:center;line-height:1.5}
+/* 柱＋土台 */
+.pil{display:grid;gap:4mm;flex:0 0 auto}
+.pil .p{background:#efe8da;padding:5mm 4.5mm;display:flex;flex-direction:column;gap:2mm}
+.pil .p .pt{font-size:11pt;font-weight:700;color:#241a10;line-height:1.4}
+.pil .p .px{font-size:9pt;color:#4a3d30;line-height:1.6}
+.base{background:#241a10;color:#fff;padding:3.5mm 5mm;font-size:10pt;margin-top:4mm;display:flex;gap:3mm;align-items:baseline}
+.base b{font-size:10.5pt;color:#c9a97e}
+/* ニュース根拠グリッド */
+.clip{background:#f6f3ee;padding:4.5mm 5mm;display:flex;flex-direction:column;gap:2mm}
+.clip .cd{font-size:8pt;color:#8a7c6c;font-style:italic}
+.clip .ch{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:11pt;font-weight:700;color:#241a10;line-height:1.45}
+.clip .cx{font-size:8.5pt;color:#4a3d30;line-height:1.6}
+.clip .cg{align-self:flex-start;background:#241a10;color:#fff;font-size:7.5pt;font-weight:700;padding:1mm 2.5mm;letter-spacing:.06em}
+/* 対向シェブロン */
+.opp{display:grid;grid-template-columns:1fr 46mm 1fr;gap:6mm;flex:1;min-height:0;align-items:stretch}
+.opp .ol{display:flex;flex-direction:column}
+.opp .ol .oi{flex:1;display:flex;align-items:center;font-size:10pt;line-height:1.55;color:#241a10;border-bottom:1px solid #c7b69e;padding:2mm 0}
+.opp .ol .oi:last-child{border-bottom:0}
+.opp .oc{display:flex;flex-direction:column;gap:3mm;justify-content:center}
+.opp .oc .ob{background:#241a10;color:#fff;text-align:center;font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-size:14pt;font-weight:700;padding:9mm 3mm;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%)}
+.opp .oc .ob.alt{background:#6b4a2b}
+
+/* 縦の余白つぶし（slide-rules §4.5 下端揃え・§4.12 不自然な下部余白の禁止） */
+.grid>div{display:flex;flex-direction:column;min-height:0}
+.grid>div>.rows{flex:1;display:flex;flex-direction:column}
+.grid>div>.rows .r{flex:1;align-items:center}
+.two>div>table{flex:1 1 0;height:0}
+.two>div>table tr:first-child{height:1px}
+.pil .p{justify-content:center}
+
+/* セパレーター（章扉＝アジェンダ再掲・現在地だけ強調）。think-cell のアジェンダ機能に相当。
+   目次と同じ並び・同じ文言を使い、章が変わるたびに現在地だけを入れ替えて再掲する。 */
+.agd{display:flex;flex-direction:column;flex:1;min-height:0;justify-content:center}
+.agd .ai{display:grid;grid-template-columns:14mm 1fr 16mm;gap:5mm;align-items:baseline;padding:4.6mm 0;border-bottom:1px solid #e3dccf;color:#b3a798}
+.agd .ai:last-child{border-bottom:0}
+.agd .an{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:700;font-size:14pt}
+.agd .at{font-family:"YuMincho","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:700;font-size:15pt}
+.agd .ap{font-size:9pt;text-align:right}
+.agd .ai.on{color:#241a10}
+.agd .ai.on .an{color:#6b4a2b;font-size:19pt}
+.agd .ai.on .at{font-size:21pt}
+.agd .ai.on .ap{color:#8a7c6c}
+
+/* 表の詳細セル（理由・前提・読み取り）はブレット2〜3行で書く（slide-rules §6） */
+td ul.cb{margin:0;padding-left:4mm;line-height:1.6}
+td ul.cb li{margin:0 0 1mm 0}
+/* ハーベイボール列は見出しも玉も水平中央 */
+th.hbc,td.hbc{text-align:center}
+</style></head><body>
+
+<!-- ═══ パーツ01: 表紙 ═══ -->
+<section class="s cover">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ01｜表紙</div></div>
+  <div class="big">Text 1</div>
+  <div class="rule"></div>
+  <div class="sub">ラベル 1：Text 2に基づく整理</div>
+  <div class="foot"><b>資料名</b><span>1</span></div>
+</section>
+
+<!-- ═══ パーツ02: 全体マップ（P.2 必須：各行に → P.n 参照） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ02｜全体マップ</div></div>
+  <h1>全体マップ</h1>
+  <div class="c">
+    <div class="rows">
+      <div class="r"><div class="l">ラベル 1</div><div>Text 1<span class="ref">→ P.3</span></div></div>
+      <div class="r"><div class="l">ラベル 2</div><div>Text 2<span class="ref">→ P.4</span></div></div>
+      <div class="r"><div class="l">ラベル 3</div><div>Text 3<span class="ref">→ P.5</span></div></div>
+      <div class="r"><div class="l">ラベル 4</div><div>Text 4<span class="ref">→ P.6</span></div></div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>2</span></div>
+</section>
+
+<!-- ═══ パーツ03: 目次（1列） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ03｜目次</div></div>
+  <h1>目次</h1>
+  <div class="c"><div class="toc">
+    <div class="ti"><span class="tn">01</span><span>ラベル 1</span><span class="tp">P.4</span></div>
+    <div class="ti"><span class="tn">02</span><span>ラベル 2</span><span class="tp">P.6</span></div>
+    <div class="ti"><span class="tn">03</span><span>ラベル 3</span><span class="tp">P.8</span></div>
+  </div></div>
+  <div class="foot"><b>資料名</b><span>3</span></div>
+</section>
+
+<!-- ═══ パーツ04: 章扉 ═══ -->
+<section class="s chap">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ04｜章扉</div></div>
+  <div class="cno">01</div>
+  <div class="cbig">ラベル 1</div>
+  <div class="foot"><b>資料名</b><span>4</span></div>
+</section>
+
+<!-- ═══ パーツ05: 矢羽（プロセス・変遷。色分けするなら凡例必須） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ05｜矢羽（プロセス・変遷）</div></div>
+  <h1>矢羽（プロセス・変遷）</h1>
+  <div class="c" style="justify-content:center">
+    <div class="chev">
+      <div class="cv"><span class="n">YYYY年M月</span><span class="t">ラベル 1</span><span class="x">Text 1</span></div>
+      <div class="cv"><span class="n">YYYY年M月</span><span class="t">ラベル 2</span><span class="x">Text 2</span></div>
+      <div class="cv"><span class="n">YYYY年M月</span><span class="t">ラベル 3</span><span class="x">Text 3</span></div>
+      <div class="cv"><span class="n">現在</span><span class="t">ラベル 4</span><span class="x">Text 4</span></div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>5</span></div>
+</section>
+
+<!-- ═══ パーツ06: 前提→帰結の2カラム（左=事実の表・中央三角・右=「だから、ラベル 5」） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ06｜前提→帰結の2カラム</div></div>
+  <h1>前提→帰結の2カラム</h1>
+  <div class="c">
+    <div class="two">
+      <div>
+        <div class="colh">Text 1の推移（事実）</div>
+        <table>
+          <tr><td class="ax" style="width:34mm">YYYY年M月</td><td>Text 1</td></tr>
+          <tr><td class="ax">YYYY年M月</td><td>Text 2</td></tr>
+          <tr><td class="ax">YYYY年M月〜</td><td>Text 3</td></tr>
+        </table>
+      </div>
+      <div class="tri"></div>
+      <div>
+        <div class="colh">だから、Text 2はこう変わる</div>
+        <ul>
+          <li>Text 4（語尾は階層内で統一）</li>
+          <li>Text 5</li>
+          <li>Text 6</li>
+        </ul>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>6</span></div>
+</section>
+
+<!-- ═══ パーツ07: 大型数値（左=軸つき数値表・右=「だから、こう読める」。スタット羅列＋補足行の縦積みは読みにくいので使わない） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ07｜大型数値の表＋読み取り</div></div>
+  <h1>大型数値の表＋読み取り</h1>
+  <div class="c">
+    <div class="two">
+      <div>
+        <div class="colh">数値で見るText 1の現状</div>
+        <table>
+          <tr><td class="ax" style="width:44mm">ラベル 2</td><td class="b" style="width:34mm;font-size:14pt">ラベル 3</td><td>Text 1</td></tr>
+          <tr><td class="ax">ラベル 4</td><td class="b" style="font-size:14pt">ラベル 5</td><td>Text 2</td></tr>
+          <tr><td class="ax">ラベル 6</td><td class="b" style="font-size:14pt">ラベル 7</td><td>Text 3</td></tr>
+        </table>
+      </div>
+      <div class="tri"></div>
+      <div>
+        <div class="colh">だから、こう読める</div>
+        <ul>
+          <li>Text 4</li>
+          <li>Text 5</li>
+          <li>Text 6</li>
+        </ul>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>7</span></div>
+</section>
+
+<!-- ═══ パーツ08: 並列カード 2×2（粒度・縦幅・語尾を統一） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ08｜並列カード 2×2</div></div>
+  <h1>並列カード 2×2</h1>
+  <div class="c">
+    <div class="grid g2">
+      <div class="card"><div class="hd"><span class="h">ラベル 1：ラベル 2（主語＋何をする で統一）</span></div>
+        <div class="bd">• Text 1<br>• Text 2</div></div>
+      <div class="card"><div class="hd"><span class="h">ラベル 3：ラベル 4</span></div>
+        <div class="bd">• Text 3<br>• Text 4</div></div>
+      <div class="card"><div class="hd"><span class="h">ラベル 5：ラベル 6</span></div>
+        <div class="bd">• Text 5<br>• Text 6</div></div>
+      <div class="card"><div class="hd"><span class="h">ラベル 7：ラベル 8</span></div>
+        <div class="bd">• Text 7<br>• Text 8</div></div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>8</span></div>
+</section>
+
+<!-- ═══ パーツ09: 軸のある表（行=軸・列=観点。最終行の下は罫線なし） ═══ -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ09｜軸のある表</div></div>
+  <h1>軸のある表</h1>
+  <div class="c">
+    <table>
+      <tr><th class="ax" style="width:52mm">ラベル 1（軸）</th><th>ラベル 2</th><th style="width:70mm">ラベル 3</th><th style="width:78mm">ラベル 4</th></tr>
+      <tr><td class="ax">ラベル 5</td><td>Text 1</td><td>ラベル 6</td><td><ul class="cb"><li>Text 1</li><li>Text 2</li></ul></td></tr>
+      <tr><td class="ax">ラベル 8</td><td>Text 2</td><td>ラベル 9</td><td><ul class="cb"><li>Text 3</li><li>Text 4</li></ul></td></tr>
+      <tr><td class="ax">ラベル 11</td><td>Text 3</td><td>ラベル 12</td><td><ul class="cb"><li>Text 5</li><li>Text 6</li></ul></td></tr>
+    </table>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>9</span></div>
+</section>
+
+<!-- ═══ パーツ10: 裏表紙（メッセージなし。CTAは手前の通常スライドへ） ═══ -->
+<section class="s cover">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ10｜裏表紙</div></div>
+  <div class="big" style="margin-top:60mm;font-size:22pt">会社名</div>
+  <div class="sub">連絡先</div>
+  <div class="foot"><b>資料名</b><span>10</span></div>
+</section>
+
+
+<!-- ═══ パーツ11: 主張パネル＋図（左=濃色パネルに番号・区分・主張、右=図表／表） ═══
+     使いどころ: 章の各論を連続で見せるとき。左パネルの番号と区分名を各論スライドで揃えると、
+     まとめページ（パーツ02）との対応が番号だけで読める（slide-rules §4.13 / §4.33）。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ11｜主張パネル＋図</div></div>
+  <h1>主張パネル＋図</h1>
+  <div class="c">
+    <div class="side">
+      <div class="sp">
+        <div class="cn">2</div>
+        <div class="ct">ラベル 1（区分名）</div>
+        <div class="cm">Text 1（この1枚の主張を1文で）</div>
+      </div>
+      <div class="sb">
+        <div class="axh"><span>指標名</span><span class="u">単位、YYYY〜YYYY年</span></div>
+        <table>
+          <tr><td class="ax" style="width:40mm">ラベル 7</td><td class="b" style="width:26mm;font-size:14pt">ラベル 8</td><td>Text 1</td></tr>
+          <tr><td class="ax">ラベル 9</td><td class="b" style="font-size:14pt">ラベル 10</td><td>Text 2</td></tr>
+          <tr><td class="ax">ラベル 11</td><td class="b" style="font-size:14pt">ラベル 12</td><td>Text 3</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>11</span></div>
+</section>
+
+<!-- ═══ パーツ12: 打ち手の効果表（項目 × 方向つき矢印 × 効果幅 × 補足） ═══
+     使いどころ: 複数の打ち手を「どちらに・どれだけ効くか」で一覧する。矢印の向き＝増減、色＝増/減で凡例必須。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ12｜打ち手の効果表</div></div>
+  <h1>打ち手の効果表</h1>
+  <div class="c">
+    <div class="legend"><span><i class="li-b"></i>増やす方向</span><span><i style="background:#b9b3a9"></i>減らす方向</span></div>
+    <table class="lev">
+      <tr><th class="ax" style="width:56mm">打ち手</th><th style="width:56mm">効果の幅（単位）</th><th>前提・制約</th></tr>
+      <tr><td class="ax">ラベル 2</td><td><span class="ar up" style="width:80%">＋00〜00</span></td><td><ul class="cb"><li>Text 1</li><li>Text 2</li></ul></td></tr>
+      <tr><td class="ax">ラベル 5</td><td><span class="ar up" style="width:55%">＋00〜00</span></td><td><ul class="cb"><li>Text 3</li><li>Text 4</li></ul></td></tr>
+      <tr><td class="ax">ラベル 8</td><td><span class="ar dn" style="width:38%">−00</span></td><td><ul class="cb"><li>Text 5</li><li>Text 6</li></ul></td></tr>
+    </table>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>12</span></div>
+</section>
+
+<!-- ═══ パーツ13: 状態ヒートマップ＋右コメント（定点観測。凡例必須） ═══
+     使いどころ: 月次・四半期のモニタリング。行=指標カテゴリ、列=比較軸（前月比・前年比）。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ13｜状態ヒートマップ＋右コメント</div></div>
+  <h1>状態ヒートマップ＋右コメント</h1>
+  <div class="c">
+    <div class="legend"><span><i class="v4" style="background:#241a10"></i>大きく改善</span><span><i style="background:#6b4a2b"></i>改善</span><span><i style="background:#b9b3a9"></i>横ばい</span><span><i style="background:#c9a97e"></i>悪化</span></div>
+    <div class="two" style="grid-template-columns:1.25fr auto 1fr">
+      <div>
+        <div class="axh"><span>指標カテゴリー別の状況</span><span class="u">YYYY年M月時点</span></div>
+        <table class="hm">
+          <tr><th class="ax" style="width:38mm">指標カテゴリー</th><th style="width:26mm">前月比</th><th style="width:26mm">前年比</th></tr>
+          <tr><td class="ax">ラベル 1</td><td><span class="cell v4"></span></td><td><span class="cell v2"></span></td></tr>
+          <tr><td class="ax">ラベル 2</td><td><span class="cell v3"></span></td><td><span class="cell v3"></span></td></tr>
+          <tr><td class="ax">ラベル 3</td><td><span class="cell v0"></span></td><td><span class="cell v4"></span></td></tr>
+          <tr><td class="ax">ラベル 4</td><td><span class="cell v2"></span></td><td><span class="cell v0"></span></td></tr>
+        </table>
+      </div>
+      <div class="tri"></div>
+      <div>
+        <div class="colh">だから、次に見るべき点</div>
+        <ul><li>Text 1</li><li>Text 2</li><li>Text 3</li></ul>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>13</span></div>
+</section>
+
+<!-- ═══ パーツ14: 充足度評価表（ハーベイボール） ═══
+     使いどころ: 選択肢×評価軸を「◎○△×」でなく充填円で示す。凡例必須。数値がある軸には使わない。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ14｜充足度評価表（ハーベイボール）</div></div>
+  <h1>充足度評価表（ハーベイボール）</h1>
+  <div class="c">
+    <div class="legend"><span><span class="hb q4"><i></i></span>満たす</span><span><span class="hb q2"><i></i></span>一部満たす</span><span><span class="hb q0"><i></i></span>満たさない</span></div>
+    <table>
+      <tr><th class="ax" style="width:50mm">評価軸</th><th class="hbc" style="width:34mm">ラベル 1案</th><th class="hbc" style="width:34mm">ラベル 2案</th><th>判断の理由</th></tr>
+      <tr><td class="ax">ラベル 3</td><td class="hbc"><span class="hb q4"><i></i></span></td><td class="hbc"><span class="hb q2"><i></i></span></td><td><ul class="cb"><li>Text 1</li><li>Text 2</li></ul></td></tr>
+      <tr><td class="ax">ラベル 4</td><td class="hbc"><span class="hb q3"><i></i></span></td><td class="hbc"><span class="hb q0"><i></i></span></td><td><ul class="cb"><li>Text 3</li><li>Text 4</li></ul></td></tr>
+      <tr><td class="ax">ラベル 5</td><td class="hbc"><span class="hb q2"><i></i></span></td><td class="hbc"><span class="hb q4"><i></i></span></td><td><ul class="cb"><li>Text 5</li><li>Text 6</li></ul></td></tr>
+    </table>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>14</span></div>
+</section>
+
+<!-- ═══ パーツ15: 割合のドットマトリクス（100点＝全体） ═══
+     使いどころ: 複数項目の「N割がラベル 6」を横並びで比べる。棒グラフより「人数・件数の感覚」が残る。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ15｜割合のドットマトリクス</div></div>
+  <h1>割合のドットマトリクス</h1>
+  <div class="c">
+    <div class="axh"><span>Text 1に取り組んでいる領域</span><span class="u">回答者に占める割合、n=ラベル 2、複数回答</span></div>
+    <div class="grid g4" style="flex:1;align-items:center">
+      <div class="dotcol"><div class="dv">58%</div><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dl">ラベル 3</div></div>
+      <div class="dotcol"><div class="dv">42%</div><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dl">ラベル 4</div></div>
+      <div class="dotcol"><div class="dv">21%</div><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dl">ラベル 5</div></div>
+      <div class="dotcol"><div class="dv">13%</div><div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="dl">ラベル 6</div></div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>15</span></div>
+</section>
+
+<!-- ═══ パーツ16: 進捗バブル行列（行=対象、列=段階、円の大きさ＝件数） ═══
+     使いどころ: 「どの層がどの段階まで来ているか」。数値を円の中に置き、凡例で円の意味を書く。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ16｜進捗バブル行列</div></div>
+  <h1>進捗バブル行列</h1>
+  <div class="c">
+    <div class="axh"><span>取り組み段階別の件数</span><span class="u">件、n=ラベル 1</span></div>
+    <svg viewBox="0 0 900 300" style="flex:1;min-height:0" preserveAspectRatio="xMidYMid meet">
+      <g font-family="Yu Gothic" font-size="15" fill="#241a10">
+        <text x="0" y="40" font-weight="700">ラベル 2層</text><text x="0" y="120" font-weight="700">ラベル 3層</text>
+        <text x="0" y="200" font-weight="700">ラベル 4層</text><text x="0" y="280" font-weight="700">ラベル 5層</text>
+      </g>
+      <g font-family="Yu Gothic" font-size="14" fill="#4a3d30" text-anchor="middle">
+        <text x="250" y="18">構想</text><text x="420" y="18">試行</text><text x="590" y="18">部分展開</text><text x="760" y="18">全面展開</text>
+      </g>
+      <g fill="#241a10">
+        <circle cx="250" cy="40" r="26"/><circle cx="420" cy="40" r="16"/><circle cx="590" cy="40" r="14"/><circle cx="760" cy="40" r="9"/>
+        <circle cx="250" cy="120" r="20"/><circle cx="420" cy="120" r="19"/><circle cx="590" cy="120" r="12"/><circle cx="760" cy="120" r="12"/>
+        <circle cx="250" cy="200" r="32"/><circle cx="420" cy="200" r="20"/><circle cx="590" cy="200" r="20"/><circle cx="760" cy="200" r="13"/>
+        <circle cx="250" cy="280" r="15"/><circle cx="420" cy="280" r="16"/><circle cx="590" cy="280" r="13"/><circle cx="760" cy="280" r="10"/>
+      </g>
+      <g font-family="Yu Gothic" font-size="13" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="700">
+        <text x="250" y="40">30</text><text x="420" y="40">9</text><text x="590" y="40">9</text><text x="760" y="40">4</text>
+        <text x="250" y="120">15</text><text x="420" y="120">12</text><text x="590" y="120">6</text><text x="760" y="120">6</text>
+        <text x="250" y="200">54</text><text x="420" y="200">13</text><text x="590" y="200">13</text><text x="760" y="200">6</text>
+        <text x="250" y="280">8</text><text x="420" y="280">9</text><text x="590" y="280">6</text><text x="760" y="280">4</text>
+      </g>
+    </svg>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>16</span></div>
+</section>
+
+<!-- ═══ パーツ17: 分布の順位棒＋注記（多数を1枚に収める） ═══
+     使いどころ: 数十〜千件規模の個票を並べて「裾の広さ・偏り」を見せる。個別名は上位のみラベル。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ17｜分布の順位棒＋注記</div></div>
+  <h1>分布の順位棒＋注記</h1>
+  <div class="c">
+    <div class="two" style="grid-template-columns:1.6fr auto 1fr">
+      <div>
+        <div class="axh"><span>指標名</span><span class="u">単位、YYYY〜YYYY年</span></div>
+        <svg viewBox="0 0 620 250" style="flex:1;min-height:0" preserveAspectRatio="none">
+          <g fill="#6b4a2b">
+            <rect x="0" y="10" width="7" height="240"/><rect x="9" y="26" width="7" height="224"/><rect x="18" y="40" width="7" height="210"/><rect x="27" y="58" width="7" height="192"/><rect x="36" y="70" width="7" height="180"/>
+          </g>
+          <g fill="#b9b3a9">
+            <rect x="46" y="96" width="7" height="154"/><rect x="55" y="110" width="7" height="140"/><rect x="64" y="120" width="7" height="130"/><rect x="73" y="132" width="7" height="118"/><rect x="82" y="140" width="7" height="110"/>
+            <rect x="92" y="150" width="7" height="100"/><rect x="101" y="158" width="7" height="92"/><rect x="110" y="164" width="7" height="86"/><rect x="119" y="170" width="7" height="80"/><rect x="128" y="176" width="7" height="74"/>
+            <rect x="138" y="180" width="7" height="70"/><rect x="147" y="186" width="7" height="64"/><rect x="156" y="190" width="7" height="60"/><rect x="165" y="194" width="7" height="56"/><rect x="174" y="198" width="7" height="52"/>
+            <rect x="184" y="202" width="7" height="48"/><rect x="193" y="205" width="7" height="45"/><rect x="202" y="208" width="7" height="42"/><rect x="211" y="211" width="7" height="39"/><rect x="220" y="214" width="7" height="36"/>
+            <rect x="230" y="217" width="7" height="33"/><rect x="239" y="219" width="7" height="31"/><rect x="248" y="221" width="7" height="29"/><rect x="257" y="223" width="7" height="27"/><rect x="266" y="225" width="7" height="25"/>
+            <rect x="276" y="227" width="7" height="23"/><rect x="285" y="229" width="7" height="21"/><rect x="294" y="230" width="7" height="20"/><rect x="303" y="232" width="7" height="18"/><rect x="312" y="233" width="7" height="17"/>
+            <rect x="322" y="235" width="7" height="15"/><rect x="331" y="236" width="7" height="14"/><rect x="340" y="237" width="7" height="13"/><rect x="349" y="238" width="7" height="12"/><rect x="358" y="239" width="7" height="11"/>
+            <rect x="368" y="240" width="7" height="10"/><rect x="377" y="241" width="7" height="9"/><rect x="386" y="242" width="7" height="8"/><rect x="395" y="242" width="7" height="8"/><rect x="404" y="243" width="7" height="7"/>
+            <rect x="414" y="244" width="7" height="6"/><rect x="423" y="244" width="7" height="6"/><rect x="432" y="245" width="7" height="5"/><rect x="441" y="245" width="7" height="5"/><rect x="450" y="246" width="7" height="4"/>
+            <rect x="460" y="246" width="7" height="4"/><rect x="469" y="247" width="7" height="3"/><rect x="478" y="247" width="7" height="3"/><rect x="487" y="248" width="7" height="2"/><rect x="496" y="248" width="7" height="2"/>
+            <rect x="506" y="248" width="7" height="2"/><rect x="515" y="249" width="7" height="1"/><rect x="524" y="249" width="7" height="1"/><rect x="533" y="249" width="7" height="1"/><rect x="542" y="249" width="7" height="1"/>
+          </g>
+          <line x1="0" y1="250" x2="620" y2="250" stroke="#241a10" stroke-width="2"/>
+        </svg>
+        <div class="legend" style="justify-content:flex-start;margin-top:2mm"><span><i style="background:#6b4a2b"></i>上位N社</span><span><i style="background:#b9b3a9"></i>その他</span></div>
+      </div>
+      <div class="tri"></div>
+      <div>
+        <div class="colh">だから、Text 4に絞る</div>
+        <ul><li>Text 1</li><li>Text 2</li><li>Text 3</li></ul>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>17</span></div>
+</section>
+
+<!-- ═══ パーツ18: 注記つき散布図（象限の意味を図中に書く） ═══
+     使いどころ: 2指標の位置づけ。凡例に逃がさず点の横に直接ラベル。象限の意味と参照線を図中に置く。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ18｜注記つき散布図</div></div>
+  <h1>注記つき散布図</h1>
+  <div class="c">
+    <div class="axh"><span>Text 1とText 2の関係</span><span class="u">単位、YYYY年</span></div>
+    <svg viewBox="0 0 900 330" style="flex:1;min-height:0" preserveAspectRatio="xMidYMid meet">
+      <line x1="70" y1="300" x2="880" y2="300" stroke="#241a10" stroke-width="2"/>
+      <line x1="70" y1="10" x2="70" y2="300" stroke="#241a10" stroke-width="2"/>
+      <line x1="450" y1="10" x2="450" y2="300" stroke="#c9a97e" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="458" y="24" font-family="Yu Gothic" font-size="12" fill="#8a7c6c" font-style="italic">平均（ラベル 4）</text>
+      <g fill="#241a10"><circle cx="150" cy="250" r="6"/><circle cx="230" cy="215" r="6"/><circle cx="330" cy="230" r="6"/><circle cx="400" cy="180" r="6"/><circle cx="520" cy="150" r="6"/><circle cx="600" cy="120" r="6"/><circle cx="700" cy="95" r="6"/><circle cx="800" cy="60" r="6"/></g>
+      <g font-family="Yu Gothic" font-size="13" fill="#241a10">
+        <text x="162" y="255">ラベル 5</text><text x="242" y="220">ラベル 6</text><text x="342" y="235">ラベル 7</text><text x="412" y="185">ラベル 8</text>
+        <text x="532" y="155">ラベル 9</text><text x="612" y="125">ラベル 10</text><text x="712" y="100">ラベル 11</text><text x="812" y="65">ラベル 12</text>
+      </g>
+      <g font-family="Yu Gothic" font-size="13" fill="#6b4a2b" font-style="italic">
+        <text x="82" y="30">Text 13が高い</text><text x="82" y="292">Text 14が低い</text><text x="700" y="292" text-anchor="end">Text 15が大きい →</text>
+      </g>
+    </svg>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>18</span></div>
+</section>
+
+<!-- ═══ パーツ19: 柱＋土台（個別テーマの柱と、全体に効く前提を分ける） ═══
+     使いどころ: 「Nつの取り組み」に加えて、全部に共通して効く条件（人材・基盤等）を下段の帯で示す。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ19｜柱＋土台</div></div>
+  <h1>柱＋土台</h1>
+  <div class="c" style="justify-content:center">
+    <div class="pil grid g4 fix" style="height:62mm">
+      <div class="p"><span class="pt">ラベル 1</span><span class="px">Text 1</span></div>
+      <div class="p"><span class="pt">ラベル 2</span><span class="px">Text 2</span></div>
+      <div class="p"><span class="pt">ラベル 3</span><span class="px">Text 3</span></div>
+      <div class="p"><span class="pt">ラベル 4</span><span class="px">Text 4</span></div>
+    </div>
+    <div class="base"><b>共通条件1</b><span>Text 5を全社で整えること</span></div>
+    <div class="base" style="margin-top:2.5mm"><b>共通条件2</b><span>Text 6を継続的に確保すること</span></div>
+    <div class="src" style="margin-top:4mm">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>19</span></div>
+</section>
+
+<!-- ═══ パーツ20: 対向シェブロン（左右の項目を2つの目的に束ねる） ═══
+     使いどころ: 「攻め／守り」「増やす／減らす」のように、性質の違う効果を1枚で対比する。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ20｜対向シェブロン</div></div>
+  <h1>対向シェブロン</h1>
+  <div class="c">
+    <div class="opp">
+      <div class="ol">
+        <div class="oi">Text 1</div><div class="oi">Text 2</div><div class="oi">Text 3</div><div class="oi">Text 4</div>
+      </div>
+      <div class="oc">
+        <div class="ob">収益を<br>拡大する</div>
+        <div class="ob alt">損失を<br>抑える</div>
+      </div>
+      <div class="ol">
+        <div class="oi">Text 5</div><div class="oi">Text 6</div><div class="oi">Text 7</div><div class="oi">Text 8</div>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>20</span></div>
+</section>
+
+<!-- ═══ パーツ21: 外部動向の根拠グリッド（日付＋見出し＋要旨＋分類） ═══
+     使いどころ: 「市場がすでに動いている」ことを一次記事・公表資料で示す。出典URLは脚注へ。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ21｜外部動向の根拠グリッド</div></div>
+  <h1>外部動向の根拠グリッド</h1>
+  <div class="c">
+    <div class="grid g2">
+      <div class="clip"><span class="cg">ラベル 1分類</span><span class="cd">YYYY年M月D日</span><span class="ch">Text 1</span><span class="cx">Text 2</span></div>
+      <div class="clip"><span class="cg">ラベル 2分類</span><span class="cd">YYYY年M月D日</span><span class="ch">Text 3</span><span class="cx">Text 4</span></div>
+      <div class="clip"><span class="cg">ラベル 3分類</span><span class="cd">YYYY年M月D日</span><span class="ch">Text 5</span><span class="cx">Text 6</span></div>
+      <div class="clip"><span class="cg">ラベル 4分類</span><span class="cd">YYYY年M月D日</span><span class="ch">Text 7</span><span class="cx">Text 8</span></div>
+    </div>
+    <div class="src">出典：Source 1（YYYY年M月D日）、Source 2（YYYY年M月D日）</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>21</span></div>
+</section>
+
+<!-- ═══ パーツ22: 比例円の対比（現在 → 将来） ═══
+     使いどころ: 2時点・2状態の規模差を、面積で直感的に見せる。3つ以上並べるなら棒にする。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ22｜比例円の対比</div></div>
+  <h1>比例円の対比</h1>
+  <div class="c">
+    <div class="axh"><span>Text 1に占める割合</span><span class="u">％、YYYY年 / YYYY年</span></div>
+    <svg viewBox="0 0 900 300" style="flex:1;min-height:0" preserveAspectRatio="xMidYMid meet">
+      <circle cx="260" cy="150" r="120" fill="#241a10"/>
+      <text x="260" y="150" text-anchor="middle" dominant-baseline="central" font-family="Yu Mincho" font-size="52" font-weight="700" fill="#ffffff">65%</text>
+      <text x="260" y="192" text-anchor="middle" font-family="Yu Gothic" font-size="15" fill="#d8c8ab">Text 2が占める割合</text>
+      <text x="260" y="20" text-anchor="middle" font-family="Yu Gothic" font-size="16" font-weight="700" fill="#241a10">現在（YYYY年）</text>
+      <circle cx="640" cy="150" r="82" fill="#6b4a2b"/>
+      <text x="640" y="150" text-anchor="middle" dominant-baseline="central" font-family="Yu Mincho" font-size="38" font-weight="700" fill="#ffffff">30%</text>
+      <text x="640" y="182" text-anchor="middle" font-family="Yu Gothic" font-size="13" fill="#efe8da">Text 3が占める割合</text>
+      <text x="640" y="20" text-anchor="middle" font-family="Yu Gothic" font-size="16" font-weight="700" fill="#241a10">N年後（YYYY年）</text>
+    </svg>
+    <div class="src">出典：Source 1。円の面積は割合に比例</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>22</span></div>
+</section>
+
+<!-- ═══ パーツ23: 増減の縦棒＋左右の合計（差し引きを見せる） ═══
+     使いどころ: 増える側と減る側が同時に起きる話（雇用・件数・コスト）。合計を大型数値で左に置く。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ23｜増減の縦棒＋左右合計</div></div>
+  <h1>増減の縦棒＋左右合計</h1>
+  <div class="c">
+    <div class="axh"><span>指標名</span><span class="u">単位、YYYY〜YYYY年</span></div>
+    <svg viewBox="0 0 900 300" style="flex:1;min-height:0" preserveAspectRatio="xMidYMid meet">
+      <text x="20" y="90" font-family="Yu Mincho" font-size="40" font-weight="700" fill="#6b4a2b">＋200</text>
+      <text x="20" y="112" font-family="Yu Gothic" font-size="14" fill="#4a3d30">増える分</text>
+      <text x="20" y="230" font-family="Yu Mincho" font-size="40" font-weight="700" fill="#241a10">−185</text>
+      <text x="20" y="252" font-family="Yu Gothic" font-size="14" fill="#4a3d30">減る分</text>
+      <line x1="180" y1="150" x2="880" y2="150" stroke="#241a10" stroke-width="2"/>
+      <g fill="#6b4a2b">
+        <rect x="210" y="60" width="70" height="90"/><rect x="330" y="82" width="70" height="68"/><rect x="450" y="118" width="70" height="32"/><rect x="570" y="140" width="70" height="10"/><rect x="690" y="98" width="70" height="52"/>
+      </g>
+      <g fill="#241a10">
+        <rect x="210" y="150" width="70" height="50"/><rect x="330" y="150" width="70" height="88"/><rect x="450" y="150" width="70" height="12"/><rect x="570" y="150" width="70" height="43"/><rect x="690" y="150" width="70" height="46"/>
+      </g>
+      <g font-family="Yu Gothic" font-size="14" fill="#241a10" text-anchor="middle">
+        <text x="245" y="270">ラベル 2</text><text x="365" y="270">ラベル 3</text><text x="485" y="270">ラベル 4</text><text x="605" y="270">ラベル 5</text><text x="725" y="270">ラベル 6</text>
+      </g>
+    </svg>
+    <div class="legend"><span><i style="background:#6b4a2b"></i>増える分</span><span><i style="background:#241a10"></i>減る分</span></div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>23</span></div>
+</section>
+
+<!-- ═══ パーツ24: 複数シナリオの推移＋年平均成長率（線の終点に値・右に率） ═══
+     使いどころ: 前提の置き方で結論が変わる話。線は終点に直接値を書き、凡例に逃がさない。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ24｜シナリオ線＋成長率チップ</div></div>
+  <h1>シナリオ線＋成長率チップ</h1>
+  <div class="c">
+    <div class="axh"><span>指標名</span><span class="u">単位、YYYY〜YYYY年</span></div>
+    <svg viewBox="0 0 900 300" style="flex:1;min-height:0" preserveAspectRatio="xMidYMid meet">
+      <line x1="60" y1="270" x2="760" y2="270" stroke="#241a10" stroke-width="2"/>
+      <polyline points="60,250 180,225 300,190 420,150 540,105 660,55" fill="none" stroke="#241a10" stroke-width="3"/>
+      <polyline points="60,250 180,232 300,208 420,180 540,148 660,112" fill="none" stroke="#6b4a2b" stroke-width="3"/>
+      <polyline points="60,250 180,238 300,222 420,202 540,180 660,155" fill="none" stroke="#b9b3a9" stroke-width="3"/>
+      <g font-family="Yu Gothic" font-size="16" font-weight="700" fill="#241a10" text-anchor="start">
+        <text x="670" y="60">114</text><text x="670" y="117">96</text><text x="670" y="160">81</text>
+      </g>
+      <g font-family="Yu Gothic" font-size="14" fill="#4a3d30" text-anchor="middle">
+        <text x="60" y="292">YYYY</text><text x="300" y="292">YYYY</text><text x="540" y="292">YYYY</text><text x="660" y="292">YYYY</text>
+      </g>
+      <text x="770" y="20" font-family="Yu Gothic" font-size="13" font-weight="700" fill="#241a10">年平均成長率</text>
+      <rect x="770" y="42" width="100" height="26" fill="#241a10"/><text x="820" y="55" text-anchor="middle" dominant-baseline="central" font-family="Yu Gothic" font-size="15" font-weight="700" fill="#fff">27%</text>
+      <rect x="770" y="99" width="100" height="26" fill="#6b4a2b"/><text x="820" y="112" text-anchor="middle" dominant-baseline="central" font-family="Yu Gothic" font-size="15" font-weight="700" fill="#fff">23%</text>
+      <rect x="770" y="142" width="100" height="26" fill="#b9b3a9"/><text x="820" y="155" text-anchor="middle" dominant-baseline="central" font-family="Yu Gothic" font-size="15" font-weight="700" fill="#241a10">19%</text>
+    </svg>
+    <div class="legend"><span><i style="background:#241a10"></i>Text 3が進む場合</span><span><i style="background:#6b4a2b"></i>現状の延長</span><span><i style="background:#b9b3a9"></i>Text 4が遅れる場合</span></div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>24</span></div>
+</section>
+
+<!-- ═══ パーツ25: 調査の土台（何に基づく資料かを冒頭で示す） ═══
+     使いどころ: 提案・調査報告の2枚目。件数を大型数値で縦に積み、右に内訳を書く。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ25｜調査の土台</div></div>
+  <h1>調査の土台</h1>
+  <div class="c">
+    <div class="two" style="grid-template-columns:1fr auto 1.35fr">
+      <div>
+        <div class="colh">調べ方</div>
+        <ul><li>Text 1</li><li>Text 2</li><li>Text 3</li></ul>
+      </div>
+      <div class="tri"></div>
+      <div>
+        <div class="colh">調べた対象</div>
+        <table>
+          <tr><td class="b" style="width:28mm;font-size:17pt">ラベル 1社</td><td>Text 4</td></tr>
+          <tr><td class="b" style="font-size:17pt">ラベル 2件</td><td>Text 5</td></tr>
+          <tr><td class="b" style="font-size:17pt">Nか月</td><td>Text 6</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="src">出典：Source 1（調査期間 YYYY年M月〜M月）</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>25</span></div>
+</section>
+
+<!-- ═══ パーツ26: 課題と打ち手の2カラム ═══
+     使いどころ: 左に事実（いま起きている課題）、右にそれへの打ち手。左右で行を対応させる。
+     論点が多いときは、この版面のまま「左だけの1枚 → 左右そろえた1枚」の2枚に割って順に見せる
+     （段階ビルドアップ。slide-rules §4.34。2枚目でレイアウトを1mmも動かさないこと）。 -->
+
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ26｜課題と打ち手の2カラム</div></div>
+  <h1>課題と打ち手の2カラム</h1>
+  <div class="c">
+    <div class="grid g2">
+      <div>
+        <div class="axh"><span>いま起きている課題</span></div>
+        <div class="rows">
+          <div class="r"><div class="l">ラベル 1</div><div>Text 1</div></div>
+          <div class="r"><div class="l">ラベル 2</div><div>Text 2</div></div>
+          <div class="r"><div class="l">ラベル 3</div><div>Text 3</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="axh"><span>これから打つ手</span></div>
+        <div class="rows">
+          <div class="r"><div class="l">ラベル 4</div><div>Text 4</div></div>
+          <div class="r"><div class="l">ラベル 5</div><div>Text 5</div></div>
+          <div class="r"><div class="l">ラベル 6</div><div>Text 6</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="src">出典：Source 1</div>
+  </div>
+  <div class="foot"><b>資料名</b><span>26</span></div>
+</section>
+
+
+<!-- ═══ パーツ27: セパレーター（章扉＝アジェンダ再掲・現在地を強調） ═══
+     使いどころ: 章が変わるたびに目次を再掲し、これから話す章だけを濃く出す。
+     think-cell のアジェンダ機能と同じ考え方で、聞き手が「いまどこか」を毎回確認できる。
+     条件: 目次（パーツ03）と項目の並び・文言を完全に一致させる。章ごとに .on を移すだけ。 -->
+<section class="s">
+  <div class="bar"><div class="logo">資料名</div><div class="date">パーツ27｜セパレーター（章扉＝アジェンダ再掲）</div></div>
+  <h1>セパレーター（章扉＝アジェンダ再掲）</h1>
+  <div class="c">
+    <div class="agd">
+      <div class="ai"><span class="an">01</span><span class="at">ラベル 1</span><span class="ap">P.4</span></div>
+      <div class="ai on"><span class="an">02</span><span class="at">ラベル 2</span><span class="ap">P.9</span></div>
+      <div class="ai"><span class="an">03</span><span class="at">ラベル 3</span><span class="ap">P.15</span></div>
+      <div class="ai"><span class="an">04</span><span class="at">ラベル 4</span><span class="ap">P.21</span></div>
+    </div>
+  </div>
+  <div class="foot"><b>資料名</b><span>27</span></div>
+</section>
+
+<script>
+/* ビューポート幅への等比スケール（印刷時は @media print で無効化） */
+(function () {
+  function fit() {
+    var slides = document.querySelectorAll(".s");
+    if (!slides.length) return;
+    var base = null;
+    slides.forEach(function (el) {
+      el.style.transform = "";
+      var w = el.offsetWidth;
+      if (!base) base = w;
+      var avail = Math.max(320, window.innerWidth - 24);
+      var s = Math.min(1, avail / base);
+      var wrap = el.parentElement;
+      if (!wrap || !wrap.classList.contains("fitwrap")) {
+        wrap = document.createElement("div");
+        wrap.className = "fitwrap";
+        wrap.style.overflow = "hidden";
+        wrap.style.margin = "8mm auto";
+        el.parentNode.insertBefore(wrap, el);
+        wrap.appendChild(el);
+        el.style.margin = "0";
+      }
+      el.style.transformOrigin = "top left";
+      el.style.transform = "scale(" + s + ")";
+      wrap.style.width = base * s + "px";
+      wrap.style.height = el.offsetHeight * s + "px";
+    });
+  }
+  window.addEventListener("resize", fit);
+  window.addEventListener("load", fit);
+  fit();
+})();
+</script>
+</body></html>

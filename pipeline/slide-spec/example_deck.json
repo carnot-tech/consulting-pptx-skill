@@ -1,0 +1,111 @@
+{
+  "deckTitle": "SlideSpec対応例デモ",
+  "slides": [
+    {
+      "template": "waterfall",
+      "kicker": "07｜収益ブリッジ",
+      "title": "営業利益は価格改定と歩留まり改善で+42を積み、為替の逆風を吸収して140に着地する",
+      "chart": {
+        "unit": "億円",
+        "series": [
+          {
+            "label": "FY24実績",
+            "value": 100,
+            "kind": "base"
+          },
+          {
+            "label": "価格改定",
+            "value": 18,
+            "kind": "up"
+          },
+          {
+            "label": "歩留まり改善",
+            "value": 24,
+            "kind": "up"
+          },
+          {
+            "label": "為替影響",
+            "value": -9,
+            "kind": "down"
+          },
+          {
+            "label": "その他",
+            "value": 7,
+            "kind": "up"
+          },
+          {
+            "label": "FY25見込",
+            "value": 140,
+            "kind": "total"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "title": "含意",
+          "copy": "寄与の6割は価格改定。為替の逆風は想定レンジ内で吸収できる"
+        }
+      ],
+      "note": "注：FY25は10月時点の着地見込",
+      "source": "出典：社内管理会計"
+    },
+    {
+      "template": "kpi_dashboard",
+      "kicker": "04｜事業KPI",
+      "title": "主要KPIは改善基調にあるが、解約率だけが悪化しており対策を要する",
+      "kpis": [
+        {
+          "label": "売上成長率",
+          "value": "+24%",
+          "delta": "前年 +6pt",
+          "note": "注：既存事業のみ、通期見込"
+        },
+        {
+          "label": "粗利率",
+          "value": "62%",
+          "delta": "前年 +3pt",
+          "note": "注：値引き率改善が寄与"
+        },
+        {
+          "label": "月次解約率",
+          "value": "1.8%",
+          "delta": "前年 +0.4pt 悪化",
+          "note": "注：中小セグメントに集中"
+        },
+        {
+          "label": "NPS",
+          "value": "+41",
+          "delta": "前年 +9pt",
+          "note": "注：2026年7月調査、n=412"
+        }
+      ],
+      "source": "出典：社内BI、2026年8月時点"
+    },
+    {
+      "template": "comparison_table",
+      "kicker": "10｜選択肢の比較",
+      "title": "自社開発は基幹連携で勝るが、今期中に効果を出せるのはSaaS導入だけである",
+      "table": [
+        {
+          "criterion": "初期費用",
+          "company": "1.2億円",
+          "competitor": "月額300万円",
+          "implication": "単年度の負担はSaaSが軽い"
+        },
+        {
+          "criterion": "立ち上がり期間",
+          "company": "12ヶ月",
+          "competitor": "2ヶ月",
+          "implication": "今期中の効果創出はSaaSのみ可能"
+        },
+        {
+          "criterion": "基幹システム連携",
+          "company": "自由に設計可",
+          "competitor": "標準APIの範囲に限定",
+          "implication": "連携が必須要件なら自社開発"
+        }
+      ],
+      "source": "出典：各社提案書より当社作成、2026年8月"
+    }
+  ]
+}
