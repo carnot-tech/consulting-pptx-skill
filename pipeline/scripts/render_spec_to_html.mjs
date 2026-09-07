@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const input = process.argv[2] || "slide-spec/synthetic_b2b_growth.json";
-const output = process.argv[3] || "generated/synthetic_b2b_growth.html";
+const input = process.argv[2] || "slide-spec/example_deck.json";
+const output = process.argv[3] || "generated/example_deck.html";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const inputPath = path.resolve(root, input);
@@ -117,7 +117,7 @@ function footer(slide, n) {
   return `<footer class="footer"><span class="source">${esc(source || "Source: Synthetic example")}</span><span>${n}</span></footer>`;
 }
 
-// slide-rules §2.13: タイトルは意味の切れ目で改行し泣き別れを作らない（PPTX 書き出しと同じ規則）
+// slide-rules §2.1: タイトルは意味の切れ目で改行し泣き別れを作らない（PPTX 書き出しと同じ規則）
 function fwLen(str) { let n = 0; for (const ch of String(str || "")) n += ch.charCodeAt(0) < 0x3000 ? 0.5 : 1; return n; }
 function smartBreak(text, cap, minTail = 4) {
   const t = String(text || "");
@@ -132,7 +132,7 @@ function smartBreak(text, cap, minTail = 4) {
 function titleHtml(text, cap) { return esc(smartBreak(text, cap)).replaceAll("\n", "<br>"); }
 
 function shell(slide, n, body, opts = {}) {
-  // Client rule: no title-underline by default. Opt in with { titleRule: true }.
+  // Default: no title underline. Opt in with { titleRule: true }.
   const slideClass = opts.titleRule === true ? "slide" : "slide slide--no-title-rule";
   return `<section class="${slideClass}">
   <div class="slide-inner">

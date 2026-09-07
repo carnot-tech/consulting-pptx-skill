@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { chromium } from "playwright";
 
-const input = process.argv[2] || "generated/synthetic_b2b_growth.html";
+const input = process.argv[2] || "generated/example_deck.html";
 const output = process.argv[3] || "generated/quality-qa.json";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
