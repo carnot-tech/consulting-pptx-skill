@@ -4,8 +4,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import pptxgen from "pptxgenjs";
 
-const inputArg = process.argv[2] || "slide-spec/synthetic_b2b_growth.json";
-const outputArg = process.argv[3] || "generated/synthetic_b2b_growth_editable.pptx";
+const inputArg = process.argv[2] || "slide-spec/example_deck.json";
+const outputArg = process.argv[3] || "generated/example_deck_editable.pptx";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const inputPath = path.resolve(root, inputArg);
@@ -15,8 +15,7 @@ const deck = JSON.parse(await fs.readFile(inputPath, "utf8"));
 // Pick a font with Japanese glyph coverage when the deck contains Japanese; Arial lacks CJK glyphs.
 const HAS_JP = /[぀-ヿ㐀-鿿]/.test(JSON.stringify(deck));
 const FONT = HAS_JP ? "Yu Gothic" : "Arial";
-// 見出し・ロゴは明朝。HTMLパーツ集（Yu Mincho）と外枠を揃えるため
-// （統合カタログでPPTX由来ページとHTML由来ページの書体・版面がずれていた）。
+// 見出しは明朝。HTMLパーツ集（Yu Mincho）と外枠の書体を揃える。
 const FONT_SERIF = HAS_JP ? "Yu Mincho Demibold" : "Georgia";  // HTML側 h1(font-weight:600) と同じ太さ
 const LANG = HAS_JP ? "ja-JP" : "en-US";
 
@@ -46,7 +45,7 @@ const pptx = new pptxgen();
 pptx.layout = "LAYOUT_WIDE";
 pptx.author = "Consulting Slide Lab";
 pptx.company = "Consulting Slide Lab";
-pptx.subject = "Editable synthetic consulting deck generated from SlideSpec";
+pptx.subject = "Editable consulting deck generated from SlideSpec";
 pptx.title = deck.deckTitle;
 pptx.lang = LANG;
 pptx.theme = {
@@ -72,7 +71,7 @@ function addKicker(slide, text) {
   });
 }
 
-// スキル有無検証の反映（slide-rules §2.13 / §5.13）
+// テキスト計測ヘルパー（泣き別れ防止と版面バランスに使う）
 // 全角換算の文字数（半角は0.5）
 function fwLen(str) {
   let n = 0;
@@ -126,7 +125,7 @@ function estTextHeight(text, wIn, fontPt) {
 }
 
 function addTitle(slide, title, opts = {}) {
-  // slide-rules §2.1/§2.13: 2行タイトルは意味の切れ目で明示改行し、文字を縮小して1行に詰めない
+  // slide-rules §2.1: 2行タイトルは意味の切れ目で明示改行し、文字を縮小して1行に詰めない
   const cap = lineCapacity(W - M * 2, 22, 1.0);
   const text = smartBreak(title, cap - 1);
   const twoLines = text.includes("\n");
@@ -144,7 +143,7 @@ function addTitle(slide, title, opts = {}) {
     fit: "none",
     valign: "top",
   });
-  // Client rule: no title-underline by default. Opt in with { titleRule: true }.
+  // Default: no title underline. Opt in with { titleRule: true }.
   if (opts.titleRule === true) {
     slide.addShape(pptx.ShapeType.line, {
       x: M,
@@ -182,9 +181,8 @@ const CONTENT_AREA_TOP = 1.70;
 const CONTENT_AREA_BOTTOM = FOOTER_Y - 0.34;  // 出典行の分を空ける
 const pendingBalancedSlides = [];
 
-// slide-rules §5.3「塗りありボックスに枠線を付けない」に合わせ、
-// 図形オプションを書き出し直前に正規化する。98か所の line: を個別に消すのではなく
-// ここで一括して落とす（check_deck の「塗りあり図形に枠線」WARN の発生源）。
+// slide-rules「塗りありボックスに枠線を付けない」に合わせ、
+// 図形オプションを書き出し直前に一括で正規化する（check_deck の「塗りあり図形に枠線」WARN を防ぐ）。
 function normalizeShapeOpts(opts) {
   if (!opts || typeof opts !== "object") return opts;
   const fill = opts.fill;
@@ -245,7 +243,7 @@ function opGeometry(method, args) {
     h = Array.isArray(opts.rowH) ? opts.rowH.reduce((a, b) => a + b, 0) : args[0].length * 0.35;
   }
   if (h === null) h = 0;
-  // §5.13: 宣言した箱の高さでなく、テキストの実高さ推定で下端を測る（下半分が空く原因の除去）
+  // 宣言した箱の高さでなく、テキストの実高さ推定で下端を測る（下半分が空くのを防ぐ）
   if (method === "addText" && typeof opts.w === "number" && opts.fontSize) {
     const est = estTextHeight(args[0], opts.w, opts.fontSize);
     if (est < h) h = est;
@@ -332,7 +330,7 @@ function addCover(item, pageNum) {
     w: 4.9,
     h: 4.9,
     rotate: 28,
-    // 透明度100%の白塗り＝実質「塗りなし」。塗りあり＋枠線に見えるので type:"none" にする（slide-rules §5.3）
+    // 白塗り＋枠線に見えないよう、塗りは明示的に none にする（slide-rules「塗りありボックスに枠線を付けない」）
     fill: { type: "none" },
     line: { color: CYAN, transparency: 25, width: 0.7 },
   });
@@ -478,7 +476,7 @@ function addRisk(item, pageNum) {
   addTableLike(slide, headers, rows, [3.1, 2.8, 5.0, 1.23], 2.22, {});
 }
 
-// Native, editable PowerPoint table that mirrors the lab's table grammar:
+// Native, editable PowerPoint table that mirrors the HTML renderer's table grammar:
 // bold header row with a solid bottom rule, body rows with thin hairline separators,
 // optional numeric-emphasis column.
 function addTableLike(slide, headers, rows, widths, y, opts = {}) {
@@ -486,7 +484,7 @@ function addTableLike(slide, headers, rows, widths, y, opts = {}) {
     text: h,
     options: {
       bold: true,
-      fontSize: 12.5, // rule 6: header 2pt larger than body (10.5)
+      fontSize: 12.5, // slide-rules §6: header 2pt larger than body (10.5)
       color: INK,
       align: "left",
       valign: "top",
@@ -507,7 +505,7 @@ function addTableLike(slide, headers, rows, widths, y, opts = {}) {
         options: {
           bold: i === 0 || isNum,
           color: isNum ? BLUE : INK,
-          fontSize: 10.5, // rule 6: emphasis is bold+color only, never larger than the header
+          fontSize: 10.5, // slide-rules §6: emphasis is bold+color only, never larger than the header
           align: "left",
           valign: "top",
           border: [{ type: "none" }, { type: "none" }, { type: "solid", pt: 0.5, color: HAIR }, { type: "none" }],
@@ -801,7 +799,7 @@ function addCurrentTargetState(item, pageNum) {
     const bl = toFormattedBullets(p.bullets);
     if (bl) addBodyText(slide, bl, x + 0.3, y + 1.4, panelW - 0.6, panelH - 1.5, { fontSize: 12 });
   });
-  // 塗り円＋三角の「▶」は意味を持たない飾りに見える（slide-rules §7.13/§5.13）。
+  // 塗り円＋三角の「▶」は意味を持たない飾りに見える（slide-rules §7.13）。
   // 現状→あるべき姿の遷移は細いシェブロン1本で示す（パーツ集の対向シェブロンと同じ文法）。
   const ax = M + panelW + gap / 2;
   const acy = y + 0.9;
@@ -1009,8 +1007,7 @@ function addTrueWaterfall(item, pageNum) {
     addBodyText(slide, p.display, x - 0.2, yTop - 0.28, barW + 0.4, 0.22, { fontSize: 11, bold: true, align: "center" });
     addBodyText(slide, p.label, x - 0.3, baseY + 0.1, barW + 0.6, 0.4, { fontSize: 10.5, align: "center" });
   });
-  // ゼロ基準の横線が無く、棒が宙に浮いて見えていた（addWaterfall には元からある）。
-  // 棒の下端＝ゼロ位置に基準線を引く。ゼロが領域の途中にある場合はその高さに引く。
+  // 棒の下端＝ゼロ位置に基準線を引く（無いと棒が宙に浮いて見える）。ゼロが領域の途中にある場合はその高さに引く。
   const zeroY = baseY - ((0 - domainMin) / range) * maxH;
   slide.addShape(pptx.ShapeType.line, { x: M, y: baseY, w: totalW + 0.6, h: 0, line: { color: INK, width: 1 } });
   if (zeroY < baseY - 0.02) {
@@ -1396,7 +1393,7 @@ function addSmallMultiples(item, pageNum) {
 }
 
 function addNestedRowMatrix(item, pageNum) {
-  // 内容の列挙で最もよく使う型。規約に合わせて作り直した
+  // 内容の列挙で最もよく使う型
   //  - 軸（大分類・小分類）は塗りつぶしでなく太字＋罫線で示す（slide-rules §6「軸は塗りでなく罫線」）
   //  - 行区切りは点線でなく薄い実線1本。最終行の下には引かない（§5.4）
   //  - 列見出しを置き、各列が何かを言葉で示す
