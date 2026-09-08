@@ -163,6 +163,11 @@ def main():
             sec = re.sub(r'(<div class="logo">)[^<]*(</div>)', rf"\g<1>{a.title}\g<2>", sec)
         else:
             sec = re.sub(r'(<footer class="footer">.*?</span><span>)\d*(</span>)', rf"\g<1>{page}\g<2>", sec, flags=re.S)
+            # 見出し様式を基本パーツ集に揃える（slide-rules §4.19）: kicker をロゴ＋右上チップのバーに置き換える
+            km = re.search(r'<div class="kicker">(.*?)</div>', sec, flags=re.S)
+            kick = re.sub(r"<[^>]+>", "", km.group(1)).strip() if km else ""
+            bar = f'<div class="hdr"><div class="logo">{a.title}</div><div class="date">{kick}</div></div>'
+            sec = re.sub(r'<div class="kicker">.*?</div>', bar, sec, count=1, flags=re.S)
         body.append(sec)
 
     base_css = scope_css(split_css(base_html), ".s", section_classes(base_html, "s"))
@@ -179,6 +184,11 @@ def main():
 {base_css}
 /* ===== 追加パーツ集（templates/freeform_parts_more_16x9.html）===== */
 {more_css}
+/* ===== 追加パーツ集の見出しバーを基本パーツ集と同じ様式にする（.slide は zoom:0.8 なので px は 1/0.8 倍） ===== */
+.slide .hdr{{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--navy);padding-bottom:10px;margin-bottom:6px}}
+.slide .hdr .logo{{font-family:var(--font-serif);font-weight:600;font-size:30px;color:var(--navy);line-height:1.1}}
+.slide .hdr .date{{font-size:12.5px;letter-spacing:.15em;color:var(--muted)}}
+.slide .title{{margin-top:14px}}
 </style></head><body>
 <main class="deck skin-warm">
 {chr(10).join(body)}
