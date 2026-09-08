@@ -26,19 +26,20 @@
   --rule:#c5a681;       /* 行間罫 */
   --hairline:#e2dcd2;   /* さらに薄い罫・非強調セル */
   --soft:#efeee8;       /* 塗りカード・矢羽・ステップ */
+  --rose:#a22727;       /* 意味を持つ赤（悪化・✕）だけに使う */
   --font-sans:"Helvetica Neue",Arial,Helvetica,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
   --font-serif:"Hiragino Mincho ProN","Yu Mincho","Songti SC",Georgia,"Times New Roman",serif;
 }
 /* cool スキン（ネイビー。Bレーンの {"skin":"cool"} と同一）にするときは :root を次に差し替える:
    --page-bg:#f2f2f0; --slide-bg:#ffffff; --ink:#050505; --navy:#071b2c; --accent:#1e5f8c; --cyan:#79c8dc;
-   --muted:#666b70; --rule:#b9bec3; --hairline:#d9dcdf; --soft:#e7f4f8; */
+   --muted:#666b70; --rule:#b9bec3; --hairline:#d9dcdf; --soft:#e7f4f8; --rose:#d94c68; */
 @page{size:338.67mm 190.5mm;margin:0}
 html,body{margin:0;background:var(--page-bg);font-family:var(--font-sans);color:var(--navy)}
 .s{width:338.67mm;height:190.5mm;background:var(--slide-bg);position:relative;margin:8mm auto;box-sizing:border-box;padding:9mm 16mm 0 16mm;overflow:hidden;page-break-after:always;display:flex;flex-direction:column;align-items:stretch}
 .bar{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.5px solid var(--navy);padding-bottom:2.2mm;margin-top:3mm;flex:0 0 auto}
 .logo{font-family:var(--font-serif);font-weight:600;font-size:18pt;color:var(--navy)}
 .date{font-size:7.5pt;letter-spacing:.15em;color:var(--muted)}
-h1{margin:4.5mm 0 0 0;font-family:var(--font-serif);font-size:22pt;line-height:1.3;color:var(--navy);font-weight:600;flex:0 0 auto;white-space:nowrap}
+h1{margin:4.5mm 0 0 0;font-family:var(--font-serif);font-size:22pt;line-height:1.3;color:var(--navy);font-weight:600;flex:0 0 auto} /* 2行まで可（意味の切れ目で <br>。slide-rules §2.1） */
 .c{margin-top:6mm;flex:1;min-height:0;display:flex;flex-direction:column;gap:5mm;margin-bottom:19mm}
 .c>.grid{flex:1;grid-auto-rows:1fr;min-height:0}
 .c>.grid.fix{flex:0 0 auto}
@@ -53,6 +54,7 @@ h1{margin:4.5mm 0 0 0;font-family:var(--font-serif);font-size:22pt;line-height:1
 .h{font-size:11pt;font-weight:700;color:var(--navy);line-height:1.3}
 .bd{padding:3.5mm 4.5mm;font-size:10pt;line-height:1.7;color:var(--ink);flex:1}
 .ref{font-size:8pt;color:var(--accent);font-weight:700;margin-left:auto;white-space:nowrap}
+.rows .r>div:last-child{display:flex;justify-content:space-between;align-items:baseline;gap:4mm} /* 「→ P.n」を右端に */
 .rows .r{display:grid;grid-template-columns:44mm 1fr;gap:6mm;padding:4mm 0;border-top:1px solid var(--rule);font-size:10.5pt;line-height:1.6}
 .rows .r:first-child{border-top:0}
 .rows .l{font-family:var(--font-serif);font-weight:700;font-size:11.5pt;color:var(--accent)}
@@ -85,8 +87,10 @@ th.ax{border-right:1.8px solid var(--navy)}
 .two{display:grid;grid-template-columns:1.5fr auto 1fr;gap:6mm;flex:1;min-height:0;align-items:stretch}
 .two>div:first-child,.two>div:last-child{display:flex;flex-direction:column;min-height:0}
 .two>div:first-child table{flex:1}
-.two>div:last-child ul{flex:1;display:flex;flex-direction:column;justify-content:center}
-.two .colh{font-family:var(--font-serif);font-size:11.5pt;font-weight:700;color:var(--accent);border-bottom:1.8px solid var(--navy);padding:2.5mm 0 1.5mm 0;margin-bottom:3mm}
+.two>div>ul{flex:1;display:flex;flex-direction:column;justify-content:center} /* 左右どちらのブレットも縦中央（§4.5 下端揃え） */
+/* カラム見出し（.colh）と軸タイトル（.axh）は同じ高さ・同じ余白にして左右で罫線が揃うようにする（§4.21） */
+.two .colh,.axh{font-family:var(--font-serif);font-size:11.5pt;font-weight:700;color:var(--navy);border-bottom:1.8px solid var(--navy);height:7mm;box-sizing:content-box;padding:0 0 1.5mm 0;margin:0 0 3.5mm 0;flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-end}
+.two .colh{color:var(--accent)}
 .two ul{margin:0;padding-left:4.5mm;font-size:10pt;line-height:1.8;color:var(--ink)}
 .two li{margin-bottom:2.5mm}
 .tri{align-self:center;width:0;height:0;border-top:5mm solid transparent;border-bottom:5mm solid transparent;border-left:6mm solid var(--cyan)}
@@ -104,9 +108,9 @@ th.ax{border-right:1.8px solid var(--navy)}
 .legend i{width:4mm;height:4mm;display:inline-block}
 .legend .li-a{background:var(--soft)}
 .legend .li-b{background:var(--navy)}
+.legend.left{justify-content:flex-start} /* チャート直下に左寄せで置くとき */
 @media print{html,body{background:#fff}.s{margin:0!important;transform:none!important}.fitwrap{width:auto!important;height:auto!important;margin:0!important}}
 /* ── 追加パーツ用 ── */
-.axh{font-family:var(--font-serif);font-size:11.5pt;font-weight:700;color:var(--navy);border-bottom:1.8px solid var(--navy);padding:0 0 1.5mm 0;margin-bottom:3.5mm;flex:0 0 auto;display:flex;justify-content:space-between;align-items:baseline}
 .axh .u{font-family:var(--font-sans);font-size:8.5pt;font-weight:400;color:var(--muted)}
 .note{font-size:8pt;letter-spacing:.08em;font-weight:700;color:var(--accent);border-bottom:1px solid var(--cyan);align-self:flex-start;padding-bottom:.8mm;flex:0 0 auto}
 /* 左サイドの主張パネル */
@@ -126,8 +130,9 @@ th.ax{border-right:1.8px solid var(--navy)}
 .hm{width:100%;border-collapse:collapse;font-size:9.5pt}
 .hm th{font-size:10.5pt;padding:2mm}
 .hm td{padding:2.2mm 2.5mm;border-bottom:1px solid var(--hairline)}
-.hm .cell{display:block;height:5mm}
-.hm .v4{background:var(--navy)}.hm .v3{background:var(--accent)}.hm .v2{background:var(--cyan)}.hm .v1{background:var(--soft)}.hm .v0{background:var(--hairline)}
+.hm .cell{display:block;height:8mm}
+/* 4=大きく改善 3=改善 0=横ばい 2=悪化（悪化だけ意味のある赤。§5.8） */
+.hm .v4{background:var(--navy)}.hm .v3{background:var(--accent)}.hm .v2{background:var(--rose)}.hm .v1{background:var(--soft)}.hm .v0{background:var(--hairline)}
 /* ハーベイボール */
 .hb{width:4.6mm;height:4.6mm;display:inline-block;border:1px solid var(--navy);border-radius:50%;position:relative;vertical-align:-.7mm}
 .hb i{position:absolute;inset:0;background:var(--navy);border-radius:50%}
@@ -137,8 +142,8 @@ th.ax{border-right:1.8px solid var(--navy)}
 .hb.q4 i{clip-path:none}
 .hb.q0 i{display:none}
 /* ドットマトリクス */
-.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:.9mm;width:26mm}
-.dots i{width:2.1mm;height:2.1mm;background:var(--hairline);display:block}
+.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:1.2mm;width:36mm}
+.dots i{width:3mm;height:3mm;background:var(--hairline);display:block}
 .dots i.on{background:var(--accent)}
 .dotcol{display:flex;flex-direction:column;align-items:center;gap:2.5mm}
 .dotcol .dv{font-size:15pt;font-weight:700;color:var(--navy)}
@@ -409,7 +414,7 @@ th.hbc,td.hbc{text-align:center}
   <div class="bar"><div class="logo">資料名</div><div class="date">パーツ13｜状態ヒートマップ＋右コメント</div></div>
   <h1>状態ヒートマップ＋右コメント</h1>
   <div class="c">
-    <div class="legend"><span><i class="v4" style="background:var(--navy)"></i>大きく改善</span><span><i style="background:var(--accent)"></i>改善</span><span><i style="background:var(--rule)"></i>横ばい</span><span><i style="background:var(--cyan)"></i>悪化</span></div>
+    <div class="legend"><span><i style="background:var(--navy)"></i>大きく改善</span><span><i style="background:var(--accent)"></i>改善</span><span><i style="background:var(--hairline)"></i>横ばい</span><span><i style="background:var(--rose)"></i>悪化</span></div>
     <div class="two" style="grid-template-columns:1.25fr auto 1fr">
       <div>
         <div class="axh"><span>指標カテゴリー別の状況</span><span class="u">YYYY年M月時点</span></div>
@@ -770,9 +775,9 @@ th.hbc,td.hbc{text-align:center}
      使いどころ: 章が変わるたびに目次を再掲し、これから話す章だけを濃く出す。
      think-cell のアジェンダ機能と同じ考え方で、聞き手が「いまどこか」を毎回確認できる。
      条件: 目次（パーツ03）と項目の並び・文言を完全に一致させる。章ごとに .on を移すだけ。 -->
-<section class="s">
+<section class="s chap">
   <div class="bar"><div class="logo">資料名</div><div class="date">パーツ27｜セパレーター（章扉＝アジェンダ再掲）</div></div>
-  <h1>セパレーター（章扉＝アジェンダ再掲）</h1>
+  <h1>セパレーター（章扉＝アジェンダ再掲。section は "s chap" でページ番号なし）</h1>
   <div class="c">
     <div class="agd">
       <div class="ai"><span class="an">01</span><span class="at">ラベル 1</span><span class="ap">P.4</span></div>
