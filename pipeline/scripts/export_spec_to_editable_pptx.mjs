@@ -41,7 +41,9 @@ const CONTENT_TOP = 1.72;    // 本文開始 43.7mm
 const FOOTER_Y = 7.09;       // フッター罫線 180mm
 // Base palette. A spec may override any key via a root-level "palette" object
 // (e.g. {"palette": {"navy": "1F3A5F"}}) — used for brand-recolored decks.
-const PALETTE = deck.palette || {};
+// {"skin":"warm"} は HTML レンダラーの warm スキンと同じトークン（A レーンの自由記述テンプレの warm ブロックとも同一）
+const WARM = { ink: "241A10", navy: "241A10", muted: "8A7C6C", hair: "E3DCCF", blue: "6B4A2B", cyan: "C9A97E", rose: "A22727", warning: "C9A97E", green: "5D5137", softYellow: "F6EFDF", softBlue: "F1EBE0" };
+const PALETTE = { ...(deck.skin === "warm" ? WARM : {}), ...(deck.palette || {}) };
 const INK = PALETTE.ink || "050505";
 const NAVY = PALETTE.navy || "071B2C";
 const MUTED = PALETTE.muted || "666B70";

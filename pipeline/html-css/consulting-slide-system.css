@@ -14,6 +14,7 @@
   --soft-blue: #e7f4f8;
   --soft-yellow: #fff3bd;
   --font-sans: "Helvetica Neue", Arial, Helvetica, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", Georgia, "Times New Roman", serif;
   --slide-w: 1600px;
   --slide-h: 900px;
   --margin-x: 72px;
@@ -2758,6 +2759,9 @@ body {
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", Georgia, "Times New Roman", serif;
 }
 
+/* 見出しは cool/warm とも明朝（PPTX エクスポーターの Yu Mincho と一致。A レーンの自由記述テンプレとも同じ） */
+.title,
+.cover-title,
 .skin-warm .title,
 .skin-warm .cover-title {
   font-family: var(--font-serif);
