@@ -179,6 +179,7 @@ Node.jsが無い環境でも、カタログPDFで型を選び、見本帳PPTXか
 
 - **いちばん効くのは slide-rules.md への追記**です。レビューで受けた指摘を1行ずつ足していくと、御社専用の資料作成AIに育ちます
 - SlideSpecルートの `palette` でブランドカラーを一括差し替えできます（`schema.json` 参照）
+- 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈が入ります。SlideSpecルートの `attribution` で無効化（`false`）・文言差し替え（文字列）ができます
 
 ## About
 

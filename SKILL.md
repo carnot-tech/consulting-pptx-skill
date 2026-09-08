@@ -172,6 +172,13 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 - Node環境が無い場合の**手動フォールバック**として、該当スライドをコピーして文言を差し替える
 のどちらでも使える。ただし品質の再現性はSlideSpecパイプライン経由のほうが高い。
 
+## 本スキル使用の注釈（最終ページのみ）
+
+本スキルで作った資料は、**最終ページの出典行にだけ**「本資料は consulting-pptx-skill（github.com/carnot-tech/consulting-pptx-skill）で作成」と入れる。他のページには入れない。
+
+- Bレーン（SlideSpec）: `render_spec_to_html.mjs` / `export_spec_to_editable_pptx.mjs` が最終スライドの `source` に自動で追記する。ルートに `"attribution": false` で無効化、文字列を入れると文言を差し替え。
+- Aレーン（自由記述）: 最終 section の `.src`（出典行）に同じ一文を手で足す。
+
 ## カラーカスタマイズ
 
 デフォルトはニュートラルなネイビー系。SlideSpecのルートに `palette` オブジェクトを入れると全スライドのブランドカラーを一括で差し替えられる（`schema.json` 参照）。その際も以下は守る:

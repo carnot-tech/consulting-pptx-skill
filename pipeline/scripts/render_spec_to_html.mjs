@@ -10,6 +10,20 @@ const inputPath = path.resolve(root, input);
 const outputPath = path.resolve(root, output);
 const spec = JSON.parse(await fs.readFile(inputPath, "utf8"));
 
+// 最終ページの出典行だけに、本スキルで作成した旨の注釈を付ける（他のページには付けない）。
+// ルートの attribution: false で無効化、文字列を入れると差し替え。
+const SKILL_ATTRIBUTION_JA = "本資料は consulting-pptx-skill（github.com/carnot-tech/consulting-pptx-skill）で作成";
+const SKILL_ATTRIBUTION_EN = "Created with consulting-pptx-skill (github.com/carnot-tech/consulting-pptx-skill)";
+function applySkillAttribution(deck) {
+  if (deck.attribution === false || !Array.isArray(deck.slides) || !deck.slides.length) return;
+  const isJp = /[぀-ヿ㐀-鿿]/.test(JSON.stringify(deck));
+  const text = typeof deck.attribution === "string" ? deck.attribution : (isJp ? SKILL_ATTRIBUTION_JA : SKILL_ATTRIBUTION_EN);
+  const last = deck.slides[deck.slides.length - 1];
+  if (String(last.source || "").includes(text) || String(last.note || "").includes(text)) return;
+  last.source = [last.source, text].filter(Boolean).join(isJp ? "　" : "  ");
+}
+applySkillAttribution(spec);
+
 // Single source of truth: exactly the templates with a renderSlide() case below.
 // Schema enum may list additional "planned" archetypes; specs using them fail loudly (see validate + default).
 const templates = new Set([
