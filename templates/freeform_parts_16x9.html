@@ -69,7 +69,7 @@ h1{margin:4.5mm 0 0 0;font-family:var(--font-serif);font-size:22pt;line-height:1
 .stat.l .cp{color:var(--muted)}
 table{border-collapse:collapse;width:100%;font-size:10pt;flex:0 0 auto}
 th{background:none;text-align:left;padding:2.5mm;font-size:11.5pt;font-weight:700;color:var(--navy);border-bottom:1.8px solid var(--navy)}
-td{padding:4mm 2.5mm;border-bottom:1px solid var(--rule);vertical-align:middle;line-height:1.65;color:var(--ink)}
+td{padding:4.5mm 2.5mm;border-bottom:1px solid var(--rule);vertical-align:middle;line-height:1.65;color:var(--ink)}
 td.b{font-weight:700;color:var(--navy)}
 tr:last-child td{border-bottom:0}
 td.ax{font-size:11pt;font-weight:700;color:var(--accent);font-family:var(--font-serif);border-right:1.8px solid var(--navy)}
@@ -86,9 +86,11 @@ table.eq{table-layout:fixed}
 .chev .n{font-size:12pt;font-weight:700;color:var(--accent)}
 .chev .t{font-size:10.5pt;font-weight:700;margin:1mm 0 1.5mm 0;color:var(--navy)}
 .chev .x{font-size:9pt;line-height:1.55;color:var(--ink)}
-.two{display:grid;grid-template-columns:1.5fr auto 1fr;gap:6mm;flex:1;min-height:0;align-items:stretch}
+/* 2カラムは版面いっぱいに引き伸ばさない。表は自然な高さのまま、見出し＋表のブロックごと縦中央に置く（間延び防止。§5.13 は 55% を目安に、足りなければ行を足す） */
+.two{display:grid;grid-template-columns:1.5fr auto 1fr;gap:6mm;flex:0 1 auto;min-height:0;align-items:stretch}
+.c:has(>.two){justify-content:center}
 .two>div:first-child,.two>div:last-child{display:flex;flex-direction:column;min-height:0}
-.two>div:first-child table{flex:1}
+.two>div:first-child table{flex:0 1 auto}
 .two>div>ul{flex:1;display:flex;flex-direction:column;justify-content:center} /* 左右どちらのブレットも縦中央（§4.5 下端揃え） */
 /* カラム見出し（.colh）と軸タイトル（.axh）は同じ高さ・同じ余白にして左右で罫線が揃うようにする（§4.21） */
 .two .colh,.axh{font-family:var(--font-serif);font-size:11.5pt;font-weight:700;color:var(--navy);border-bottom:1.8px solid var(--navy);height:7mm;box-sizing:content-box;padding:0 0 1.5mm 0;margin:0 0 3.5mm 0;flex:0 0 auto;display:flex;justify-content:space-between;align-items:flex-end}
@@ -176,7 +178,7 @@ table.eq{table-layout:fixed}
 .grid>div{display:flex;flex-direction:column;min-height:0}
 .grid>div>.rows{flex:1;display:flex;flex-direction:column}
 .grid>div>.rows .r{flex:1;align-items:center}
-.two>div>table{flex:1 1 0;height:0}
+.two>div>table{flex:0 1 auto;height:auto}
 .two>div>table tr:first-child{height:1px}
 .pil .p{justify-content:center}
 
