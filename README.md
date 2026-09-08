@@ -3,7 +3,7 @@
 **AIに「まじ」なPowerPointを作らせるためのClaude Codeスキル。**
 スライド作成規約（約110項目）＋機械チェック＋**62型のHTMLパーツ集**（基本27＋追加35）＋型カタログPDFの一式です。HTML（16:9）で組んで PDF にします。
 
-作り方は1本です。パーツ集から該当 section をコピーして1枚ずつ組み、規約 → 機械チェック → 別エージェントのレビュー、の順で仕上げます。以前あった SlideSpec パイプライン（JSON → 編集可能PPTX）は使用頻度が低かったので廃止し（git のタグ `pipeline-archived` で辿れます）、その36型はHTMLパーツとして追加パーツ集に移しました。
+作り方はひとつです。HTMLのパーツ集から必要なパーツを取り出して1枚ずつ組み、規約を読む、機械チェックを通す、別エージェントにレビューさせる、の順で仕上げます。以前あった SlideSpec パイプライン（JSON → 編集可能PPTX）は使用頻度が低かったので廃止し（git のタグ `pipeline-archived` で辿れます）、その36型はHTMLパーツとして追加パーツ集に移しました。
 
 A Claude Code skill for generating boardroom-quality decks: a slide-design rulebook, an automated rule checker, a 62-part HTML slide library (16:9, one section per slide, printed to PDF via Chrome), and a visual catalog PDF. The former JSON SlideSpec → editable PPTX pipeline is retired (see git tag `pipeline-archived`).
 
@@ -26,7 +26,7 @@ A Claude Code skill for generating boardroom-quality decks: a slide-design ruleb
 「62型」は作れる見せ方の上限ではありません。実際のデッキでは、型を組み合わせたり崩したりして規約の範囲で自由に組むので、見せ方のパターンはこれより多くなります。型カタログは「レイアウトの発想帳」として使い、合わなければ捨ててください。
 
 
-## 作り方は1本（HTMLパーツ集 → PDF）
+## 作り方：HTMLパーツ集で組んで、PDFにする
 
 | ファイル | 中身 | 使用頻度 |
 | --- | --- | --- |
