@@ -88,4 +88,4 @@
 - 各 section の h1 は型名を表示しているだけで、実デッキではストーリーラインから起こした主張文に差し替える（slide-rules §2.8）。プレースホルダー（`Text N` / `ラベル N` / `YYYY`）は1つも残さない（check_deck が FAIL にする）。
 - 配色・書体は両ファイルとも `<style>` 冒頭の `:root` トークン（warm 既定）。片方を変えたらもう片方も揃える。
 - 手でコピーして組む場合、追加パーツ集の section はそのCSSも一緒に要る。`new_deck.py` は両方のCSSをそれぞれ `.s` / `.slide` 配下にスコープして結合するので、混在しても `.bar` のような同名クラスが衝突しない。
-- 旧 SlideSpec パイプライン（JSON → 編集可能PPTX）は `_archive/pipeline/` に退避してある。編集可能PPTXが必要になったときだけ参照する。
+- 旧 SlideSpec パイプライン（JSON → 編集可能PPTX）は git タグ `pipeline-archived` の時点のリポジトリに残してある。編集可能PPTXが必要になったときだけ参照する。

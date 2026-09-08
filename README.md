@@ -3,9 +3,9 @@
 **AIに「まじ」なPowerPointを作らせるためのClaude Codeスキル。**
 スライド作成規約（約110項目）＋機械チェック＋**62型のHTMLパーツ集**（基本27＋追加35）＋型カタログPDFの一式です。HTML（16:9）で組んで PDF にします。
 
-作り方は1本です。パーツ集から該当 section をコピーして1枚ずつ組み、規約 → 機械チェック → 別エージェントのレビュー、の順で仕上げます。以前あった SlideSpec パイプライン（JSON → 編集可能PPTX）は使用頻度が低かったので `_archive/pipeline/` に退避し、その36型はHTMLパーツとして追加パーツ集に移しました。
+作り方は1本です。パーツ集から該当 section をコピーして1枚ずつ組み、規約 → 機械チェック → 別エージェントのレビュー、の順で仕上げます。以前あった SlideSpec パイプライン（JSON → 編集可能PPTX）は使用頻度が低かったので廃止し（git のタグ `pipeline-archived` で辿れます）、その36型はHTMLパーツとして追加パーツ集に移しました。
 
-A Claude Code skill for generating boardroom-quality decks: a slide-design rulebook, an automated rule checker, a 62-part HTML slide library (16:9, one section per slide, printed to PDF via Chrome), and a visual catalog PDF. The former JSON SlideSpec → editable PPTX pipeline is kept under `_archive/`.
+A Claude Code skill for generating boardroom-quality decks: a slide-design rulebook, an automated rule checker, a 62-part HTML slide library (16:9, one section per slide, printed to PDF via Chrome), and a visual catalog PDF. The former JSON SlideSpec → editable PPTX pipeline is retired (see git tag `pipeline-archived`).
 
 私たちが実際に毎週の提案書・報告書づくりで使っている仕組みの公開版です。解説記事はこちら → [AIにまじなスライド作らせる（note）](https://note.com/jinbaflow/n/nc8372b84e572)
 
@@ -75,14 +75,13 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 | `scripts/check_layout.mjs` | HTMLデッキの実レンダリング検査（フッターとの重なり・右端/下端のはみ出し） |
 | `assets/SlideCatalog_16x9.pdf` | **62型のスライド型カタログ（両パーツ集を印刷した62ページ）。型を探すときの入口** |
 | `assets/SuperTemplate_62type.pptx` | 旧パイプラインが書き出した62型のPPTX見本帳（全スライド編集可能）。PowerPointで手動コピーして使うときの見本。パーツ集の正本ではない |
-| `_archive/pipeline/` | 旧 SlideSpec パイプライン（JSON → HTMLプレビュー → 編集可能PPTX）。編集可能PPTXが必要なときだけ参照 |
 
 ## カスタマイズ
 
 - **いちばん効くのは slide-rules.md への追記**です。レビューで受けた指摘を1行ずつ足していくと、御社専用の資料作成AIに育ちます
 - 色・書体は両パーツ集の `<style>` 冒頭 `:root` トークンで差し替えます。ブランドに合わせるときは両ファイルを同じ値にします
 - 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈を入れます
-- PowerPoint（.pptx）が要るときは、PDFで渡す／`_archive/pipeline/` の SlideSpec から書き出す／`assets/SuperTemplate_62type.pptx` から手でコピーする、のいずれかです。HTML → PPTX の自動変換はこのスキルには含めていません
+- PowerPoint（.pptx）が要るときは、PDFで渡す／`assets/SuperTemplate_62type.pptx` から手でコピーする／git タグ `pipeline-archived` の旧パイプラインで JSON から書き出す、のいずれかです。HTML → PPTX の自動変換はこのスキルには含めていません
 
 ## About
 
