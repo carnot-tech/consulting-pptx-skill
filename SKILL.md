@@ -28,6 +28,7 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 | 追加パーツ集（35パーツ・基本で足りないとき） | `templates/freeform_parts_more_16x9.html`（エグゼクティブサマリー・積み上げ棒・ブリッジ・散布図・比較表・マトリクス・イシューツリー・ロードマップ・ガントなど。旧 SlideSpec 36型の移植） |
 | 型カタログの目視版 | `assets/SlideCatalog_16x9.pdf`（両パーツ集を印刷した62ページ。P.1〜27 が基本、P.28〜62 が追加） |
 | 機械チェック | `scripts/check_deck.py`（HTML は標準ライブラリのみ。PPTX を検査するときだけ `pip3 install python-pptx`）／`scripts/check_layout.mjs`（実レンダリング検査。リポ直下で `npm run setup`） |
+| PPTX見本帳（旧パイプラインの書き出し） | `assets/SuperTemplate_62type.pptx`（62型・全スライド編集可能。PowerPointで手動コピーするときの見本） |
 | 退避した旧パイプライン | `_archive/pipeline/`（SlideSpec → HTML/編集可能PPTX。編集可能PPTXが要るときだけ参照） |
 
 ## 規約の要点（全文は references/slide-rules.md — 作成前に必読）
