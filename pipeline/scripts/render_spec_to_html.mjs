@@ -68,7 +68,8 @@ const templates = new Set([
 ]);
 
 // ── 型プラグイン（scripts/archetypes/*.mjs）。PPTX エクスポーターと同じ登録簿。
-// html(ctx, item, n) を持つ型はそれで描画し、持たない型は中身を汎用レイアウトで描画する（プレビュー・QA 用）。
+// html(ctx, item, n) を持つ型はそれで描画し（全27型が実装済み。共通ヘルパーは archetypes/_html.mjs）、
+// 持たない型（今後追加する型の暫定）は中身を汎用レイアウトで描画する。
 const ARCHETYPES = await (async () => {
   const dir = path.resolve(root, "scripts/archetypes");
   const map = new Map();
@@ -147,7 +148,7 @@ function titleHtml(text, cap) { return esc(smartBreak(text, cap)).replaceAll("\n
 
 function shell(slide, n, body, opts = {}) {
   // Default: no title underline. Opt in with { titleRule: true }.
-  const slideClass = opts.titleRule === true ? "slide" : "slide slide--no-title-rule";
+  const slideClass = (opts.titleRule === true ? "slide" : "slide slide--no-title-rule") + (opts.className ? ` ${opts.className}` : "");
   return `<section class="${slideClass}">
   <div class="slide-inner">
     <div class="kicker">${esc(slide.kicker || slide.template.replaceAll("_", " "))}</div>
@@ -1032,8 +1033,8 @@ const viewer = spec.viewer === true ? `<style>
 // Deck color/typography skin. Two equal, canonical options:
 //   cool (default) — white / near-black ink / navy+cyan accents / sans-serif
 //   warm           — cream / espresso ink / brown accent / serif, editorial-premium
-// Set at the top of the spec: { "skin": "warm" }. Anything else falls back to cool.
-const skin = spec.skin === "warm" ? "warm" : "cool";
+// Set at the top of the spec: { "skin": "cool" }. Anything else falls back to warm (the default, same tokens as the freeform template).
+const skin = spec.skin === "cool" ? "cool" : "warm";
 
 const html = `<!doctype html>
 <html lang="en">

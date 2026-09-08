@@ -18,7 +18,7 @@
         "cool",
         "warm"
       ],
-      "description": "Deck color/type skin. cool (default) = white/near-black/navy+cyan/sans. warm = cream/espresso/brown/serif, editorial."
+      "description": "Deck color/type skin. warm (default) = cream/espresso/brown, serif titles, same tokens as templates/freeform_parts_16x9.html. cool = white/near-black/navy+cyan."
     },
     "viewer": {
       "type": "boolean",

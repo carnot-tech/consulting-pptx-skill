@@ -36,7 +36,7 @@ A Claude Code skill for generating boardroom-quality decks: a 62-archetype slide
 
 内訳は、もともとの SlideSpec 36型のうち表紙を除く35型と、自由記述パーツ集の27パーツを SlideSpec の型として実装したもの（`pipeline/scripts/archetypes/`、型ID一覧は下）。`pipeline/slide-spec/super_template.json` には63型（36＋27）の完成 SlideSpec が入っており、どの型も `npm run export` で編集可能PPTXになります。もともとの36型は [docs/catalog/](docs/catalog/) に1枚ずつ画像でも置いています（テンプレ再描画: `TEMPLATE_MODE=1 npm run render -- slide-spec/super_template.json generated/super_template.html`。型名だけのタイトルは通常の最短字数チェックに引っかかるため、この環境変数で検証を外します）。
 
-カタログPDFと62型PPTXの再生成は `python3 scripts/build_slide_catalog.py`（要: `pipeline/` で `npm run setup` 済み、`pip3 install python-pptx`、LibreOffice）。カタログの配色は HTML パーツ集と同じブラウン系に揃えています（スクリプトが palette を注入）。SlideSpec から生成するデッキの既定色はネイビーで、SlideSpec ルートの `palette` で変えられます。
+カタログPDFと62型PPTXの再生成は `python3 scripts/build_slide_catalog.py`（要: `pipeline/` で `npm run setup` 済み、`pip3 install python-pptx`、LibreOffice）。配色は自由記述パーツ集・SlideSpec 生成デッキ・カタログのすべてで同じ暖色系（warm）が既定です。ネイビー系にするときは SlideSpec ルートに `"skin": "cool"`、個別の色は `palette` で上書きできます。
 
 ### パーツ由来の27型（`parts` フィールドに中身を書く）
 

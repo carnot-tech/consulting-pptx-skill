@@ -41,21 +41,21 @@ const CONTENT_TOP = 1.72;    // 本文開始 43.7mm
 const FOOTER_Y = 7.09;       // フッター罫線 180mm
 // Base palette. A spec may override any key via a root-level "palette" object
 // (e.g. {"palette": {"navy": "1F3A5F"}}) — used for brand-recolored decks.
-// {"skin":"warm"} は HTML レンダラーの warm スキンと同じトークン（A レーンの自由記述テンプレの warm ブロックとも同一）
-const WARM = { ink: "241A10", navy: "241A10", muted: "8A7C6C", hair: "E3DCCF", blue: "6B4A2B", cyan: "C9A97E", rose: "A22727", warning: "C9A97E", green: "5D5137", softYellow: "F6EFDF", softBlue: "F1EBE0" };
-const PALETTE = { ...(deck.skin === "warm" ? WARM : {}), ...(deck.palette || {}) };
-const INK = PALETTE.ink || "050505";
-const NAVY = PALETTE.navy || "071B2C";
-const MUTED = PALETTE.muted || "666B70";
-const HAIR = PALETTE.hair || "D9DCDF";
-const BLUE = PALETTE.blue || "1E5F8C";
-const CYAN = PALETTE.cyan || "79C8DC";
-const ROSE = PALETTE.rose || "D94C68";
-const WARNING = PALETTE.warning || "E0B22E";
-const GREEN = PALETTE.green || "00856F";
+// 既定は warm（自由記述テンプレ templates/freeform_parts_16x9.html と同じトークン）。{"skin":"cool"} でネイビー系。
+const COOL = { ink: "050505", navy: "071B2C", muted: "666B70", hair: "D9DCDF", blue: "1E5F8C", cyan: "79C8DC", rose: "D94C68", warning: "E0B22E", green: "00856F", softYellow: "FFF3BD", softBlue: "E7F4F8" };
+const PALETTE = { ...(deck.skin === "cool" ? COOL : {}), ...(deck.palette || {}) };
+const INK = PALETTE.ink || "322014";
+const NAVY = PALETTE.navy || "322014";
+const MUTED = PALETTE.muted || "8A7B6B";
+const HAIR = PALETTE.hair || "E2DCD2";
+const BLUE = PALETTE.blue || "5A3921";
+const CYAN = PALETTE.cyan || "C5A681";
+const ROSE = PALETTE.rose || "A22727";
+const WARNING = PALETTE.warning || "C5A681";
+const GREEN = PALETTE.green || "5A3921";
 const WHITE = "FFFFFF";
-const SOFTYELLOW = PALETTE.softYellow || "FFF3BD";
-const SOFTBLUE = PALETTE.softBlue || "E7F4F8";
+const SOFTYELLOW = PALETTE.softYellow || "F6F2EA";
+const SOFTBLUE = PALETTE.softBlue || "EFEEE8";
 
 const pptx = new pptxgen();
 pptx.layout = "LAYOUT_WIDE";

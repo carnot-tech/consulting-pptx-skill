@@ -1,18 +1,18 @@
 :root {
-  --page-bg: #f2f2f0;
+  --page-bg: #f2efe9;
   --slide-bg: #ffffff;
-  --ink: #050505;
-  --navy: #071b2c;
-  --muted: #666b70;
-  --rule: #b9bec3;
-  --hairline: #d9dcdf;
-  --blue: #1e5f8c;
-  --cyan: #79c8dc;
-  --rose: #d94c68;
-  --green: #00856f;
-  --warning: #e0b22e;
-  --soft-blue: #e7f4f8;
-  --soft-yellow: #fff3bd;
+  --ink: #322014;
+  --navy: #322014;
+  --muted: #8a7b6b;
+  --rule: #c5a681;
+  --hairline: #e2dcd2;
+  --blue: #5a3921;
+  --cyan: #c5a681;
+  --rose: #a22727;
+  --green: #5a3921;
+  --warning: #c5a681;
+  --soft-blue: #efeee8;
+  --soft-yellow: #f6f2ea;
   --font-sans: "Helvetica Neue", Arial, Helvetica, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", Georgia, "Times New Roman", serif;
   --slide-w: 1600px;
@@ -2737,37 +2737,242 @@ body {
 }
 
 /* =====================================================================
-   Skin: warm — cream ground / espresso ink / brown accent / serif titles.
-   Activated by {"skin": "warm"} at the SlideSpec root (class .skin-warm).
-   Neutral placeholder palette: swap the tokens below for your own brand.
+   Skin: cool — white ground / near-black ink / navy+cyan accent.
+   Activated by {"skin": "cool"} at the SlideSpec root (class .skin-cool).
+   Default (no skin) is warm: cream / espresso / brown / serif titles — the same tokens as templates/freeform_parts_16x9.html.
    ===================================================================== */
-.skin-warm {
-  --page-bg: #efece5;
-  --slide-bg: #fffdf9;
-  --ink: #241a10;
-  --navy: #241a10;
-  --muted: #8a7c6c;
-  --rule: #c7b69e;
-  --hairline: #e3dccf;
-  --blue: #6b4a2b;
-  --cyan: #c9a97e;
-  --rose: #a22727;
-  --green: #5d5137;
-  --warning: #c9a97e;
-  --soft-blue: #f1ebe0;
-  --soft-yellow: #f6efdf;
-  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", Georgia, "Times New Roman", serif;
+.skin-cool {
+  --page-bg: #f2f2f0;
+  --slide-bg: #ffffff;
+  --ink: #050505;
+  --navy: #071b2c;
+  --muted: #666b70;
+  --rule: #b9bec3;
+  --hairline: #d9dcdf;
+  --blue: #1e5f8c;
+  --cyan: #79c8dc;
+  --rose: #d94c68;
+  --green: #00856f;
+  --warning: #e0b22e;
+  --soft-blue: #e7f4f8;
+  --soft-yellow: #fff3bd;
 }
 
 /* 見出しは cool/warm とも明朝（PPTX エクスポーターの Yu Mincho と一致。A レーンの自由記述テンプレとも同じ） */
 .title,
 .cover-title,
-.skin-warm .title,
-.skin-warm .cover-title {
+.skin-cool .title,
+.skin-cool .cover-title {
   font-family: var(--font-serif);
   letter-spacing: 0.01em;
 }
 
-.skin-warm .kicker {
+.skin-cool .kicker {
   color: var(--blue);
 }
+
+/* =====================================================================
+   Parts-derived archetypes（パーツ由来27型の HTML プレビュー）
+   templates/freeform_parts_16x9.html の CSS を .slide（1600×900px）の px 系に移植したもの。
+   換算: 1mm ≈ 4.724px（338.67mm → 1600px）、1pt ≈ 1.667px。
+   色はスキンのトークンに写像（#241a10→--ink/--navy、#6b4a2b→--blue、#c9a97e→--cyan、
+   #8a7c6c→--muted、#c7b69e→--rule、#e3dccf→--hairline、#f1ebe0/#efe8da→--soft-blue、#b9b3a9→--rule）。
+   ===================================================================== */
+.slide--parts .slide-inner > .content {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.parts {
+  --pserif: var(--font-serif, "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", Georgia, "Times New Roman", serif);
+  --pgrey: var(--rule);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.2;
+}
+.parts.center { justify-content: center; }
+
+/* grid */
+.parts .grid { display: grid; gap: 19px; }
+.parts > .grid { flex: 1; grid-auto-rows: 1fr; min-height: 0; }
+.parts > .grid.fix { flex: 0 0 auto; }
+.parts .g2 { grid-template-columns: 1fr 1fr; }
+.parts .g3 { grid-template-columns: repeat(3, 1fr); }
+.parts .g4 { grid-template-columns: repeat(4, 1fr); }
+.parts .g5 { grid-template-columns: repeat(5, 1fr); }
+.parts .grid > div { display: flex; flex-direction: column; min-height: 0; }
+.parts .grid > div > .rows { flex: 1; display: flex; flex-direction: column; }
+.parts .grid > div > .rows .r { flex: 1; align-items: center; }
+
+/* card（パーツ08） */
+.parts .card { background: var(--soft-blue); border: 0; display: flex; flex-direction: column; }
+.parts .hd { display: flex; align-items: baseline; gap: 12px; padding: 17px 19px 12px 19px; border-bottom: 1px solid var(--hairline); }
+.parts .no { font-size: 23px; font-weight: 700; color: var(--blue); line-height: 1; }
+.parts .h { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+.parts .bd { padding: 17px 21px; font-size: 17px; line-height: 1.7; color: var(--ink); flex: 1; }
+.parts .bd ul { margin: 0; padding-left: 19px; }
+
+/* rows（パーツ02・26） */
+.parts .rows .r { display: grid; grid-template-columns: 208px 1fr; gap: 28px; padding: 19px 0; border-top: 1px solid var(--rule); font-size: 18px; line-height: 1.6; }
+.parts .rows .r:first-child { border-top: 0; }
+.parts .rows .r > div:last-child { display: flex; align-items: center; gap: 12px; }
+.parts .rows .l { font-family: var(--pserif); font-weight: 700; font-size: 19px; color: var(--blue); }
+.parts > .rows { flex: 1; display: flex; flex-direction: column; }
+.parts > .rows .r { flex: 1; align-items: center; }
+.parts .ref { font-size: 13px; color: var(--blue); font-weight: 700; margin-left: auto; white-space: nowrap; }
+
+/* table（パーツ06・07・09・11・12・13・14・25） */
+.parts table { border-collapse: collapse; width: 100%; font-size: 17px; flex: 0 0 auto; }
+.parts th { background: none; text-align: left; padding: 12px; font-size: 19px; font-weight: 700; color: var(--ink); border-bottom: 2px solid var(--ink); }
+.parts td { padding: 19px 12px; border-bottom: 1px solid var(--rule); vertical-align: middle; line-height: 1.65; color: var(--ink); }
+.parts td.b { font-weight: 700; color: var(--ink); }
+.parts tr:last-child td { border-bottom: 0; }
+.parts td.ax { font-size: 18px; font-weight: 700; color: var(--blue); font-family: var(--pserif); border-right: 2px solid var(--ink); }
+.parts th.ax { border-right: 2px solid var(--ink); }
+.parts > table, .parts .side .sb table, .parts .two > div > table { flex: 1 1 0; height: 0; }
+/* 表を縦に伸ばすと余剰高さが見出し行にも配分され見出しが沈む（slide-rules §4.21） */
+.parts table tr:first-child:has(th) { height: 1px; }
+.parts td ul.cb { margin: 0; padding-left: 19px; line-height: 1.6; }
+.parts td ul.cb li { margin: 0 0 5px 0; }
+.parts th.hbc, .parts td.hbc { text-align: center; }
+
+/* chevron（パーツ05） */
+.parts .chev { display: flex; gap: 0; flex: 0 0 auto; }
+.parts .chev .cv { flex: 1; position: relative; background: var(--soft-blue); border: 0; padding: 24px 19px 24px 43px; clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 50%, calc(100% - 28px) 100%, 0 100%, 28px 50%); display: flex; flex-direction: column; }
+.parts .chev .cv:first-child { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 50%, calc(100% - 28px) 100%, 0 100%); padding-left: 24px; }
+.parts .chev .n { font-size: 20px; font-weight: 700; color: var(--blue); }
+.parts .chev .t { font-size: 18px; font-weight: 700; margin: 5px 0 7px 0; color: var(--ink); }
+.parts .chev .x { font-size: 15px; line-height: 1.55; color: var(--ink); }
+
+/* two（左表・中央三角・右ブレット。パーツ06・07・13・17・25） */
+.parts .two { display: grid; grid-template-columns: 1.5fr auto 1fr; gap: 28px; flex: 1; min-height: 0; align-items: stretch; }
+.parts .two > div:first-child, .parts .two > div:last-child { display: flex; flex-direction: column; min-height: 0; }
+.parts .two > div:last-child > ul { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.parts .colh { font-family: var(--pserif); font-size: 19px; font-weight: 700; color: var(--blue); border-bottom: 2px solid var(--ink); padding: 12px 0 7px 0; margin-bottom: 14px; }
+.parts .two ul { margin: 0; padding-left: 21px; font-size: 17px; line-height: 1.8; color: var(--ink); }
+.parts .two li { margin-bottom: 12px; }
+.parts .tri { align-self: center; width: 0; height: 0; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 28px solid var(--cyan); }
+
+/* cover / 章扉 / 裏表紙（パーツ01・04・10。タイトル欄なし） */
+.slide--parts-cover .slide-inner { grid-template-rows: auto 1fr auto; }
+.parts-cover { --pserif: var(--font-serif, "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", Georgia, "Times New Roman", serif); padding-top: 180px; color: var(--ink); }
+.parts-cover .big { font-family: var(--pserif); font-size: 57px; font-weight: 700; color: var(--ink); line-height: 1.25; max-width: 1040px; }
+.parts-cover .prule { width: 151px; height: 5px; background: var(--blue); margin: 38px 0 19px 0; }
+.parts-cover .sub { font-family: var(--pserif); font-size: 25px; font-weight: 700; color: var(--blue); margin-top: 14px; max-width: 1040px; }
+.parts-cover .lead { font-size: 18px; line-height: 1.7; margin-top: 28px; max-width: 850px; }
+.parts-cover.back { padding-top: 283px; }
+.parts-cover.back .big { font-size: 37px; }
+.parts-cover.chap { padding-top: 260px; }
+.parts-cover .cno { font-family: var(--pserif); font-size: 25px; font-weight: 700; color: var(--blue); letter-spacing: 0.2em; }
+.parts-cover .cbig { font-family: var(--pserif); font-size: 50px; font-weight: 700; color: var(--ink); margin-top: 19px; max-width: 1040px; line-height: 1.25; }
+.parts-cover .desc { font-size: 20px; color: var(--blue); margin-top: 19px; }
+
+/* toc（パーツ03） */
+.parts .toc { margin-top: 19px; }
+.parts .toc .ti { display: grid; grid-template-columns: 66px 1fr 66px; gap: 19px; padding: 17px 0; border-bottom: 1px solid var(--rule); font-size: 19px; align-items: baseline; }
+.parts .toc .ti:last-child { border-bottom: 0; }
+.parts .toc .ti .tn { font-family: var(--pserif); font-weight: 700; color: var(--blue); }
+.parts .toc .ti .tp { text-align: right; color: var(--muted); font-size: 15px; }
+
+/* legend */
+.parts .legend { display: flex; gap: 28px; justify-content: flex-end; font-size: 13px; color: var(--ink); flex: 0 0 auto; }
+.parts .legend span { display: flex; align-items: center; gap: 7px; }
+.parts .legend i { width: 19px; height: 19px; display: inline-block; }
+.parts .legend .li-a { background: var(--soft-blue); }
+.parts .legend .li-b { background: var(--navy); }
+
+/* 軸見出し（.axh）・注記 */
+.parts .axh { font-family: var(--pserif); font-size: 19px; font-weight: 700; color: var(--ink); border-bottom: 2px solid var(--ink); padding: 0 0 7px 0; margin-bottom: 17px; flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline; }
+.parts .axh .u { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--muted); }
+.parts .note { font-size: 13px; letter-spacing: 0.08em; font-weight: 700; color: var(--blue); border-bottom: 1px solid var(--cyan); align-self: flex-start; padding-bottom: 4px; flex: 0 0 auto; }
+
+/* 左サイドの主張パネル（パーツ11） */
+.parts .side { display: grid; grid-template-columns: 293px 1fr; gap: 0; flex: 1; min-height: 0; }
+.parts .side .sp { background: var(--navy); color: #fff; padding: 28px; display: flex; flex-direction: column; }
+.parts .side .sp .cn { font-family: var(--pserif); font-size: 43px; font-weight: 700; color: var(--cyan); line-height: 1; }
+.parts .side .sp .ct { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; color: var(--rule); margin-top: 7px; }
+.parts .side .sp .cm { font-family: var(--pserif); font-size: 23px; font-weight: 700; line-height: 1.55; margin-top: auto; }
+.parts .side .sb { padding: 0 0 0 38px; display: flex; flex-direction: column; min-height: 0; }
+
+/* レバー矢印表（パーツ12） */
+.parts .lev { width: 100%; border-collapse: collapse; font-size: 17px; }
+.parts .lev th { font-size: 19px; }
+.parts .lev td { padding: 14px 12px; }
+.parts .lev .ar { height: 26px; display: flex; align-items: center; color: #fff; font-size: 15px; font-weight: 700; padding-left: 14px; clip-path: polygon(0 0, calc(100% - 19px) 0, 100% 50%, calc(100% - 19px) 100%, 0 100%); }
+.parts .lev .up { background: var(--blue); }
+.parts .lev .dn { background: var(--pgrey); color: var(--ink); }
+
+/* 状態ヒートマップ（パーツ13） */
+.parts .hm { width: 100%; border-collapse: collapse; font-size: 16px; }
+.parts .hm th { font-size: 18px; padding: 9px; }
+.parts .hm td { padding: 10px 12px; border-bottom: 1px solid var(--hairline); }
+.parts .hm .cell { display: block; height: 24px; }
+.parts .v4 { background: var(--navy); }
+.parts .v3 { background: var(--blue); }
+.parts .v2 { background: var(--cyan); }
+.parts .v1 { background: var(--soft-blue); }
+.parts .v0 { background: var(--hairline); }
+
+/* ハーベイボール（パーツ14） */
+.parts .hb { width: 22px; height: 22px; display: inline-block; border: 1px solid var(--ink); border-radius: 50%; position: relative; vertical-align: -3px; }
+.parts .hb i { position: absolute; inset: 0; background: var(--ink); border-radius: 50%; }
+.parts .hb.q1 i { clip-path: polygon(50% 50%, 50% 0, 100% 0, 100% 50%); }
+.parts .hb.q2 i { clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%); }
+.parts .hb.q3 i { clip-path: polygon(50% 0, 100% 0, 100% 100%, 0 100%, 0 50%); }
+.parts .hb.q4 i { clip-path: none; }
+.parts .hb.q0 i { display: none; }
+
+/* ドットマトリクス（パーツ15） */
+.parts .dots { display: grid; grid-template-columns: repeat(10, 10px); gap: 4px; }
+.parts .dots i { width: 10px; height: 10px; background: var(--hairline); display: block; }
+.parts .dots i.on { background: var(--blue); }
+.parts .dotcol { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.parts .dotcol .dv { font-size: 25px; font-weight: 700; color: var(--ink); }
+.parts .dotcol .dl { font-size: 15px; color: var(--ink); text-align: center; line-height: 1.5; }
+
+/* 柱＋土台（パーツ19） */
+.parts .pil { display: grid; gap: 19px; flex: 0 0 auto; }
+.parts .pil .p { background: var(--soft-blue); padding: 24px 21px; display: flex; flex-direction: column; gap: 9px; justify-content: center; }
+.parts .pil .p .pt { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+.parts .pil .p .px { font-size: 15px; color: var(--ink); line-height: 1.6; }
+.parts .base { background: var(--navy); color: #fff; padding: 17px 24px; font-size: 17px; margin-top: 19px; display: flex; gap: 14px; align-items: baseline; }
+.parts .base + .base { margin-top: 12px; }
+.parts .base b { font-size: 18px; color: var(--cyan); }
+
+/* ニュース根拠グリッド（パーツ21） */
+.parts .clip { background: var(--soft-blue); padding: 21px 24px; display: flex; flex-direction: column; gap: 9px; }
+.parts .clip .cd { font-size: 13px; color: var(--muted); font-style: italic; }
+.parts .clip .ch { font-family: var(--pserif); font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.45; }
+.parts .clip .cx { font-size: 14px; color: var(--ink); line-height: 1.6; }
+.parts .clip .cg { align-self: flex-start; background: var(--navy); color: #fff; font-size: 13px; font-weight: 700; padding: 5px 12px; letter-spacing: 0.06em; }
+
+/* 対向シェブロン（パーツ20） */
+.parts .opp { display: grid; grid-template-columns: 1fr 217px 1fr; gap: 28px; flex: 1; min-height: 0; align-items: stretch; }
+.parts .opp .ol { display: flex; flex-direction: column; }
+.parts .opp .ol .oi { flex: 1; display: flex; align-items: center; font-size: 17px; line-height: 1.55; color: var(--ink); border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.parts .opp .ol .oi:last-child { border-bottom: 0; }
+.parts .opp .oc { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+.parts .opp .oc .ob { background: var(--navy); color: #fff; text-align: center; font-family: var(--pserif); font-size: 23px; font-weight: 700; padding: 43px 14px; clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%); }
+.parts .opp .oc .ob.alt { background: var(--blue); }
+
+/* セパレーター（章扉＝アジェンダ再掲。パーツ27） */
+.parts .agd { display: flex; flex-direction: column; flex: 1; min-height: 0; justify-content: center; }
+.parts .agd .ai { display: grid; grid-template-columns: 66px 1fr 76px; gap: 24px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--hairline); color: var(--muted); }
+.parts .agd .ai:last-child { border-bottom: 0; }
+.parts .agd .an { font-family: var(--pserif); font-weight: 700; font-size: 23px; }
+.parts .agd .at { font-family: var(--pserif); font-weight: 700; font-size: 25px; }
+.parts .agd .ap { font-size: 15px; text-align: right; }
+.parts .agd .ai.on { color: var(--ink); }
+.parts .agd .ai.on .an { color: var(--blue); font-size: 32px; }
+.parts .agd .ai.on .at { font-size: 35px; }
+.parts .agd .ai.on .ap { color: var(--muted); }
+
+/* 図（SVG。パーツ16・17・18・22・23・24。viewBox はパーツ集と同じ 900×300 等） */
+.parts svg.pfig { flex: 1; min-height: 0; width: 100%; font-family: var(--font-sans); }
+.parts svg.pfig .serif { font-family: var(--pserif); }
