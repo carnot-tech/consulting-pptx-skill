@@ -45,7 +45,7 @@ A Claude Code skill for generating boardroom-quality decks: a slide-design ruleb
 | `templates/freeform_parts_16x9.html`（基本パーツ集） | 表紙・全体マップ・目次・章扉・矢羽・前提→帰結・軸のある表・主張パネル・評価表・分布図など27パーツ | 高い。まずここから |
 | `templates/freeform_parts_more_16x9.html`（追加パーツ集） | エグゼクティブサマリー・積み上げ棒・ブリッジ・散布図・比較表・マトリクス・イシューツリー・ロードマップ・ガントなど35パーツ | 低い。基本で足りないとき |
 
-どちらも 16:9・1 section = 1スライドの単体HTMLです。ファイルをコピーして不要な section を消し、プレースホルダー（本文 `Text 1`、項目名 `ラベル 1`、見出し `タイトル 1`、数値 `00`、年 `YYYY年`、出典 `出典：Source 1`）を差し替えます。`check_deck.py` はこれらが納品デッキに残っていると FAIL にします。
+どちらも 16:9・1 section = 1スライドの単体HTMLです。`scripts/new_deck.py --parts b01,m05,...` で必要なパーツだけを1本に結合し（2ファイルのCSSはスクリプトがスコープして混在させる）、プレースホルダー（本文 `Text 1`、項目名 `ラベル 1`、見出し `タイトル 1`、数値 `00`、年 `YYYY年`、出典 `出典：Source 1`）を差し替えます。`check_deck.py` はこれらが納品デッキに残っていると FAIL にします。
 
 各 section の h1 は型名を表示しているだけで、見本の主張文は置いていません。見本文があると文型がそのまま真似され、主張ではなくテンプレを写した資料になるからです（slide-rules §2.8）。タイトルは必ずストーリーラインから起こします。
 
@@ -63,6 +63,8 @@ git clone https://github.com/carnot-tech/consulting-pptx-skill.git ~/.claude/ski
 ## 手動で使う場合
 
 ```bash
+python3 scripts/new_deck.py --list                                          # パーツ番号と型名の一覧
+python3 scripts/new_deck.py --parts b01,b02,m05,b06,b09,b10 --title "資料名" -o mydeck.html   # たたき台を生成
 python3 scripts/check_deck.py mydeck.html           # 規約の機械チェック（FAIL 0 にする）
 node scripts/check_layout.mjs mydeck.html           # フッター重なり・はみ出しの実レンダリング検査
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu \
@@ -80,6 +82,7 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 | `references/archetype-catalog.md` | 62型の型カタログ（型ID・型名・使いどころ・どのパーツ集の何番か） |
 | `references/content-review-prompt.md` | フレッシュアイ・レビューの指示文。機械チェックのあと、作り方を伏せた別エージェントにデッキのファイルを渡して日本語・論理・破綻を拾わせ、採否表にして直す |
 | `references/ai-smell-lexicon.md` | AI臭ワード・言い回しのリストとセルフチェック |
+| `scripts/new_deck.py` | パーツ番号を並べて1本のデッキHTMLを生成（両パーツ集のCSSをスコープして結合・ページ番号の振り直し） |
 | `scripts/check_deck.py` | 規約の機械チェック（HTML / PPTX 両対応。テンプレ集の検査は `--template`）。タイトルの「N段階」と本文の連番の食い違いも FAIL にする |
 | `scripts/check_layout.mjs` | HTMLデッキの実レンダリング検査（フッターとの重なり・右端/下端のはみ出し） |
 | `assets/SlideCatalog_16x9.pdf` | **62型のスライド型カタログ（両パーツ集を印刷した62ページ）。型を探すときの入口** |
@@ -91,6 +94,7 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 - **いちばん効くのは slide-rules.md への追記**です。レビューで受けた指摘を1行ずつ足していくと、御社専用の資料作成AIに育ちます
 - 色・書体は両パーツ集の `<style>` 冒頭 `:root` トークンで差し替えます。ブランドに合わせるときは両ファイルを同じ値にします
 - 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈を入れます
+- PowerPoint（.pptx）が要るときは、PDFで渡す／`_archive/pipeline/` の SlideSpec から書き出す／`assets/SuperTemplate_62type.pptx` から手でコピーする、のいずれかです。HTML → PPTX の自動変換はこのスキルには含めていません
 
 ## About
 
