@@ -36,7 +36,6 @@ A Claude Code skill for generating boardroom-quality decks: a slide-design ruleb
 
 「62型」は作れる見せ方の上限ではありません。実際のデッキでは、型を組み合わせたり崩したりして規約の範囲で自由に組むので、見せ方のパターンはこれより多くなります。型カタログは「レイアウトの発想帳」として使い、合わなければ捨ててください。
 
-もともとの36型（エグゼクティブサマリー・チャート系・比較表・マトリクス・ロードマップなど）は [docs/catalog/](docs/catalog/) に1枚ずつ画像でも置いています。
 
 ## 作り方は1本（HTMLパーツ集 → PDF）
 
