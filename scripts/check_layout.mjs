@@ -12,7 +12,6 @@ async function loadPlaywright() {
     process.env.PLAYWRIGHT_MODULE_DIR,
     path.join(process.cwd(), "node_modules", "playwright"),
     path.join(path.dirname(new URL(import.meta.url).pathname), "..", "node_modules", "playwright"),
-    path.join(path.dirname(new URL(import.meta.url).pathname), "..", "_archive", "pipeline", "node_modules", "playwright"),
   ].filter(Boolean);
   for (const c of cands) {
     try { return (await import(pathToFileURL(path.join(c, "index.mjs")).href)); } catch {}
