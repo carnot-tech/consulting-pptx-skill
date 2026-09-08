@@ -42,11 +42,19 @@ A Claude Code skill for generating boardroom-quality decks: a slide-design ruleb
 ## セットアップ
 
 ```bash
-# Claude Codeのスキルフォルダにcloneするだけ
+# 1. Claude Code のスキルフォルダに clone する（これだけで規約・パーツ集・機械チェックが使える）
 git clone https://github.com/carnot-tech/consulting-pptx-skill.git ~/.claude/skills/consulting-pptx-skill
+
+# 2.（任意）実レンダリング検査 check_layout.mjs を使う場合。Node.js が必要。playwright と Chromium が入る
+cd ~/.claude/skills/consulting-pptx-skill && npm run setup
+
+# 3.（任意）PPTX ファイルを check_deck.py で検査する場合
+pip3 install python-pptx
 ```
 
-機械チェック `scripts/check_deck.py` は Python 標準ライブラリだけで動きます（PPTX を検査するときだけ `pip3 install python-pptx`）。実レンダリング検査 `scripts/check_layout.mjs` を使うときはリポ直下で `npm run setup`（playwright と chromium が入ります）。PDF化は Chrome の `--headless --print-to-pdf` で行います（SKILL.md にコマンド例）。
+- `scripts/check_deck.py`（規約の機械チェック）と `scripts/new_deck.py`（たたき台の生成）は Python 標準ライブラリだけで動きます。
+- PDF 化は Chrome のヘッドレス印刷を使います（コマンドは次節）。
+- `package.json` は手順2の playwright を入れるためだけのものです。`node_modules/` は .gitignore 済みです。
 
 ## 手動で使う場合
 
