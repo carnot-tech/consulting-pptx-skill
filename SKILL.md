@@ -27,6 +27,7 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 | 基本パーツ集（27パーツ・まずここから） | `templates/freeform_parts_16x9.html`（表紙・全体マップ・目次・章扉・矢羽・前提→帰結2カラム・軸のある表・主張パネル・評価表・分布図など） |
 | 追加パーツ集（35パーツ・基本で足りないとき） | `templates/freeform_parts_more_16x9.html`（エグゼクティブサマリー・積み上げ棒・ブリッジ・散布図・比較表・マトリクス・イシューツリー・ロードマップ・ガントなど。旧 SlideSpec 36型の移植） |
 | 型カタログの目視版 | `assets/SlideCatalog_16x9.pdf`（両パーツ集を印刷した62ページ。P.1〜27 が基本、P.28〜62 が追加） |
+| デッキ生成 | `scripts/new_deck.py`（パーツ番号を並べて1本のHTMLに結合。CSSのスコープとページ番号の振り直しを自動で行う） |
 | 機械チェック | `scripts/check_deck.py`（HTML は標準ライブラリのみ。PPTX を検査するときだけ `pip3 install python-pptx`）／`scripts/check_layout.mjs`（実レンダリング検査。リポ直下で `npm run setup`） |
 | PPTX見本帳（旧パイプラインの書き出し） | `assets/SuperTemplate_62type.pptx`（62型・全スライド編集可能。PowerPointで手動コピーするときの見本） |
 | 退避した旧パイプライン | `_archive/pipeline/`（SlideSpec → HTML/編集可能PPTX。編集可能PPTXが要るときだけ参照） |
@@ -47,7 +48,12 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 
 1. **作る前に定義する（Define-before-Produce）**: 目的・成果物の定義・スコープIN/OUTを3〜5行で先に合意する。前提が薄いまま豪華な体裁で出すのが最悪の失敗。
 2. **ストーリーライン**（1枚1行のタイトル列）を書き、**各行に見せ方を併記する**（図／表／矢羽／2カラム／数値カード）。推移・構成比・分布・相関は必ず「図」にする。見せ方に迷う行は `references/archetype-catalog.md` を眺めて着想を得る。型に合わせるためではなく、引き出しを増やすために見る。
-3. `templates/freeform_parts_16x9.html` をコピーし、不要な section を消して差し替える。基本パーツ集に無い見せ方は `templates/freeform_parts_more_16x9.html` から該当 section をコピーして足す（2ファイルは `:root` トークンが同じなので混在できる。追加パーツ集の section を持ち込むときは、その section が使う CSS も一緒に持ち込む）。
+3. ストーリーラインの行ごとに選んだパーツ番号を並べて、たたき台を生成する:
+   ```bash
+   python3 scripts/new_deck.py --list                                   # 番号と型名の一覧（b01〜b27 基本／m01〜m35 追加）
+   python3 scripts/new_deck.py --parts b01,b02,m05,b06,b09,b10 --title "資料名" -o mydeck.html
+   ```
+   2つのパーツ集はCSSの設計が違うが、このスクリプトが両方のCSSをそれぞれ `.s` / `.slide` 配下にスコープして1本のHTMLに結合し、ページ番号も振り直す。あとは生成された HTML のプレースホルダー（`Text N` / `ラベル N` / `YYYY`）を実物に差し替える。手でコピーして組んでもよいが、追加パーツ集の section を持ち込むときはそのCSSも要るので、スクリプトを使うほうが確実。
 4. **グラフが要るページはパーツの表を捨てて自分で描く。** 推移や構成比を表・数値の羅列で代替すると、体裁は整うのに主張が図から読めなくなる（同一プロンプトの比較検証で、テンプレートを持たせた側だけがグラフを描かなかった）。
 5. **調整（ここが本番）**: 型に囚われず考えて直す。表を2枚に割る、右カラムを帰結形に書き直す、粒度の揃わない並列を書き直す。1枚ごとに「この型のままでよいか」を疑う。受けた指摘は slide-rules.md に1行追記する。
 6. `python3 scripts/check_deck.py mydeck.html` で FAIL 0 にする（表紙・裏表紙の「タイトル空」WARNは許容）。出力されるタイトル一覧を上から通し読みして、1本のストーリーになっているか確認する。
@@ -58,6 +64,14 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu \
      --no-pdf-header-footer --print-to-pdf=mydeck.pdf mydeck.html   # @page 設定済み・ページ数=スライド数
    ```
+
+## PowerPoint（.pptx）が要るとき
+
+成果物は HTML → PDF が基本で、HTML から編集可能な PPTX への変換はこのスキルには含めない（レイアウトの再現に大きな実装が要り、使用頻度に見合わない）。PPTX で渡す必要があるときは次のどれかにする:
+
+- **PDF で渡す**（まずこれを提案する。閲覧・印刷・共有はPDFで足りる）
+- **旧パイプラインで作る**: `_archive/pipeline/` の SlideSpec（JSON）から編集可能PPTXを書き出す。62型すべてに対応するが、JSONで書き直す手間と、型の枠に収まらないページが出る制約がある（手順は `_archive/pipeline/scripts/archetypes/README.md` と旧 README）
+- **見本帳から手で組む**: `assets/SuperTemplate_62type.pptx` の該当スライドを PowerPoint でコピーして文言を差し替える。数枚ならこれが最速
 
 ## 本スキル使用の注釈（最終ページのみ）
 
