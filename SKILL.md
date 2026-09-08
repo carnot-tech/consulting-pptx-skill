@@ -104,7 +104,12 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 
 ## カラーカスタマイズ
 
-デフォルトはニュートラルなネイビー系。SlideSpecのルートに `palette` オブジェクトを入れると全スライドのブランドカラーを一括で差し替えられる（`schema.json` 参照）。その際も以下は守る:
+**A・B 両レーンの既定は同じ**（ネイビー系 cool スキン。本文ゴシック・見出し明朝）。トークンの正本は `pipeline/html-css/consulting-slide-system.css` の `:root` で、`templates/freeform_parts_16x9.html` の `<style>` 冒頭 `:root` はその写し。片方を変えたらもう片方も揃える。
+
+- Aレーン: テンプレ冒頭の `:root` トークンを差し替える（warm 用の値はコメントで同梱）
+- Bレーン: SlideSpecのルートに `"skin": "warm"` を入れると HTML・PPTX とも warm に切り替わる。`palette` オブジェクトで個別の色を上書きできる（`schema.json` 参照）
+
+その際も以下は守る:
 
 - 意味を持つ色（✕の赤・追加の緑など）は変換しない
 - 2系列の区別が要る図では、メインカラー×グレー系の2色に抑える
