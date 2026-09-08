@@ -2337,7 +2337,8 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 18px;
-  height: 240px;
+  height: 320px;
+  width: 100%; /* 版面いっぱいに使う。固定幅で左に寄せない */
 }
 
 .cf-op {
@@ -2352,6 +2353,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .cf-panel-label {
@@ -2366,11 +2369,22 @@ body {
 .cf-chart {
   display: flex;
   align-items: flex-end;
+  justify-content: space-around;
   gap: 14px;
+  width: 100%;
+}
+
+.cf-chart > div {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .cf-chart .stack-col {
-  width: 70px;
+  width: 100%;
+  max-width: 110px;
 }
 
 .cf-chart .stack-seg {

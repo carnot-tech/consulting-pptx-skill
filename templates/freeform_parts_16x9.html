@@ -75,6 +75,8 @@ tr:last-child td{border-bottom:0}
 td.ax{font-size:11pt;font-weight:700;color:var(--accent);font-family:var(--font-serif);border-right:1.8px solid var(--navy)}
 th.ax{border-right:1.8px solid var(--navy)}
 .c>table{flex:1 1 0;height:0}
+/* 列の内容が同種（時点・案など）なら等幅にする。最後の列だけに余白を吸わせて右側を空けない（§4.12） */
+table.eq{table-layout:fixed}
 /* 表を縦に伸ばすと余剰高さが見出し行にも配分され見出しが沈む（slide-rules §4.21） */
 .c>table tr:first-child,.side .sb table tr:first-child{height:1px}
 .side .sb table{flex:1 1 0;height:0}
@@ -337,7 +339,8 @@ th.hbc,td.hbc{text-align:center}
   <div class="foot"><b>資料名</b><span>8</span></div>
 </section>
 
-<!-- ═══ パーツ09: 軸のある表（行=軸・列=観点。最終行の下は罫線なし） ═══ -->
+<!-- ═══ パーツ09: 軸のある表（行=軸・列=観点。最終行の下は罫線なし）
+     列幅: 見本は最後の列（説明・ブレット）に余白を渡す設計。列の内容が同種（時点・案・部門）なら <table class="eq"> にして軸列だけ幅指定し、残りを等幅に割る。右側に空白を残さない。 ═══ -->
 <section class="s">
   <div class="bar"><div class="logo">資料名</div><div class="date">パーツ09｜軸のある表</div></div>
   <h1>軸のある表</h1>
