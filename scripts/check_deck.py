@@ -375,9 +375,16 @@ def check_html(path):
     if re.search(r"\btd\b[^{}]*{[^}]*border-bottom\s*:", html) and not re.search(
             r"tr:last-child[^{}]*{[^}]*border(-bottom)?\s*:\s*(0|none)", html):
         fail("最終行の罫線が消えていない（`tr:last-child td{border-bottom:0}` を追加 — 行き先のない罫線禁止）")
+    body_html = html.split("</style>", 1)[1] if "</style>" in html else html
+    used_classes = set(re.findall(r'class="([^"]*)"', body_html))
+    used_tokens = set(tok for cl in used_classes for tok in cl.split())
     for m in re.finditer(r"([^{}]{0,80}){([^}]*)}", html):
         sel, body = m.group(1), m.group(2)
         if re.search(r"pill|chip|tag|badge|dot|legend", sel, re.I):
+            continue
+        # 本文で使っていないクラスの規則は対象外（パーツ集のCSSをまとめて取り込んだデッキで誤検知しない）
+        cls_in_sel = re.findall(r"\.([A-Za-z0-9_-]+)", sel)
+        if cls_in_sel and cls_in_sel[-1] not in used_tokens:  # 主語（末尾のクラス）が本文に無ければ対象外
             continue
         has_fill = re.search(r"background(-color)?\s*:\s*(?!none|transparent)#?\w", body)
         has_border = re.search(r"border\s*:\s*(?!0|none)\d", body)
