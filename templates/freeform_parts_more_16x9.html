@@ -1,0 +1,3360 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<title>自由記述デッキ 追加パーツ集 16:9（チャート・表・構造・計画の35型）</title>
+<!--
+  ============================================================
+  自由記述（freeform）デッキの追加パーツ集（16:9・1パーツ=1スライド）
+  旧 SlideSpec パイプラインの 36型（表紙を除く35型）を、そのまま HTML パーツとして移植したもの。
+  基本パーツ集 freeform_parts_16x9.html（表紙・全体マップ・矢羽・2カラム・軸のある表など）で足りないとき、
+  ここから該当 section をコピーして使う。使用頻度は基本パーツ集より低い。
+  規約の正典: references/slide-rules.md（作成前に必読）／型の一覧と使いどころ: references/archetype-catalog.md
+  ★ 各スライドの h1 は「そのパーツが何の型か」を表示しているだけ。実デッキでは主張文に差し替える（slide-rules §2.8）。
+  配色・書体は <style> 冒頭の :root トークン（基本パーツ集と同じ warm 既定）。ネイビー系は .deck に skin-cool を付ける。
+  納品前: check_deck.py で FAIL 0 → PDF化して全ページ目視。
+  ============================================================
+-->
+<style>
+:root {
+  --page-bg: #f2efe9;
+  --slide-bg: #ffffff;
+  --ink: #322014;
+  --navy: #322014;
+  --muted: #8a7b6b;
+  --rule: #c5a681;
+  --hairline: #e2dcd2;
+  --blue: #5a3921;
+  --cyan: #c5a681;
+  --rose: #a22727;
+  --green: #5a3921;
+  --warning: #c5a681;
+  --soft-blue: #efeee8;
+  --soft-yellow: #f6f2ea;
+  --font-sans: "Helvetica Neue", Arial, Helvetica, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", Georgia, "Times New Roman", serif;
+  --slide-w: 1600px;
+  --slide-h: 900px;
+  --margin-x: 72px;
+  --margin-y: 56px;
+}
+
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.2;
+}
+
+.deck {
+  display: grid;
+  gap: 40px;
+  padding: 40px;
+  justify-content: center;
+}
+
+.slide {
+  position: relative;
+  width: var(--slide-w);
+  zoom: 0.8; /* 1600px × 0.8 = 1280px = 338.67mm（16:9・A のパーツ集と同じ物理サイズ） */
+  page-break-after: always;
+  aspect-ratio: 16 / 9;
+  background: var(--slide-bg);
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.16);
+  margin: 8mm auto;
+}
+
+.sinner {
+  position: absolute;
+  inset: var(--margin-y) var(--margin-x);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+}
+
+.slide--dense .title {
+  max-width: 1460px;
+  font-size: 35px;
+  line-height: 1.12;
+}
+
+.slide--dense .content {
+  padding-top: 20px;
+}
+
+.slide--no-title-rule .sinner > .rule {
+  display: none;
+}
+
+.slide--no-title-rule .sinner {
+  grid-template-rows: auto auto 1fr auto;
+}
+
+.kicker {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 54px;
+  align-items: start;
+}
+
+.principle-list {
+  display: grid;
+  gap: 0;
+}
+
+.principle-item {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 24px;
+  padding: 15px 0;
+  border-bottom: 1px dotted #8a8f94;
+}
+
+.principle-label {
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.principle-copy {
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.32;
+}
+
+.type-spec {
+  display: grid;
+  gap: 12px;
+}
+
+.type-row {
+  display: grid;
+  grid-template-columns: 135px 1fr 108px;
+  gap: 18px;
+  align-items: baseline;
+  padding-bottom: 11px;
+  border-bottom: 1px dotted #8a8f94;
+}
+
+.type-name {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.type-sample {
+  font-weight: 700;
+}
+
+.type-size {
+  color: var(--muted);
+  font-size: 15px;
+  text-align: right;
+}
+
+.type-title {
+  font-size: 35px;
+  line-height: 1.12;
+}
+
+.type-section {
+  font-size: 22px;
+  line-height: 1.18;
+}
+
+.type-body {
+  font-size: 19px;
+  line-height: 1.32;
+  font-weight: 400;
+}
+
+.type-source {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.title {
+  margin: 10px 0 18px;
+  max-width: 1360px;
+  font-size: 39px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.rule {
+  display: none;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.8;
+}
+
+.content {
+  padding-top: 24px;
+}
+
+/* Vertically balance the body between title and footer so sparse slides
+   don't cram against the title and leave a large empty bottom half. */
+.sinner > .content {
+  align-self: center;
+  width: 100%;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid var(--ink);
+  padding-top: 9px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.source {
+  color: var(--muted);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 68px;
+  align-items: start;
+}
+
+.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+}
+
+.scr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 34px;
+  align-items: start;
+}
+
+.scr-col {
+  display: grid;
+  grid-template-rows: auto 92px 126px auto;
+}
+
+.scr-tag {
+  display: block;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+  font-size: 22px;
+  line-height: 1.08;
+  font-weight: 700;
+}
+
+.scr-heading {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.16;
+  font-weight: 700;
+}
+
+.scr-copy {
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.34;
+}
+
+.scr-note {
+  margin: 0;
+  padding-top: 13px;
+  border-top: 1px dotted #8a8f94;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.32;
+  font-weight: 700;
+}
+
+.section-label {
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+  font-size: 22px;
+  line-height: 1.18;
+  font-weight: 700;
+}
+
+.body-copy {
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+.bullets {
+  margin: 0;
+  padding-left: 24px;
+  font-size: 21px;
+  line-height: 1.34;
+}
+
+.bullets li {
+  margin: 0 0 16px;
+}
+
+.lead {
+  font-weight: 700;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.metric {
+  padding-top: 0;
+}
+
+.metric-value {
+  color: var(--blue);
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.metric-label {
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.bar-chart {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  align-items: stretch;
+  height: 360px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0;
+}
+
+.bar-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+}
+
+.bar {
+  width: 74%;
+  flex: 0 0 auto;
+  background: var(--navy);
+}
+
+.bar.blue {
+  background: var(--blue);
+}
+
+.bar.cyan {
+  background: var(--cyan);
+}
+
+.bar-label {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.bar-value {
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.insight-panel {
+  border-left: 2px solid var(--ink);
+  padding-left: 22px;
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: 1.1fr 0.8fr 0.8fr 1.6fr;
+}
+
+.comparison > div {
+  min-height: 86px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.comparison .head {
+  min-height: auto;
+  color: var(--ink);
+  font-size: 21px; /* rule 6: header 2pt larger than body (19px) */
+  font-weight: 700;
+  border-bottom: 2px solid var(--rule);
+}
+
+.comparison .row-label {
+  font-weight: 700;
+}
+
+.roadmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.phase {
+  min-height: 330px;
+  padding: 20px;
+  border-right: 1px solid var(--hairline);
+}
+
+.phase:last-child {
+  border-right: 0;
+}
+
+.phase-year {
+  color: var(--blue);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.phase-title {
+  margin-top: 12px;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.phase-copy {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.cover .sinner {
+  grid-template-rows: 1fr auto auto;
+}
+
+.cover-title {
+  align-self: center;
+  max-width: 960px;
+  padding-bottom: 8px;
+  font-size: 54px;
+  line-height: 1.14;
+  font-weight: 700;
+}
+
+.cover-meta {
+  margin-top: 24px;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.cover-mark {
+  position: absolute;
+  right: -120px;
+  top: -80px;
+  width: 650px;
+  height: 650px;
+  border: 1px solid rgba(18, 169, 232, 0.7);
+  transform: rotate(28deg);
+}
+
+.cover-mark::before,
+.cover-mark::after {
+  content: "";
+  position: absolute;
+  inset: 46px;
+  border: 1px solid rgba(21, 88, 255, 0.5);
+}
+
+.cover-mark::after {
+  inset: 92px;
+}
+
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+}
+
+.pillar {
+  padding-top: 0;
+}
+
+.pillar-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  border: 2px solid var(--navy);
+  color: var(--navy);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.pillar-title {
+  font-size: 25px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pillar-copy {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.waterfall {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+  align-items: end;
+  height: 390px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.wf-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.wf-value {
+  margin-bottom: 8px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.wf-bar {
+  width: 70%;
+  background: var(--navy);
+}
+
+.wf-bar.up {
+  background: var(--blue);
+}
+
+.wf-bar.down {
+  background: var(--rose);
+}
+
+.wf-label {
+  margin-top: 10px;
+  min-height: 44px;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.matrix-wrap {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 42px;
+}
+
+.matrix-chart {
+  position: relative;
+  height: 400px;
+  border-left: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  background:
+    linear-gradient(to right, transparent 49.8%, var(--hairline) 50%, transparent 50.2%),
+    linear-gradient(to bottom, transparent 49.8%, var(--hairline) 50%, transparent 50.2%);
+}
+
+.matrix-axis-x,
+.matrix-axis-y {
+  position: absolute;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.matrix-axis-x {
+  right: 10px;
+  bottom: 10px;
+}
+
+.matrix-axis-y {
+  left: 10px;
+  top: 10px;
+}
+
+.matrix-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  max-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid var(--navy);
+  background: var(--slide-bg);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.matrix-item.priority {
+  background: var(--navy);
+  color: #fff;
+}
+
+.issue-tree {
+  display: grid;
+  grid-template-columns: 260px 1fr 1.15fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.tree-root,
+.tree-node,
+.tree-leaf {
+  border: 1px solid var(--rule);
+  background: var(--slide-bg);
+  padding: 16px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.tree-root {
+  border-left: 4px solid var(--navy);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.tree-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.tree-node {
+  font-weight: 700;
+}
+
+.tree-leaf {
+  border-left: 3px solid var(--rule);
+}
+
+.scenario-table,
+.risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 19px;
+  line-height: 1.24;
+}
+
+.scenario-table th,
+.risk-table th {
+  padding: 12px 14px;
+  font-size: 21px; /* rule 6: header 2pt larger than body (19px) */
+  border-bottom: 2px solid var(--ink);
+  text-align: left;
+  font-weight: 700;
+}
+
+.scenario-table td,
+.risk-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+}
+
+.scenario-table .num {
+  color: var(--blue);
+  font-size: 19px; /* rule 6: body emphasis must not exceed the header size */
+  font-weight: 700;
+}
+
+.risk-high {
+  border-left: 5px solid var(--rose);
+}
+
+.risk-med {
+  border-left: 5px solid var(--warning);
+}
+
+.dashboard {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 28px;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+}
+
+.kpi {
+  padding-top: 0;
+}
+
+.kpi-value {
+  color: var(--blue);
+  font-size: 36px;
+  line-height: 1.08;
+  font-weight: 700;
+}
+
+.kpi-label {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.dashboard-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.mini-panel {
+  padding-top: 0;
+}
+
+.mini-bars {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.mini-bar-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 42px;
+  gap: 12px;
+  align-items: center;
+  font-size: 17px;
+}
+
+.mini-bar-track {
+  height: 18px;
+  background: var(--hairline);
+}
+
+.mini-bar-fill {
+  height: 100%;
+  background: var(--blue);
+}
+
+.small-multiples {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.small-chart {
+  padding-top: 0;
+}
+
+.small-chart-title {
+  min-height: 44px;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.small-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  align-items: end;
+  height: 230px;
+  margin-top: 16px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.small-chart-bar {
+  background: var(--navy);
+}
+
+.small-chart-bar.accent {
+  background: var(--blue);
+}
+
+.small-chart-label {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.decision-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 54px;
+  align-items: start;
+}
+
+.decision-ask {
+  padding-top: 0;
+}
+
+.decision-ask-title {
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.decision-ask-copy {
+  margin-top: 14px;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.decision-list {
+  display: grid;
+  gap: 18px;
+}
+
+.decision-item {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 23px;
+  line-height: 1.25;
+}
+
+.decision-num {
+  color: var(--blue);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.connector-system {
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: 58px;
+  align-items: start;
+}
+
+.circle-arrow-flow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.flow-node {
+  position: relative;
+  min-height: 292px;
+  padding-top: 0;
+}
+
+.flow-node::after {
+  content: "";
+  position: absolute;
+  top: 58px;
+  right: 20px;
+  width: 25px;
+  height: 25px;
+  border-top: 3px solid var(--blue);
+  border-right: 3px solid var(--blue);
+  transform: rotate(45deg);
+}
+
+.flow-node::before {
+  content: "";
+  position: absolute;
+  top: 70px;
+  left: 66px;
+  right: 32px;
+  height: 2px;
+  background: var(--blue);
+}
+
+.flow-node:last-child::after {
+  content: none;
+}
+
+.flow-node:last-child::before {
+  content: none;
+}
+
+.flow-circle {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--navy);
+  border-radius: 50%;
+  color: var(--navy);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.flow-node.accent .flow-circle {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+
+.flow-title {
+  margin-top: 18px;
+  font-size: 22px;
+  line-height: 1.16;
+  font-weight: 700;
+}
+
+.flow-copy {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.chevron-rail {
+  display: grid;
+  gap: 0;
+  margin-top: 12px;
+}
+
+.chevron-step {
+  position: relative;
+  min-height: 58px;
+  padding: 13px 52px 13px 0;
+  background: transparent;
+  border-bottom: 1px dotted #8a8f94;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.chevron-step::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 18px;
+  height: 18px;
+  border-top: 3px solid var(--navy);
+  border-right: 3px solid var(--navy);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.connector-principles {
+  border-left: 2px solid var(--ink);
+  padding-left: 24px;
+}
+
+.axis-callout {
+  margin-bottom: 20px;
+  padding: 0 0 11px;
+  border-bottom: 1px dotted #8a8f94;
+}
+
+.axis-callout-text {
+  font-size: 20px;
+  line-height: 1.18;
+  font-weight: 700;
+}
+
+.axis-table {
+  display: grid;
+  grid-template-columns: 1.15fr 1.95fr 2.35fr 1.5fr 1.5fr;
+  column-gap: 28px;
+  row-gap: 0;
+}
+
+.axis-row {
+  display: contents;
+}
+
+.axis-col-header {
+  position: relative;
+  min-height: 50px;
+  color: var(--ink);
+  font-size: 21px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+/* flow connectors live in an overlay over the table, positioned at column boundaries */
+.axis-table-wrap {
+  position: relative;
+}
+
+.axis-flow-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 72px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.axis-flow-arrow {
+  position: absolute;
+  top: 36px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* banner row label: filled navy block, centered text */
+.axis-cell.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 6px 14px 6px 0;
+  padding: 10px 12px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 19px;
+  line-height: 1.18;
+  font-weight: 700;
+  border-bottom: none;
+}
+
+/* load / magnitude dots */
+.axis-dot-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.axis-dot {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.axis-dot.high { background: var(--rose); }
+.axis-dot.med { background: var(--warning); }
+.axis-dot.low { background: var(--muted); }
+
+.axis-dotlegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.axis-dotlegend .axis-dot {
+  width: 16px;
+  height: 16px;
+  margin-left: 14px;
+}
+
+.axis-header-label {
+  min-height: 30px;
+}
+
+.axis-header-rule {
+  height: 2px;
+  margin-top: 8px;
+  background: var(--ink);
+}
+
+.axis-subheaders {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.axis-cell {
+  min-height: 80px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.axis-cell.label {
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.axis-cell.highlight {
+  background: var(--soft-blue);
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.axis-cell .mini-bullet {
+  display: block;
+  margin-top: 4px;
+  color: var(--green);
+}
+
+.axis-cell.muted {
+  color: var(--muted);
+}
+
+/* Issue-to-solution map: paired issue -> resolution rows with directional arrow */
+.ism {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 84px 1fr;
+  column-gap: 0;
+  row-gap: 0;
+  align-items: stretch;
+}
+
+.ism-col-label {
+  align-self: end;
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 700;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.ism-col-label.solution {
+  padding-left: 22px;
+}
+
+.ism-row {
+  display: contents;
+}
+
+.ism-issue,
+.ism-arrow,
+.ism-solution {
+  min-height: 78px;
+  padding: 16px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.ism-issue {
+  padding-right: 22px;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.ism-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.ism-solution {
+  padding-left: 22px;
+}
+
+.ism-solution-text {
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.ism-impact {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+/* Process flow: numbered horizontal steps joined by chevron connectors */
+.flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.flow-step {
+  flex: 1 1 0;
+  padding: 22px 22px 22px 0;
+}
+
+.flow-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 16px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  font-size: 21px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.flow-title {
+  margin: 0 0 10px;
+  font-size: 21px;
+  line-height: 1.18;
+  font-weight: 700;
+}
+
+.flow-copy {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.32;
+  color: var(--ink);
+}
+
+.flow-arrow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 22px;
+}
+
+/* light flow connector chevron (aligned to the number-circle row; no filled circle) */
+.flow-arrow-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--navy);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* Cycle: nodes arranged on a ring */
+.cycle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 460px;
+}
+
+.cycle-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50%;
+  height: 56%;
+  transform: translate(-50%, -50%);
+  border: 1.5px dashed var(--rule);
+  border-radius: 50%;
+}
+
+.cycle-arrow-seg {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  color: var(--blue);
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.cycle-node {
+  position: absolute;
+  width: 240px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.cycle-node .flow-num {
+  margin: 0 auto 12px;
+}
+
+.cycle-node .flow-title {
+  font-size: 19px;
+  line-height: 1.18;
+}
+
+.cycle-node .flow-copy {
+  font-size: 16px;
+  line-height: 1.28;
+}
+
+/* Issue -> cause -> solution: three labelled stages joined by arrows */
+.ics {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.ics-stage {
+  flex: 1 1 0;
+  padding-right: 26px;
+}
+
+.ics-label {
+  display: block;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+  font-size: 21px;
+  line-height: 1.12;
+  font-weight: 700;
+}
+
+.ics-heading {
+  margin: 0 0 12px;
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.ics-copy {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.34;
+}
+
+.ics-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 18px 0 0;
+  color: var(--blue);
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* Current -> target state panels */
+.cts {
+  display: grid;
+  grid-template-columns: 1fr 70px 1fr;
+  align-items: stretch;
+}
+
+.cts-panel {
+  padding: 26px 28px;
+  border: 1px solid var(--hairline);
+}
+
+.cts-panel.target {
+  border-color: var(--blue);
+}
+
+.cts-label {
+  display: block;
+  margin-bottom: 14px;
+  padding-bottom: 9px;
+  border-bottom: 2px solid var(--ink);
+  font-size: 19px;
+  line-height: 1.12;
+  font-weight: 700;
+}
+
+.cts-panel.target .cts-label {
+  border-bottom-color: var(--blue);
+  color: var(--blue);
+}
+
+.cts-heading {
+  margin: 0 0 14px;
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.cts-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.cts-list li {
+  position: relative;
+  margin-bottom: 12px;
+  padding-left: 34px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.cts-list.lettered {
+  counter-reset: cts;
+}
+
+.cts-list.lettered li::before {
+  counter-increment: cts;
+  content: counter(cts, upper-alpha);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* canonical circle-arrow: navy circle + white chevron, "current leads to target" */
+.cts-arrow {
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+/* Decision fork: one question, branched options */
+.fork {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 46px;
+  align-items: center;
+}
+
+.fork-q {
+  padding: 24px 26px;
+  border-left: 4px solid var(--blue);
+  font-size: 24px;
+  line-height: 1.26;
+  font-weight: 700;
+}
+
+.fork-branches {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding-left: 36px;
+}
+
+/* vertical spine the branches fan out from */
+.fork-branches::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 2px;
+  background: var(--hairline);
+}
+
+.fork-branch {
+  position: relative;
+  padding: 16px 20px;
+  border: 1px solid var(--hairline);
+}
+
+/* horizontal connector stub from the spine into each branch */
+.fork-branch::before {
+  content: "";
+  position: absolute;
+  left: -36px;
+  top: 50%;
+  width: 36px;
+  height: 2px;
+  background: var(--hairline);
+}
+
+.fork-branch.recommended::before {
+  background: var(--blue);
+}
+
+.fork-branch.recommended {
+  border-color: var(--blue);
+  border-width: 2px;
+}
+
+.fork-branch-label {
+  margin: 0 0 6px;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.fork-branch-copy {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.fork-branch-outcome {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.28;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Heatmap table: dual-axis grid with a single-hue intensity ramp */
+.heat {
+  display: grid;
+  gap: 6px;
+}
+
+.heat-corner,
+.heat-colhead,
+.heat-rowhead,
+.heat-cell {
+  padding: 12px 14px;
+  font-size: 17px;
+  line-height: 1.22;
+}
+
+.heat-colhead {
+  font-weight: 700;
+  border-bottom: 2px solid var(--ink);
+}
+
+.heat-rowhead {
+  font-weight: 700;
+}
+
+.heat-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+}
+
+.heat-cell.lvl-0 {
+  background: #fff;
+  border: 1px solid var(--hairline);
+  color: var(--muted);
+}
+
+.heat-cell.lvl-1 {
+  background: var(--soft-blue);
+  color: var(--ink);
+}
+
+.heat-cell.lvl-2 {
+  background: var(--cyan);
+  color: var(--ink);
+}
+
+.heat-cell.lvl-3 {
+  background: var(--blue);
+  color: #fff;
+}
+
+.heat-legend {
+  display: flex;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.heat-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.legend-swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--hairline);
+}
+
+/* Timeline matrix: period spine x context columns */
+.tlm {
+  display: grid;
+  row-gap: 0;
+}
+
+.tlm-colhead {
+  padding: 0 16px 10px;
+  border-bottom: 2px solid var(--ink);
+  font-size: 19px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.tlm-period {
+  padding: 18px 16px;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.tlm-cell {
+  padding: 18px 16px;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+/* Process matrix: activity boxes on a labelled grid */
+.pmx {
+  display: grid;
+  gap: 10px;
+}
+
+.pmx-corner,
+.pmx-colhead,
+.pmx-rowhead,
+.pmx-cell {
+  font-size: 17px;
+  line-height: 1.24;
+}
+
+.pmx-colhead {
+  padding: 0 6px 10px;
+  border-bottom: 2px solid var(--ink);
+  font-weight: 700;
+}
+
+.pmx-rowhead {
+  display: flex;
+  align-items: center;
+  padding: 12px 12px 12px 0;
+  font-weight: 700;
+}
+
+.pmx-cell {
+  padding: 14px 16px;
+  background: var(--soft-blue);
+}
+
+.pmx-cell.empty {
+  background: transparent;
+}
+
+/* Chart unit caption: quiet label, no underline (not a structural axis) */
+.chart-unit {
+  margin-bottom: 18px;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Stacked bar */
+.stack-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 46px;
+  height: 360px;
+  padding-top: 10px;
+}
+
+.stack-col {
+  display: flex;
+  flex-direction: column-reverse;
+  width: 150px;
+}
+
+.stack-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.stack-seg.s0 { background: var(--navy); }
+.stack-seg.s1 { background: var(--blue); }
+.stack-seg.s2 { background: var(--cyan); color: var(--ink); }
+.stack-seg.s3 { background: var(--soft-blue); color: var(--ink); }
+
+.stack-col-label {
+  margin-top: 12px;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-align: center;
+}
+
+.stack-legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 22px;
+}
+
+.stack-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.stack-legend .legend-swatch.s0 { background: var(--navy); border-color: var(--navy); }
+.stack-legend .legend-swatch.s1 { background: var(--blue); border-color: var(--blue); }
+.stack-legend .legend-swatch.s2 { background: var(--cyan); border-color: var(--cyan); }
+.stack-legend .legend-swatch.s3 { background: var(--soft-blue); }
+
+/* True waterfall: floating cumulative bars */
+.twf {
+  display: flex;
+  align-items: flex-end;
+  gap: 30px;
+  height: 360px;
+}
+
+.twf-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  flex: 1 1 0;
+  height: 100%;
+}
+
+.twf-value {
+  margin-bottom: 8px;
+  font-size: 16px;
+  line-height: 1.1;
+  font-weight: 700;
+  text-align: center;
+}
+
+.twf-bar {
+  width: 100%;
+}
+
+.twf-bar.base { background: var(--navy); }
+.twf-bar.up { background: var(--blue); }
+.twf-bar.down { background: var(--rose); }
+.twf-bar.total { background: var(--ink); }
+
+.twf-label {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.22;
+  text-align: center;
+}
+
+/* Cause -> effect: stacked drivers converging on an outcome */
+.ce {
+  display: grid;
+  grid-template-columns: 1.1fr 70px 1fr;
+  align-items: center;
+  gap: 0;
+}
+
+.ce-causes {
+  display: grid;
+  gap: 14px;
+}
+
+.ce-cause {
+  padding: 14px 18px;
+  border: 1px solid var(--hairline);
+  border-left: 4px solid var(--cyan);
+}
+
+.ce-cause-label {
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.ce-cause-detail {
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 1.28;
+  color: var(--muted);
+}
+
+.ce-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  font-size: 34px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.ce-effect {
+  padding: 24px 26px;
+  border: 2px solid var(--blue);
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ce-effect-label {
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+
+.ce-effect-text {
+  font-size: 23px;
+  line-height: 1.24;
+  font-weight: 700;
+}
+
+/* Chevron rail: interlocking arrow steps */
+.chev-rail {
+  display: flex;
+  align-items: stretch;
+}
+
+.chev {
+  flex: 1;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: -22px;
+  padding: 18px 26px 18px 48px;
+  background: var(--soft-blue);
+  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%, 24px 50%);
+}
+
+.chev.first {
+  margin-left: 0;
+  padding-left: 28px;
+  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%);
+}
+
+.chev-num {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.chev-title {
+  font-size: 18px;
+  line-height: 1.18;
+  font-weight: 700;
+}
+
+.chev-copy {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.26;
+  color: var(--ink);
+}
+
+/* Gantt: continuous phase bars over a shared period track */
+.gantt-head {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 2px solid var(--ink);
+}
+
+.gantt-head-label {
+  flex: 0 0 300px;
+}
+
+.gantt-periods {
+  flex: 1;
+  display: grid;
+}
+
+.gantt-period {
+  padding: 0 8px 10px;
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 700;
+  text-align: center;
+}
+
+.gantt-row {
+  display: flex;
+  align-items: center;
+}
+
+.gantt-rowlabel {
+  flex: 0 0 300px;
+  padding: 18px 12px 18px 0;
+  font-size: 18px;
+  line-height: 1.22;
+  font-weight: 700;
+}
+
+.gantt-track {
+  position: relative;
+  flex: 1;
+  height: 60px;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.gantt-bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 26px;
+  border-radius: 3px;
+  background: var(--blue);
+}
+
+.gantt-bar.plan { background: var(--cyan); }
+.gantt-bar.build { background: var(--blue); }
+.gantt-bar.scale { background: var(--navy); }
+
+/* Rich gantt: year bands, milestones, grouped phases, ongoing-arrow bars */
+.gantt2 {
+  display: grid;
+  grid-template-columns: 1.6fr 2.2fr 7.2fr;
+  align-items: stretch;
+}
+
+.g2-corner {
+  border-bottom: 2px solid var(--ink);
+}
+
+.g2-mscorner {
+  display: flex;
+  align-items: center;
+  border-bottom: none;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.g2-bandrow {
+  display: grid;
+}
+
+.g2-band {
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  padding: 4px 0;
+  border: 1px solid var(--hairline);
+  border-bottom: none;
+}
+
+.g2-monthrow {
+  display: grid;
+  border-bottom: 2px solid var(--ink);
+}
+
+.g2-month {
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 700;
+  padding: 4px 0 8px;
+  border-left: 1px solid var(--hairline);
+}
+
+.g2-msrow {
+  position: relative;
+  min-height: 50px;
+}
+
+.g2-ms {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.g2-diamond {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.g2-mslab {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.15;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.g2-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+  border-top: 1px solid var(--ink);
+  padding: 6px 10px;
+}
+
+.g2-rowlabel {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  line-height: 1.25;
+  padding: 12px 14px 12px 8px;
+  border-top: 1px dashed var(--rule);
+}
+
+.g2-track {
+  position: relative;
+  min-height: 48px;
+  border-top: 1px dashed var(--rule);
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent,
+    transparent calc(100% / var(--gcols) - 1px),
+    var(--hairline) calc(100% / var(--gcols) - 1px),
+    var(--hairline) calc(100% / var(--gcols))
+  );
+}
+
+.g2-bar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 22px;
+  border-radius: 3px;
+  background: var(--blue);
+}
+
+.g2-bar.plan { background: var(--cyan); }
+.g2-bar.build { background: var(--blue); }
+.g2-bar.scale { background: var(--navy); }
+
+.g2-bar.ongoing {
+  border-radius: 3px 0 0 3px;
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%);
+}
+
+/* Issue tree: root -> MECE branches with children */
+.tree {
+  display: grid;
+  grid-template-columns: 1fr 2.1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.tree-root {
+  padding: 22px 24px;
+  border: 2px solid var(--ink);
+  font-size: 21px;
+  line-height: 1.24;
+  font-weight: 700;
+}
+
+.tree-branches {
+  display: grid;
+  gap: 16px;
+}
+
+.tree-branch {
+  border-left: 3px solid var(--blue);
+  padding-left: 18px;
+}
+
+.tree-node {
+  font-size: 19px;
+  line-height: 1.22;
+  font-weight: 700;
+}
+
+.tree-children {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.tree-children li {
+  font-size: 16px;
+  line-height: 1.32;
+  color: var(--muted);
+}
+
+/* KPI dashboard: metric tiles */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.kpi-tile {
+  min-width: 0;
+  padding: 22px 24px;
+  border-top: 3px solid var(--ink);
+}
+
+.kpi-label {
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.kpi-value {
+  margin-top: 10px;
+  font-size: 42px;
+  line-height: 1.18;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.kpi-delta {
+  margin-top: 8px;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.kpi-note {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* Recommendation pillars */
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.pillar {
+  border-top: 3px solid var(--blue);
+  padding-top: 16px;
+}
+
+.pillar-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.pillar-title {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.pillar-copy {
+  margin-top: 8px;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.pillar-bullets {
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.pillar-bullets li {
+  margin-bottom: 8px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* Small multiples: shared-scale mini bar charts */
+.sm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.sm-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.sm-title {
+  font-size: 16px;
+  line-height: 1.18;
+  font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 14px;
+}
+
+.sm-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 200px;
+}
+
+.sm-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+}
+
+.sm-bar {
+  width: 70%;
+  background: var(--navy);
+}
+
+.sm-bar-label {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+/* Nested row matrix: outer group banner spans inner row banners + content */
+.nrm {
+  display: grid;
+  grid-template-columns: 1.4fr 1.5fr 5fr;
+  align-items: stretch;
+}
+
+.nrm-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 6px 10px 6px 0;
+  padding: 12px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.nrm-rowlabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 6px 16px 6px 0;
+  padding: 10px;
+  background: var(--soft-blue);
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.nrm-content {
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.nrm-copy {
+  font-size: 17px;
+  line-height: 1.32;
+}
+
+.nrm-bullets {
+  margin: 4px 0 0;
+  padding-left: 22px;
+}
+
+.nrm-bullets li {
+  margin-bottom: 5px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+/* Calculation flow: mini stacked-bar panels joined by x / = / chevron operators */
+.cf {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  height: 240px;
+}
+
+.cf-op {
+  align-self: center;
+  color: var(--navy);
+  font-size: 34px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.cf-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.cf-panel-label {
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 12px;
+}
+
+.cf-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.cf-chart .stack-col {
+  width: 70px;
+}
+
+.cf-chart .stack-seg {
+  font-size: 13px;
+}
+
+/* Chevron value chain: 1-2 rails of chevron stages with descriptions or attribute rows */
+.cvc {
+  display: grid;
+  gap: 8px 6px;
+  align-items: stretch;
+}
+
+.cvc-lane {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+  padding: 8px 12px 8px 0;
+  color: var(--ink);
+}
+
+.cvc-chev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+  min-height: 56px;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  padding: 10px 30px 10px 30px;
+  color: #fff;
+  font-size: 17px;
+  line-height: 1.18;
+  font-weight: 700;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 16px 50%);
+  margin-left: -14px;
+}
+
+.cvc-chev.first {
+  margin-left: 0;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%);
+}
+
+.cvc-chev.primary {
+  background: var(--navy);
+}
+
+.cvc-chev.alt {
+  background: var(--cyan);
+  color: var(--ink);
+}
+
+.cvc-desc {
+  padding: 8px 14px;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.cvc-attr-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 10px 12px 10px 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.cvc-attr-val {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.32;
+  border-top: 1px solid var(--hairline);
+}
+
+@media (max-width: 900px) {
+  .deck {
+    padding: 20px;
+  }
+
+  .slide {
+    width: calc(100vw - 40px);
+  }
+}
+
+/* =====================================================================
+   additional archetypes
+   Shared grammar: the claim is the title; the metric definition sits on
+   its own quiet line; the number is the only coloured object.
+   ===================================================================== */
+
+/* metric subtitle — "指標名, 単位, 期間", never merged into the claim */
+.metric-sub {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 22px;
+}
+
+/* big_stat_pair */
+.bigstats {
+  display: flex;
+  gap: 96px;
+  align-items: flex-start;
+}
+.bigstat {
+  flex: 1;
+  min-width: 0;
+}
+.bigstat-value {
+  font-size: 148px;
+  line-height: 1.16;
+  font-weight: 700;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.bigstat-label {
+  margin-top: 26px;
+  font-size: 21px;
+  line-height: 1.45;
+  max-width: 34ch;
+}
+.bigstat-note {
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 38ch;
+}
+
+/* numbered_imperatives */
+.imps {
+  display: flex;
+  gap: 40px;
+  align-items: stretch;
+}
+.imp {
+  flex: 1;
+  min-width: 0;
+}
+.imp-num {
+  font-size: 46px;
+  line-height: 1.12;
+  font-weight: 700;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
+.imp-rule {
+  height: 1px;
+  background: var(--ink);
+  margin: 14px 0 16px;
+}
+.imp-title {
+  font-size: 21px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.imp-copy {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* theme_card_grid */
+.theme-grid {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+.theme-card {
+  flex: 1;
+  min-width: 0;
+  padding: 0 26px;
+  border-right: 1px dotted var(--rule);
+  display: flex;
+  flex-direction: column;
+}
+.theme-card:first-child {
+  padding-left: 0;
+}
+.theme-card:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+.theme-band {
+  background: var(--blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 10px;
+  margin-bottom: 20px;
+  align-self: flex-start;
+}
+.theme-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+.theme-copy {
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+.theme-value {
+  margin-top: auto;
+  padding-top: 26px;
+  font-size: 40px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* question_framework */
+.qf {
+  display: flex;
+  gap: 40px;
+  align-items: stretch;
+}
+.qf-side {
+  flex: 0 0 240px;
+  border-right: 1px solid var(--rule);
+  padding-right: 28px;
+}
+.qf-area {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 20px 0;
+  border-bottom: 1px dotted var(--rule);
+}
+.qf-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px 36px;
+}
+.qf-item {
+  flex: 1 1 40%;
+  min-width: 0;
+}
+.qf-head {
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.qf-num {
+  color: var(--blue);
+  margin-right: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.qf-q {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* evidence_basis */
+.basis {
+  display: flex;
+  gap: 52px;
+  align-items: flex-start;
+}
+.basis-why {
+  flex: 0 0 32%;
+  font-size: 17px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.basis-rows {
+  flex: 1;
+  min-width: 0;
+}
+.basis-row {
+  display: flex;
+  gap: 32px;
+  align-items: baseline;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.basis-value {
+  flex: 0 0 200px;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
+.basis-copy {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+/* =====================================================================
+   issue_tree — recursive horizontal MECE logic tree.
+   The renderer emits .ltree-* (recursive implementation)
+   but the stylesheet only carried the older, non-recursive .tree-* rules, so
+   every issue_tree slide rendered as unstyled plain text. Found by rendering
+   all 38 templates into one gallery deck.
+   Root sits at the left; each level nests to the right; elbow connectors are
+   drawn by the children, so the tree survives variable box heights.
+   ===================================================================== */
+.ltree {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.ltree-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.ltree-box {
+  position: relative;
+  flex: 0 0 auto;
+  max-width: 300px;
+  padding: 11px 15px;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--blue);
+  background: var(--slide-bg);
+}
+.ltree-l1 {
+  font-weight: 700;
+  border-left-color: var(--ink);
+  max-width: 260px;
+}
+.ltree-l2 {
+  font-weight: 600;
+}
+.ltree-l3 {
+  border-left-color: var(--cyan);
+  color: var(--muted);
+  font-size: 14px;
+}
+.ltree-children {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: 36px;
+  min-width: 0;
+}
+/* stub leaving the parent box */
+.ltree-box.has-children::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  width: 18px;
+  border-top: 1px solid var(--rule);
+}
+/* elbow arriving at each child */
+.ltree-children > .ltree-node::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  width: 18px;
+  border-top: 1px solid var(--rule);
+}
+/* vertical spine, trimmed at the first and last child so it stops at their centres */
+.ltree-children > .ltree-node::after {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--rule);
+}
+.ltree-children > .ltree-node:first-child::after {
+  top: 50%;
+}
+.ltree-children > .ltree-node:last-child::after {
+  bottom: 50%;
+}
+.ltree-children > .ltree-node:only-child::after {
+  display: none;
+}
+
+/* Single mapping marker centered in the gutter. */
+.ism-mark {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  color: var(--navy);
+  line-height: 1;
+}
+
+/* =====================================================================
+   Skin: cool — white ground / near-black ink / navy+cyan accent.
+   Activated by {"skin": "cool"} at the SlideSpec root (class .skin-cool).
+   Default (no skin) is warm: cream / espresso / brown / serif titles — the same tokens as templates/freeform_parts_16x9.html.
+   ===================================================================== */
+.skin-cool {
+  --page-bg: #f2f2f0;
+  --slide-bg: #ffffff;
+  --ink: #050505;
+  --navy: #071b2c;
+  --muted: #666b70;
+  --rule: #b9bec3;
+  --hairline: #d9dcdf;
+  --blue: #1e5f8c;
+  --cyan: #79c8dc;
+  --rose: #d94c68;
+  --green: #00856f;
+  --warning: #e0b22e;
+  --soft-blue: #e7f4f8;
+  --soft-yellow: #fff3bd;
+}
+
+/* 見出しは cool/warm とも明朝（PPTX エクスポーターの Yu Mincho と一致。A レーンの自由記述テンプレとも同じ） */
+.title,
+.cover-title,
+.skin-cool .title,
+.skin-cool .cover-title {
+  font-family: var(--font-serif);
+  letter-spacing: 0.01em;
+}
+
+.skin-cool .kicker {
+  color: var(--blue);
+}
+
+/* =====================================================================
+   Parts-derived archetypes（パーツ由来27型の HTML プレビュー）
+   templates/freeform_parts_16x9.html の CSS を .slide（1600×900px）の px 系に移植したもの。
+   換算: 1mm ≈ 4.724px（338.67mm → 1600px）、1pt ≈ 1.667px。
+   色はスキンのトークンに写像（#241a10→--ink/--navy、#6b4a2b→--blue、#c9a97e→--cyan、
+   #8a7c6c→--muted、#c7b69e→--rule、#e3dccf→--hairline、#f1ebe0/#efe8da→--soft-blue、#b9b3a9→--rule）。
+   ===================================================================== */
+.slide--parts .sinner > .content {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.parts {
+  --pserif: var(--font-serif, "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", Georgia, "Times New Roman", serif);
+  --pgrey: var(--rule);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.2;
+}
+.parts.center { justify-content: center; }
+
+/* grid */
+.parts .grid { display: grid; gap: 19px; }
+.parts > .grid { flex: 1; grid-auto-rows: 1fr; min-height: 0; }
+.parts > .grid.fix { flex: 0 0 auto; }
+.parts .g2 { grid-template-columns: 1fr 1fr; }
+.parts .g3 { grid-template-columns: repeat(3, 1fr); }
+.parts .g4 { grid-template-columns: repeat(4, 1fr); }
+.parts .g5 { grid-template-columns: repeat(5, 1fr); }
+.parts .grid > div { display: flex; flex-direction: column; min-height: 0; }
+.parts .grid > div > .rows { flex: 1; display: flex; flex-direction: column; }
+.parts .grid > div > .rows .r { flex: 1; align-items: center; }
+
+/* card（パーツ08） */
+.parts .card { background: var(--soft-blue); border: 0; display: flex; flex-direction: column; }
+.parts .hd { display: flex; align-items: baseline; gap: 12px; padding: 17px 19px 12px 19px; border-bottom: 1px solid var(--hairline); }
+.parts .no { font-size: 23px; font-weight: 700; color: var(--blue); line-height: 1; }
+.parts .h { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+.parts .bd { padding: 17px 21px; font-size: 17px; line-height: 1.7; color: var(--ink); flex: 1; }
+.parts .bd ul { margin: 0; padding-left: 19px; }
+
+/* rows（パーツ02・26） */
+.parts .rows .r { display: grid; grid-template-columns: 208px 1fr; gap: 28px; padding: 19px 0; border-top: 1px solid var(--rule); font-size: 18px; line-height: 1.6; }
+.parts .rows .r:first-child { border-top: 0; }
+.parts .rows .r > div:last-child { display: flex; align-items: center; gap: 12px; }
+.parts .rows .l { font-family: var(--pserif); font-weight: 700; font-size: 19px; color: var(--blue); }
+.parts > .rows { flex: 1; display: flex; flex-direction: column; }
+.parts > .rows .r { flex: 1; align-items: center; }
+.parts .ref { font-size: 13px; color: var(--blue); font-weight: 700; margin-left: auto; white-space: nowrap; }
+
+/* table（パーツ06・07・09・11・12・13・14・25） */
+.parts table { border-collapse: collapse; width: 100%; font-size: 17px; flex: 0 0 auto; }
+.parts th { background: none; text-align: left; padding: 12px; font-size: 19px; font-weight: 700; color: var(--ink); border-bottom: 2px solid var(--ink); }
+.parts td { padding: 19px 12px; border-bottom: 1px solid var(--rule); vertical-align: middle; line-height: 1.65; color: var(--ink); }
+.parts td.b { font-weight: 700; color: var(--ink); }
+.parts tr:last-child td { border-bottom: 0; }
+.parts td.ax { font-size: 18px; font-weight: 700; color: var(--blue); font-family: var(--pserif); border-right: 2px solid var(--ink); }
+.parts th.ax { border-right: 2px solid var(--ink); }
+.parts > table, .parts .side .sb table, .parts .two > div > table { flex: 1 1 0; height: 0; }
+/* 表を縦に伸ばすと余剰高さが見出し行にも配分され見出しが沈む（slide-rules §4.21） */
+.parts table tr:first-child:has(th) { height: 1px; }
+.parts td ul.cb { margin: 0; padding-left: 19px; line-height: 1.6; }
+.parts td ul.cb li { margin: 0 0 5px 0; }
+.parts th.hbc, .parts td.hbc { text-align: center; }
+
+/* chevron（パーツ05） */
+.parts .chev { display: flex; gap: 0; flex: 0 0 auto; }
+.parts .chev .cv { flex: 1; position: relative; background: var(--soft-blue); border: 0; padding: 24px 19px 24px 43px; clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 50%, calc(100% - 28px) 100%, 0 100%, 28px 50%); display: flex; flex-direction: column; }
+.parts .chev .cv:first-child { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 50%, calc(100% - 28px) 100%, 0 100%); padding-left: 24px; }
+.parts .chev .n { font-size: 20px; font-weight: 700; color: var(--blue); }
+.parts .chev .t { font-size: 18px; font-weight: 700; margin: 5px 0 7px 0; color: var(--ink); }
+.parts .chev .x { font-size: 15px; line-height: 1.55; color: var(--ink); }
+
+/* two（左表・中央三角・右ブレット。パーツ06・07・13・17・25） */
+.parts .two { display: grid; grid-template-columns: 1.5fr auto 1fr; gap: 28px; flex: 1; min-height: 0; align-items: stretch; }
+.parts .two > div:first-child, .parts .two > div:last-child { display: flex; flex-direction: column; min-height: 0; }
+.parts .two > div:last-child > ul { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.parts .colh { font-family: var(--pserif); font-size: 19px; font-weight: 700; color: var(--blue); border-bottom: 2px solid var(--ink); padding: 12px 0 7px 0; margin-bottom: 14px; }
+.parts .two ul { margin: 0; padding-left: 21px; font-size: 17px; line-height: 1.8; color: var(--ink); }
+.parts .two li { margin-bottom: 12px; }
+.parts .tri { align-self: center; width: 0; height: 0; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 28px solid var(--cyan); }
+
+/* cover / 章扉 / 裏表紙（パーツ01・04・10。タイトル欄なし） */
+.slide--parts-cover .sinner { grid-template-rows: auto 1fr auto; }
+.parts-cover { --pserif: var(--font-serif, "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", Georgia, "Times New Roman", serif); padding-top: 180px; color: var(--ink); }
+.parts-cover .big { font-family: var(--pserif); font-size: 57px; font-weight: 700; color: var(--ink); line-height: 1.25; max-width: 1040px; }
+.parts-cover .prule { width: 151px; height: 5px; background: var(--blue); margin: 38px 0 19px 0; }
+.parts-cover .sub { font-family: var(--pserif); font-size: 25px; font-weight: 700; color: var(--blue); margin-top: 14px; max-width: 1040px; }
+.parts-cover .lead { font-size: 18px; line-height: 1.7; margin-top: 28px; max-width: 850px; }
+.parts-cover.back { padding-top: 283px; }
+.parts-cover.back .big { font-size: 37px; }
+.parts-cover.chap { padding-top: 260px; }
+.parts-cover .cno { font-family: var(--pserif); font-size: 25px; font-weight: 700; color: var(--blue); letter-spacing: 0.2em; }
+.parts-cover .cbig { font-family: var(--pserif); font-size: 50px; font-weight: 700; color: var(--ink); margin-top: 19px; max-width: 1040px; line-height: 1.25; }
+.parts-cover .desc { font-size: 20px; color: var(--blue); margin-top: 19px; }
+
+/* toc（パーツ03） */
+.parts .toc { margin-top: 19px; }
+.parts .toc .ti { display: grid; grid-template-columns: 66px 1fr 66px; gap: 19px; padding: 17px 0; border-bottom: 1px solid var(--rule); font-size: 19px; align-items: baseline; }
+.parts .toc .ti:last-child { border-bottom: 0; }
+.parts .toc .ti .tn { font-family: var(--pserif); font-weight: 700; color: var(--blue); }
+.parts .toc .ti .tp { text-align: right; color: var(--muted); font-size: 15px; }
+
+/* legend */
+.parts .legend { display: flex; gap: 28px; justify-content: flex-end; font-size: 13px; color: var(--ink); flex: 0 0 auto; }
+.parts .legend span { display: flex; align-items: center; gap: 7px; }
+.parts .legend i { width: 19px; height: 19px; display: inline-block; }
+.parts .legend .li-a { background: var(--soft-blue); }
+.parts .legend .li-b { background: var(--navy); }
+
+/* 軸見出し（.axh）・注記 */
+.parts .axh { font-family: var(--pserif); font-size: 19px; font-weight: 700; color: var(--ink); border-bottom: 2px solid var(--ink); padding: 0 0 7px 0; margin-bottom: 17px; flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline; }
+.parts .axh .u { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--muted); }
+.parts .note { font-size: 13px; letter-spacing: 0.08em; font-weight: 700; color: var(--blue); border-bottom: 1px solid var(--cyan); align-self: flex-start; padding-bottom: 4px; flex: 0 0 auto; }
+
+/* 左サイドの主張パネル（パーツ11） */
+.parts .side { display: grid; grid-template-columns: 293px 1fr; gap: 0; flex: 1; min-height: 0; }
+.parts .side .sp { background: var(--navy); color: #fff; padding: 28px; display: flex; flex-direction: column; }
+.parts .side .sp .cn { font-family: var(--pserif); font-size: 43px; font-weight: 700; color: var(--cyan); line-height: 1; }
+.parts .side .sp .ct { font-size: 16px; font-weight: 700; letter-spacing: 0.08em; color: var(--rule); margin-top: 7px; }
+.parts .side .sp .cm { font-family: var(--pserif); font-size: 23px; font-weight: 700; line-height: 1.55; margin-top: auto; }
+.parts .side .sb { padding: 0 0 0 38px; display: flex; flex-direction: column; min-height: 0; }
+
+/* レバー矢印表（パーツ12） */
+.parts .lev { width: 100%; border-collapse: collapse; font-size: 17px; }
+.parts .lev th { font-size: 19px; }
+.parts .lev td { padding: 14px 12px; }
+.parts .lev .ar { height: 26px; display: flex; align-items: center; color: #fff; font-size: 15px; font-weight: 700; padding-left: 14px; clip-path: polygon(0 0, calc(100% - 19px) 0, 100% 50%, calc(100% - 19px) 100%, 0 100%); }
+.parts .lev .up { background: var(--blue); }
+.parts .lev .dn { background: var(--pgrey); color: var(--ink); }
+
+/* 状態ヒートマップ（パーツ13） */
+.parts .hm { width: 100%; border-collapse: collapse; font-size: 16px; }
+.parts .hm th { font-size: 18px; padding: 9px; }
+.parts .hm td { padding: 10px 12px; border-bottom: 1px solid var(--hairline); }
+.parts .hm .cell { display: block; height: 24px; }
+.parts .v4 { background: var(--navy); }
+.parts .v3 { background: var(--blue); }
+.parts .v2 { background: var(--cyan); }
+.parts .v1 { background: var(--soft-blue); }
+.parts .v0 { background: var(--hairline); }
+
+/* ハーベイボール（パーツ14） */
+.parts .hb { width: 22px; height: 22px; display: inline-block; border: 1px solid var(--ink); border-radius: 50%; position: relative; vertical-align: -3px; }
+.parts .hb i { position: absolute; inset: 0; background: var(--ink); border-radius: 50%; }
+.parts .hb.q1 i { clip-path: polygon(50% 50%, 50% 0, 100% 0, 100% 50%); }
+.parts .hb.q2 i { clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%); }
+.parts .hb.q3 i { clip-path: polygon(50% 0, 100% 0, 100% 100%, 0 100%, 0 50%); }
+.parts .hb.q4 i { clip-path: none; }
+.parts .hb.q0 i { display: none; }
+
+/* ドットマトリクス（パーツ15） */
+.parts .dots { display: grid; grid-template-columns: repeat(10, 10px); gap: 4px; }
+.parts .dots i { width: 10px; height: 10px; background: var(--hairline); display: block; }
+.parts .dots i.on { background: var(--blue); }
+.parts .dotcol { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.parts .dotcol .dv { font-size: 25px; font-weight: 700; color: var(--ink); }
+.parts .dotcol .dl { font-size: 15px; color: var(--ink); text-align: center; line-height: 1.5; }
+
+/* 柱＋土台（パーツ19） */
+.parts .pil { display: grid; gap: 19px; flex: 0 0 auto; }
+.parts .pil .p { background: var(--soft-blue); padding: 24px 21px; display: flex; flex-direction: column; gap: 9px; justify-content: center; }
+.parts .pil .p .pt { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+.parts .pil .p .px { font-size: 15px; color: var(--ink); line-height: 1.6; }
+.parts .base { background: var(--navy); color: #fff; padding: 17px 24px; font-size: 17px; margin-top: 19px; display: flex; gap: 14px; align-items: baseline; }
+.parts .base + .base { margin-top: 12px; }
+.parts .base b { font-size: 18px; color: var(--cyan); }
+
+/* ニュース根拠グリッド（パーツ21） */
+.parts .clip { background: var(--soft-blue); padding: 21px 24px; display: flex; flex-direction: column; gap: 9px; }
+.parts .clip .cd { font-size: 13px; color: var(--muted); font-style: italic; }
+.parts .clip .ch { font-family: var(--pserif); font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.45; }
+.parts .clip .cx { font-size: 14px; color: var(--ink); line-height: 1.6; }
+.parts .clip .cg { align-self: flex-start; background: var(--navy); color: #fff; font-size: 13px; font-weight: 700; padding: 5px 12px; letter-spacing: 0.06em; }
+
+/* 対向シェブロン（パーツ20） */
+.parts .opp { display: grid; grid-template-columns: 1fr 217px 1fr; gap: 28px; flex: 1; min-height: 0; align-items: stretch; }
+.parts .opp .ol { display: flex; flex-direction: column; }
+.parts .opp .ol .oi { flex: 1; display: flex; align-items: center; font-size: 17px; line-height: 1.55; color: var(--ink); border-bottom: 1px solid var(--rule); padding: 9px 0; }
+.parts .opp .ol .oi:last-child { border-bottom: 0; }
+.parts .opp .oc { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+.parts .opp .oc .ob { background: var(--navy); color: #fff; text-align: center; font-family: var(--pserif); font-size: 23px; font-weight: 700; padding: 43px 14px; clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%); }
+.parts .opp .oc .ob.alt { background: var(--blue); }
+
+/* セパレーター（章扉＝アジェンダ再掲。パーツ27） */
+.parts .agd { display: flex; flex-direction: column; flex: 1; min-height: 0; justify-content: center; }
+.parts .agd .ai { display: grid; grid-template-columns: 66px 1fr 76px; gap: 24px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--hairline); color: var(--muted); }
+.parts .agd .ai:last-child { border-bottom: 0; }
+.parts .agd .an { font-family: var(--pserif); font-weight: 700; font-size: 23px; }
+.parts .agd .at { font-family: var(--pserif); font-weight: 700; font-size: 25px; }
+.parts .agd .ap { font-size: 15px; text-align: right; }
+.parts .agd .ai.on { color: var(--ink); }
+.parts .agd .ai.on .an { color: var(--blue); font-size: 32px; }
+.parts .agd .ai.on .at { font-size: 35px; }
+.parts .agd .ai.on .ap { color: var(--muted); }
+
+/* 図（SVG。パーツ16・17・18・22・23・24。viewBox はパーツ集と同じ 900×300 等） */
+.parts svg.pfig { flex: 1; min-height: 0; width: 100%; font-family: var(--font-sans); }
+.parts svg.pfig .serif { font-family: var(--pserif); }
+
+
+/* ── 印刷・PDF（Chrome --print-to-pdf）: 1スライド=1ページ・16:9 338.67mm×190.5mm ── */
+@page{size:338.67mm 190.5mm;margin:0}
+@media print{
+  html,body{background:#fff}
+  .deck{padding:0;gap:0;display:block}
+  .slide{margin:0;box-shadow:none;width:var(--slide-w);zoom:0.8;height:900px}
+}
+
+</style></head><body>
+<main class="deck skin-warm">
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">01  executive_summary</div>
+    <h1 class="title">エグゼクティブサマリー</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="three-col"><div><div class="section-label">タイトル 2</div><div class="body-copy">Text 1</div></div><div><div class="section-label">タイトル 3</div><div class="body-copy">Text 2</div></div><div><div class="section-label">タイトル 4</div><div class="body-copy">Text 3</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>2</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">02  evidence_basis</div>
+    <h1 class="title">調査の土台</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="basis"><div class="basis-why">指標名、単位、YYYY〜YYYY年</div><div class="basis-rows"><div class="basis-row"><div class="basis-value">180+</div><div class="basis-copy">Text 1</div></div><div class="basis-row"><div class="basis-value">2.4M</div><div class="basis-copy">Text 2</div></div><div class="basis-row"><div class="basis-value">640</div><div class="basis-copy">Text 3</div></div><div class="basis-row"><div class="basis-value">12</div><div class="basis-copy">Text 4</div></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>3</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">03  big_stat_pair</div>
+    <h1 class="title">大型数値の対比</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="metric-sub">指標名、単位、YYYY〜YYYY年</div><div class="bigstats"><div class="bigstat"><div class="bigstat-value">18%</div><div class="bigstat-label">ラベル1</div><div class="bigstat-note">注：前提や注記を記載</div></div><div class="bigstat"><div class="bigstat-value">7</div><div class="bigstat-label">ラベル2</div><div class="bigstat-note">注：前提や注記を記載</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>4</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">04  kpi_dashboard</div>
+    <h1 class="title">KPI一覧</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="kpi-grid"><div class="kpi-tile"><div class="kpi-label">ラベル1</div><div class="kpi-value">-18%</div><div class="kpi-delta">Text 1</div><div class="kpi-note">注：前提や注記を記載</div></div><div class="kpi-tile"><div class="kpi-label">ラベル2</div><div class="kpi-value">0 days</div><div class="kpi-delta">Text 2</div><div class="kpi-note">注：前提や注記を記載</div></div><div class="kpi-tile"><div class="kpi-label">ラベル3</div><div class="kpi-value">2 / 4</div><div class="kpi-delta">Text 3</div><div class="kpi-note">注：前提や注記を記載</div></div><div class="kpi-tile"><div class="kpi-label">ラベル4</div><div class="kpi-value">$6M</div><div class="kpi-delta">Text 4</div><div class="kpi-note">注：前提や注記を記載</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>5</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">05  chart_insight</div>
+    <h1 class="title">単一チャート＋含意</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="two-col"><div><div class="section-label">指標名、単位</div><div class="bar-chart" style="grid-template-columns: repeat(4, minmax(0, 1fr));"><div class="bar-wrap"><div class="bar-value">32</div><div class="bar" style="height: 45%;"></div><div class="bar-label">ラベル1</div></div><div class="bar-wrap"><div class="bar-value">41</div><div class="bar" style="height: 58%;"></div><div class="bar-label">ラベル2</div></div><div class="bar-wrap"><div class="bar-value">49</div><div class="bar cyan" style="height: 69%;"></div><div class="bar-label">ラベル3</div></div><div class="bar-wrap"><div class="bar-value">58</div><div class="bar blue" style="height: 82%;"></div><div class="bar-label">ラベル4</div></div></div></div><div class="insight-panel"><div class="section-label">タイトル 2</div><div class="body-copy">Text 1</div></div></div></div>
+    <footer class="footer"><span class="source">注：前提・注記を記載 出典：Source 1</span><span>6</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">06  stacked_bar</div>
+    <h1 class="title">積み上げ棒</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="chart-unit">指標名、単位</div><div class="stack-chart"><div><div class="stack-col"><div class="stack-seg s0" style="height: 102px;">40</div><div class="stack-seg s1" style="height: 77px;">30</div><div class="stack-seg s2" style="height: 51px;">20</div></div><div class="stack-col-label">ラベル4</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 141px;">55</div><div class="stack-seg s1" style="height: 82px;">32</div><div class="stack-seg s2" style="height: 56px;">22</div></div><div class="stack-col-label">ラベル5</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 184px;">72</div><div class="stack-seg s1" style="height: 84px;">33</div><div class="stack-seg s2" style="height: 61px;">24</div></div><div class="stack-col-label">ラベル6</div></div></div><div class="stack-legend"><div class="legend-item"><span class="legend-swatch s0"></span>ラベル1</div><div class="legend-item"><span class="legend-swatch s1"></span>ラベル2</div><div class="legend-item"><span class="legend-swatch s2"></span>ラベル3</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>7</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">07  waterfall</div>
+    <h1 class="title">寄与度ブリッジ</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="two-col"><div><div class="section-label">指標名、単位</div><div class="waterfall"><div class="wf-item"><div class="wf-value">100</div><div class="wf-bar" style="height: 50%;"></div><div class="wf-label">ラベル1</div></div><div class="wf-item"><div class="wf-value">+18</div><div class="wf-bar up" style="height: 9%;"></div><div class="wf-label">ラベル2</div></div><div class="wf-item"><div class="wf-value">+24</div><div class="wf-bar up" style="height: 12%;"></div><div class="wf-label">ラベル3</div></div><div class="wf-item"><div class="wf-value">-9</div><div class="wf-bar down" style="height: 5%;"></div><div class="wf-label">ラベル4</div></div><div class="wf-item"><div class="wf-value">+7</div><div class="wf-bar up" style="height: 4%;"></div><div class="wf-label">ラベル5</div></div><div class="wf-item"><div class="wf-value">140</div><div class="wf-bar blue" style="height: 70%;"></div><div class="wf-label">ラベル6</div></div></div></div><div class="insight-panel"><div class="section-label">タイトル 2</div><div class="body-copy">Text 1</div></div></div></div>
+    <footer class="footer"><span class="source">注：前提・注記を記載 出典：Source 1</span><span>8</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">08  true_waterfall</div>
+    <h1 class="title">増減ブリッジ（厳密）</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="chart-unit">指標名、単位</div><div class="twf"><div class="twf-col"><div class="twf-value">11</div><div class="twf-bar base" style="height: 220px; margin-bottom: 0px;"></div><div class="twf-label">ラベル1</div></div><div class="twf-col"><div class="twf-value">−3</div><div class="twf-bar down" style="height: 60px; margin-bottom: 160px;"></div><div class="twf-label">ラベル2</div></div><div class="twf-col"><div class="twf-value">+4</div><div class="twf-bar up" style="height: 80px; margin-bottom: 160px;"></div><div class="twf-label">ラベル3</div></div><div class="twf-col"><div class="twf-value">+3</div><div class="twf-bar up" style="height: 60px; margin-bottom: 240px;"></div><div class="twf-label">ラベル4</div></div><div class="twf-col"><div class="twf-value">15</div><div class="twf-bar total" style="height: 300px; margin-bottom: 0px;"></div><div class="twf-label">ラベル5</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>9</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">09  small_multiples</div>
+    <h1 class="title">小図の並列比較</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="sm-grid"><div class="sm-panel"><div class="sm-title">ラベル1</div><div class="sm-chart"><div class="sm-bar-wrap"><div class="sm-bar" style="height: 30%;"></div><div class="sm-bar-label">ラベル2</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 53%;"></div><div class="sm-bar-label">ラベル3</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 88%;"></div><div class="sm-bar-label">ラベル4</div></div></div></div><div class="sm-panel"><div class="sm-title">ラベル5</div><div class="sm-chart"><div class="sm-bar-wrap"><div class="sm-bar" style="height: 23%;"></div><div class="sm-bar-label">ラベル6</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 42%;"></div><div class="sm-bar-label">ラベル7</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 67%;"></div><div class="sm-bar-label">ラベル8</div></div></div></div><div class="sm-panel"><div class="sm-title">ラベル9</div><div class="sm-chart"><div class="sm-bar-wrap"><div class="sm-bar" style="height: 12%;"></div><div class="sm-bar-label">ラベル10</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 21%;"></div><div class="sm-bar-label">ラベル11</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 35%;"></div><div class="sm-bar-label">ラベル12</div></div></div></div><div class="sm-panel"><div class="sm-title">ラベル13</div><div class="sm-chart"><div class="sm-bar-wrap"><div class="sm-bar" style="height: 18%;"></div><div class="sm-bar-label">ラベル14</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 33%;"></div><div class="sm-bar-label">ラベル15</div></div><div class="sm-bar-wrap"><div class="sm-bar" style="height: 56%;"></div><div class="sm-bar-label">ラベル16</div></div></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>10</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">10  comparison_table</div>
+    <h1 class="title">選択肢の比較表</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="comparison"><div class="head">評価軸</div><div class="head">自社</div><div class="head">競合</div><div class="head">含意</div><div class="row-label">ラベル1</div><div>ラベル2</div><div>ラベル3</div><div>Text 1,Text 2</div><div class="row-label">ラベル4</div><div>ラベル5</div><div>ラベル6</div><div>Text 3,Text 4</div><div class="row-label">ラベル7</div><div>ラベル8</div><div>ラベル9</div><div>Text 5,Text 6</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>11</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">11  scenario_table</div>
+    <h1 class="title">シナリオ比較表</h1>
+    <div class="rule"></div>
+    <div class="content"><table class="scenario-table"><thead><tr><th>シナリオ</th><th>結果</th><th>前提</th><th>経営への含意</th></tr></thead><tbody><tr><td><span class="lead">ラベル1</span></td><td><span class="num">Text 1</span></td><td>前提1-1：TextをTextと置く,前提1-2：Textは変わらないとする</td><td>Text 1をText 2まで積み増す,Text 3の判断をN月に前倒す</td></tr><tr><td><span class="lead">ラベル2</span></td><td><span class="num">Text 4</span></td><td>前提2-1：TextをTextと置く,前提2-2：Textは変わらないとする</td><td>Text 4をText 5まで積み増す,Text 6の判断をN月に前倒す</td></tr><tr><td><span class="lead">ラベル3</span></td><td><span class="num">Text 7</span></td><td>前提3-1：TextをTextと置く,前提3-2：Textは変わらないとする</td><td>Text 7をText 8まで積み増す,Text 9の判断をN月に前倒す</td></tr></tbody></table></div>
+    <footer class="footer"><span class="source">注：前提・注記を記載 出典：Source 1</span><span>12</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">12  risk_table</div>
+    <h1 class="title">リスク一覧表</h1>
+    <div class="rule"></div>
+    <div class="content"><table class="risk-table"><thead><tr><th>リスク</th><th>兆候</th><th>対応策</th><th>担当</th></tr></thead><tbody><tr class="risk-high"><td><span class="lead">Text 1</span></td><td>Text 1がNを下回る,Text 2のNがNか月続く</td><td>Text 3を先に確保する,Text 4の代替案を用意する</td><td>ラベル1</td></tr><tr class="risk-med"><td><span class="lead">Text 4</span></td><td>Text 5がNを下回る,Text 6のNがNか月続く</td><td>Text 7を先に確保する,Text 8の代替案を用意する</td><td>ラベル2</td></tr><tr class="risk-med"><td><span class="lead">Text 7</span></td><td>Text 9がNを下回る,Text 10のNがNか月続く</td><td>Text 11を先に確保する,Text 12の代替案を用意する</td><td>ラベル3</td></tr></tbody></table></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>13</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">13  horizontal_axis_table</div>
+    <h1 class="title">横軸評価表</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="axis-callout"><div class="axis-callout-text">網掛けの行＝Text 1（この行だけ立てている理由を1行で）</div></div><div class="axis-table-wrap"><div class="axis-table" style="grid-template-columns: 1fr 2.1fr 2.3fr 1.2fr 1.3fr;"><div class="axis-col-header"><div class="axis-header-label">列見出し1</div><div class="axis-header-rule"></div></div><div class="axis-col-header"><div class="axis-header-label">列見出し2</div><div class="axis-header-rule"></div></div><div class="axis-col-header"><div class="axis-header-label">列見出し3</div><div class="axis-header-rule"></div></div><div class="axis-col-header"><div class="axis-header-label">列見出し4</div><div class="axis-header-rule"></div></div><div class="axis-col-header"><div class="axis-header-label">列見出し5</div><div class="axis-header-rule"></div></div><div class="axis-row"><div class="axis-cell label highlight">値</div><div class="axis-cell highlight">値</div><div class="axis-cell highlight">値</div><div class="axis-cell highlight">値</div><div class="axis-cell highlight">値</div></div><div class="axis-row"><div class="axis-cell label">値</div><div class="axis-cell">値</div><div class="axis-cell">値</div><div class="axis-cell">値</div><div class="axis-cell">値</div></div><div class="axis-row"><div class="axis-cell label">値</div><div class="axis-cell">値</div><div class="axis-cell">値</div><div class="axis-cell">値</div><div class="axis-cell">値</div></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>14</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">14  heatmap_table</div>
+    <h1 class="title">ヒートマップ表</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="heat" style="grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr));"><div class="heat-corner">行の軸名</div><div class="heat-colhead">列見出し1</div><div class="heat-colhead">列見出し2</div><div class="heat-colhead">列見出し3</div><div class="heat-colhead">列見出し4</div><div class="heat-rowhead">行見出し1</div><div class="heat-cell lvl-3">高</div><div class="heat-cell lvl-2">中</div><div class="heat-cell lvl-1">低</div><div class="heat-cell lvl-2">中</div><div class="heat-rowhead">行見出し2</div><div class="heat-cell lvl-2">中</div><div class="heat-cell lvl-1">低</div><div class="heat-cell lvl-0">なし</div><div class="heat-cell lvl-1">低</div><div class="heat-rowhead">行見出し3</div><div class="heat-cell lvl-3">高</div><div class="heat-cell lvl-3">高</div><div class="heat-cell lvl-2">中</div><div class="heat-cell lvl-3">高</div><div class="heat-rowhead">行見出し4</div><div class="heat-cell lvl-2">中</div><div class="heat-cell lvl-1">低</div><div class="heat-cell lvl-0">なし</div><div class="heat-cell lvl-1">低</div></div><div class="heat-legend"><div class="legend-item"><span class="legend-swatch lvl-0" style="background: #fff;"></span>なし</div><div class="legend-item"><span class="legend-swatch lvl-1" style="background: var(--soft-blue);"></span>低</div><div class="legend-item"><span class="legend-swatch lvl-2" style="background: var(--cyan);"></span>中</div><div class="legend-item"><span class="legend-swatch lvl-3" style="background: var(--blue);"></span>高</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>15</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">15  matrix_2x2</div>
+    <h1 class="title">2×2マトリクス</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="matrix-wrap"><div class="matrix-chart"><div class="matrix-axis-y">縦軸名（上ほど高い）</div><div class="matrix-axis-x">横軸名（右ほど高い）</div><div class="matrix-item priority" style="left: 72%; top: 24%;">施策1</div><div class="matrix-item priority" style="left: 68%; top: 42%;">施策2</div><div class="matrix-item" style="left: 35%; top: 31%;">施策3</div><div class="matrix-item" style="left: 46%; top: 62%;">施策4</div><div class="matrix-item" style="left: 23%; top: 74%;">施策5</div></div><div class="insight-panel"><div class="section-label">タイトル 2</div><ul class="bullets"><li>Text 1</li><li>Text 2</li></ul></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>16</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">16  process_matrix</div>
+    <h1 class="title">プロセス×観点の行列</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="pmx" style="grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr));"><div class="pmx-corner">行の軸名</div><div class="pmx-colhead">列見出し1</div><div class="pmx-colhead">列見出し2</div><div class="pmx-colhead">列見出し3</div><div class="pmx-rowhead">行見出し1</div><div class="pmx-cell">値</div><div class="pmx-cell">値</div><div class="pmx-cell empty"></div><div class="pmx-rowhead">行見出し2</div><div class="pmx-cell">値</div><div class="pmx-cell">値</div><div class="pmx-cell empty"></div><div class="pmx-rowhead">行見出し3</div><div class="pmx-cell">値</div><div class="pmx-cell">値</div><div class="pmx-cell">値</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>17</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">17  nested_row_matrix</div>
+    <h1 class="title">入れ子行の行列</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="nrm"><div class="nrm-group" style="grid-row:1 / span 3; grid-column:1;">ラベル1</div><div class="nrm-rowlabel" style="grid-row:1; grid-column:2;">ラベル2</div><div class="nrm-content" style="grid-row:1; grid-column:3;"><ul class="nrm-bullets"><li>Text 1</li><li>Text 2</li></ul></div><div class="nrm-rowlabel" style="grid-row:2; grid-column:2;">ラベル3</div><div class="nrm-content" style="grid-row:2; grid-column:3;"><ul class="nrm-bullets"><li>Text 3</li><li>Text 4</li></ul></div><div class="nrm-rowlabel" style="grid-row:3; grid-column:2;">ラベル4</div><div class="nrm-content" style="grid-row:3; grid-column:3;"><ul class="nrm-bullets"><li>Text 5</li><li>Text 6</li></ul></div><div class="nrm-group" style="grid-row:4 / span 2; grid-column:1;">ラベル5</div><div class="nrm-rowlabel" style="grid-row:4; grid-column:2;">ラベル6</div><div class="nrm-content" style="grid-row:4; grid-column:3;"><ul class="nrm-bullets"><li>Text 7</li></ul></div><div class="nrm-rowlabel" style="grid-row:5; grid-column:2;">ラベル7</div><div class="nrm-content" style="grid-row:5; grid-column:3;"><ul class="nrm-bullets"><li>Text 8</li></ul></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>18</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">18  timeline_matrix</div>
+    <h1 class="title">時系列マトリクス</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="tlm" style="grid-template-columns: 1fr repeat(3, minmax(0, 1.4fr));"><div class="tlm-colhead">段階</div><div class="tlm-colhead">列見出し1</div><div class="tlm-colhead">列見出し2</div><div class="tlm-colhead">列見出し3</div><div class="tlm-period">期間1</div><div class="tlm-cell">値</div><div class="tlm-cell">値</div><div class="tlm-cell">値</div><div class="tlm-period">期間2</div><div class="tlm-cell">値</div><div class="tlm-cell">値</div><div class="tlm-cell">値</div><div class="tlm-period">期間3</div><div class="tlm-cell">値</div><div class="tlm-cell">値</div><div class="tlm-cell">値</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>19</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">19  theme_card_grid</div>
+    <h1 class="title">テーマカード</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="metric-sub">指標名、単位、YYYY〜YYYY年</div><div class="theme-grid"><div class="theme-card"><div class="theme-band">ラベル1</div><div class="theme-title">タイトル 2</div><div class="theme-copy">Text 1</div><div class="theme-value">3.4x</div></div><div class="theme-card"><div class="theme-band">ラベル2</div><div class="theme-title">タイトル 3</div><div class="theme-copy">Text 2</div><div class="theme-value">+22%</div></div><div class="theme-card"><div class="theme-band">ラベル3</div><div class="theme-title">タイトル 4</div><div class="theme-copy">Text 3</div><div class="theme-value">-41%</div></div><div class="theme-card"><div class="theme-band">ラベル4</div><div class="theme-title">タイトル 5</div><div class="theme-copy">Text 4</div><div class="theme-value">92%</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>20</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">20  recommendation_pillars</div>
+    <h1 class="title">提言の柱</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="pillars"><div class="pillar"><div class="pillar-num">1</div><div class="pillar-title">タイトル 2</div><div class="pillar-copy">Text 1</div><ul class="pillar-bullets"><li>Text 2</li><li>Text 3</li></ul></div><div class="pillar"><div class="pillar-num">2</div><div class="pillar-title">タイトル 3</div><div class="pillar-copy">Text 4</div><ul class="pillar-bullets"><li>Text 5</li><li>Text 6</li></ul></div><div class="pillar"><div class="pillar-num">3</div><div class="pillar-title">タイトル 4</div><div class="pillar-copy">Text 7</div><ul class="pillar-bullets"><li>Text 8</li><li>Text 9</li></ul></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>21</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">21  numbered_imperatives</div>
+    <h1 class="title">番号つき打ち手</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="metric-sub">指標名、単位、YYYY〜YYYY年</div><div class="imps"><div class="imp"><div class="imp-num">1</div><div class="imp-rule"></div><div class="imp-title">タイトル 2</div><div class="imp-copy">Text 1</div></div><div class="imp"><div class="imp-num">2</div><div class="imp-rule"></div><div class="imp-title">タイトル 3</div><div class="imp-copy">Text 2</div></div><div class="imp"><div class="imp-num">3</div><div class="imp-rule"></div><div class="imp-title">タイトル 4</div><div class="imp-copy">Text 3</div></div><div class="imp"><div class="imp-num">4</div><div class="imp-rule"></div><div class="imp-title">タイトル 5</div><div class="imp-copy">Text 4</div></div><div class="imp"><div class="imp-num">5</div><div class="imp-rule"></div><div class="imp-title">タイトル 6</div><div class="imp-copy">Text 5</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>22</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">22  scr</div>
+    <h1 class="title">Situation・Complication・Resolution</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="scr-grid"><div class="scr-col"><span class="scr-tag">Situation</span><h3 class="scr-heading">Text 1</h3><p class="scr-copy">Text 2</p><p class="scr-note">注：前提や注記を記載</p></div><div class="scr-col"><span class="scr-tag">Complication</span><h3 class="scr-heading">Text 3</h3><p class="scr-copy">Text 4</p><p class="scr-note">注：前提や注記を記載</p></div><div class="scr-col"><span class="scr-tag">Resolution</span><h3 class="scr-heading">Text 5</h3><p class="scr-copy">Text 6</p><p class="scr-note">注：前提や注記を記載</p></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>23</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">23  issue_to_solution_map</div>
+    <h1 class="title">課題と打ち手の対応</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="ism"><div class="ism-col-label">課題</div><div></div><div class="ism-col-label solution">打ち手</div><div class="ism-row"><div class="ism-issue">Text 1</div><div class="ism-arrow"></div><div class="ism-solution"><div class="ism-solution-text">Text 2</div><div class="ism-impact">Text 3</div></div></div><div class="ism-row"><div class="ism-issue">Text 4</div><div class="ism-arrow"></div><div class="ism-solution"><div class="ism-solution-text">Text 5</div><div class="ism-impact">Text 6</div></div></div><div class="ism-row"><div class="ism-issue">Text 7</div><div class="ism-arrow"></div><div class="ism-solution"><div class="ism-solution-text">Text 8</div><div class="ism-impact">Text 9</div></div></div><div class="ism-mark" aria-hidden="true">&#9654;</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>24</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">24  issue_cause_solution</div>
+    <h1 class="title">課題→原因→解決</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="ics"><div class="ics-stage"><span class="ics-label">ラベル1</span><h3 class="ics-heading">Text 1</h3><p class="ics-copy">Text 2</p></div><div class="ics-arrow" aria-hidden="true">&#8594;</div><div class="ics-stage"><span class="ics-label">ラベル2</span><h3 class="ics-heading">Text 3</h3><p class="ics-copy">Text 4</p></div><div class="ics-arrow" aria-hidden="true">&#8594;</div><div class="ics-stage"><span class="ics-label">ラベル3</span><h3 class="ics-heading">Text 5</h3><p class="ics-copy">Text 6</p></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>25</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">25  issue_tree</div>
+    <h1 class="title">イシューツリー</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="ltree"><div class="ltree-node"><div class="ltree-box ltree-l1 has-children">分解したいイシュー</div><div class="ltree-children"><div class="ltree-node"><div class="ltree-box ltree-l2 has-children">サブイシュー1</div><div class="ltree-children"><div class="ltree-node"><div class="ltree-box ltree-l3">論点1-1</div></div><div class="ltree-node"><div class="ltree-box ltree-l3">論点1-2</div></div></div></div><div class="ltree-node"><div class="ltree-box ltree-l2 has-children">サブイシュー2</div><div class="ltree-children"><div class="ltree-node"><div class="ltree-box ltree-l3">論点2-1</div></div><div class="ltree-node"><div class="ltree-box ltree-l3">論点2-2</div></div></div></div><div class="ltree-node"><div class="ltree-box ltree-l2 has-children">サブイシュー3</div><div class="ltree-children"><div class="ltree-node"><div class="ltree-box ltree-l3">論点3-1</div></div><div class="ltree-node"><div class="ltree-box ltree-l3">論点3-2</div></div></div></div></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>26</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">26  current_target_state</div>
+    <h1 class="title">現状と目指す姿</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="cts"><div class="cts-panel"><span class="cts-label">ラベル1</span><h3 class="cts-heading">Text 1</h3><ul class="cts-list"><li>Text 2</li><li>Text 3</li><li>Text 4</li></ul></div><div class="cts-arrow" aria-hidden="true">&#8250;</div><div class="cts-panel target"><span class="cts-label">ラベル2</span><h3 class="cts-heading">Text 5</h3><ul class="cts-list lettered"><li>Text 6</li><li>Text 7</li><li>Text 8</li></ul></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>27</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">27  calc_flow</div>
+    <h1 class="title">計算ロジックの流れ</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="chart-unit">指標名、単位</div><div class="cf"><div class="cf-panel"><div class="cf-panel-label">ラベル3</div><div class="cf-chart"><div><div class="stack-col"><div class="stack-seg s0" style="height: 20px;">1</div></div><div class="stack-col-label">ラベル4</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 60px;">3</div></div><div class="stack-col-label">ラベル5</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 120px;">6</div></div><div class="stack-col-label">ラベル6</div></div></div></div><div class="cf-op" aria-hidden="true">&#215;</div><div class="cf-panel"><div class="cf-panel-label">ラベル7</div><div class="cf-chart"><div><div class="stack-col"><div class="stack-seg s0" style="height: 120px;">2</div></div><div class="stack-col-label">ラベル8</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 120px;">2</div></div><div class="stack-col-label">ラベル9</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 120px;">2</div></div><div class="stack-col-label">ラベル10</div></div></div></div><div class="cf-op" aria-hidden="true">=</div><div class="cf-panel"><div class="cf-panel-label">ラベル11</div><div class="cf-chart"><div><div class="stack-col"><div class="stack-seg s0" style="height: 19px;">1.5</div><div class="stack-seg s1" style="height: 6px;"></div></div><div class="stack-col-label">ラベル12</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 48px;">3.8</div><div class="stack-seg s1" style="height: 6px;"></div></div><div class="stack-col-label">ラベル15</div></div><div><div class="stack-col"><div class="stack-seg s0" style="height: 114px;">9</div><div class="stack-seg s1" style="height: 6px;"></div></div><div class="stack-col-label">ラベル18</div></div></div></div></div><div class="stack-legend"><div class="legend-item"><span class="legend-swatch s0"></span>ラベル1</div><div class="legend-item"><span class="legend-swatch s1"></span>ラベル2</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>28</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">28  process_flow</div>
+    <h1 class="title">プロセスの段階</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="flow"><div class="flow-step"><div class="flow-num">1</div><h3 class="flow-title">タイトル 2</h3><p class="flow-copy">Text 1</p></div><div class="flow-arrow" aria-hidden="true"><span class="flow-arrow-mark">&#8250;</span></div><div class="flow-step"><div class="flow-num">2</div><h3 class="flow-title">タイトル 3</h3><p class="flow-copy">Text 2</p></div><div class="flow-arrow" aria-hidden="true"><span class="flow-arrow-mark">&#8250;</span></div><div class="flow-step"><div class="flow-num">3</div><h3 class="flow-title">タイトル 4</h3><p class="flow-copy">Text 3</p></div><div class="flow-arrow" aria-hidden="true"><span class="flow-arrow-mark">&#8250;</span></div><div class="flow-step"><div class="flow-num">4</div><h3 class="flow-title">タイトル 5</h3><p class="flow-copy">Text 4</p></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>29</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">29  cycle</div>
+    <h1 class="title">循環サイクル</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="cycle"><div class="cycle-ring" aria-hidden="true"></div><div class="cycle-arrow-seg" style="left: 62.0%; top: 32.9%; transform: translate(-50%, -50%) rotate(36deg);" aria-hidden="true">&#8250;</div><div class="cycle-arrow-seg" style="left: 69.5%; top: 56.5%; transform: translate(-50%, -50%) rotate(108deg);" aria-hidden="true">&#8250;</div><div class="cycle-arrow-seg" style="left: 50.0%; top: 71.1%; transform: translate(-50%, -50%) rotate(180deg);" aria-hidden="true">&#8250;</div><div class="cycle-arrow-seg" style="left: 30.5%; top: 56.5%; transform: translate(-50%, -50%) rotate(252deg);" aria-hidden="true">&#8250;</div><div class="cycle-arrow-seg" style="left: 38.0%; top: 32.9%; transform: translate(-50%, -50%) rotate(324deg);" aria-hidden="true">&#8250;</div><div class="cycle-node" style="left: 50.0%; top: 16.0%;"><div class="flow-num">1</div><h3 class="flow-title">タイトル 2</h3><p class="flow-copy">Text 1</p></div><div class="cycle-node" style="left: 81.4%; top: 39.5%;"><div class="flow-num">2</div><h3 class="flow-title">タイトル 3</h3><p class="flow-copy">Text 2</p></div><div class="cycle-node" style="left: 69.4%; top: 77.5%;"><div class="flow-num">3</div><h3 class="flow-title">タイトル 4</h3><p class="flow-copy">Text 3</p></div><div class="cycle-node" style="left: 30.6%; top: 77.5%;"><div class="flow-num">4</div><h3 class="flow-title">タイトル 5</h3><p class="flow-copy">Text 4</p></div><div class="cycle-node" style="left: 18.6%; top: 39.5%;"><div class="flow-num">5</div><h3 class="flow-title">タイトル 6</h3><p class="flow-copy">Text 5</p></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>30</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">30  chevron_rail</div>
+    <h1 class="title">矢羽の段階（全体像の見出し）</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="chev-rail"><div class="chev first"><div class="chev-num">1</div><div class="chev-body"><div class="chev-title">タイトル 2</div><div class="chev-copy">Text 1</div></div></div><div class="chev"><div class="chev-num">2</div><div class="chev-body"><div class="chev-title">タイトル 3</div><div class="chev-copy">Text 2</div></div></div><div class="chev"><div class="chev-num">3</div><div class="chev-body"><div class="chev-title">タイトル 4</div><div class="chev-copy">Text 3</div></div></div><div class="chev"><div class="chev-num">4</div><div class="chev-body"><div class="chev-title">タイトル 5</div><div class="chev-copy">Text 4</div></div></div><div class="chev"><div class="chev-num">5</div><div class="chev-body"><div class="chev-title">タイトル 6</div><div class="chev-copy">Text 5</div></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>31</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">31  chevron_value_chain</div>
+    <h1 class="title">バリューチェーン</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="cvc" style="grid-template-columns:1fr repeat(7, 1.5fr);"><div class="cvc-lane" style="grid-row:1; grid-column:1;">ラベル1</div><div class="cvc-chev primary first" style="grid-row:1; grid-column:2;">ラベル2</div><div class="cvc-chev primary" style="grid-row:1; grid-column:3;">ラベル3</div><div class="cvc-chev primary" style="grid-row:1; grid-column:4;">ラベル4</div><div class="cvc-chev primary" style="grid-row:1; grid-column:5;">ラベル5</div><div class="cvc-chev primary" style="grid-row:1; grid-column:6;">ラベル6</div><div class="cvc-chev primary" style="grid-row:1; grid-column:7;">ラベル7</div><div class="cvc-chev primary" style="grid-row:1; grid-column:8;">ラベル8</div><div style="grid-row:2; grid-column:1;"></div><div class="cvc-desc" style="grid-row:2; grid-column:2;">Text 1</div><div class="cvc-desc" style="grid-row:2; grid-column:3;">Text 2</div><div class="cvc-desc" style="grid-row:2; grid-column:4;">Text 3</div><div class="cvc-desc" style="grid-row:2; grid-column:5;">Text 4</div><div class="cvc-desc" style="grid-row:2; grid-column:6;">Text 5</div><div class="cvc-desc" style="grid-row:2; grid-column:7;">Text 6</div><div class="cvc-desc" style="grid-row:2; grid-column:8;">Text 7</div><div class="cvc-lane" style="grid-row:3; grid-column:1;">ラベル9</div><div class="cvc-chev alt first" style="grid-row:3; grid-column:2;">ラベル10</div><div class="cvc-chev alt" style="grid-row:3; grid-column:3;">ラベル11</div><div class="cvc-chev alt" style="grid-row:3; grid-column:4;">ラベル12</div><div class="cvc-chev alt" style="grid-row:3; grid-column:5;">ラベル13</div><div class="cvc-chev alt" style="grid-row:3; grid-column:6;">ラベル14</div><div class="cvc-chev alt" style="grid-row:3; grid-column:7;">ラベル15</div><div class="cvc-chev alt" style="grid-row:3; grid-column:8;">ラベル16</div><div style="grid-row:4; grid-column:1;"></div><div class="cvc-desc" style="grid-row:4; grid-column:2;">Text 8</div><div class="cvc-desc" style="grid-row:4; grid-column:3;">Text 9</div><div class="cvc-desc" style="grid-row:4; grid-column:4;">Text 10</div><div class="cvc-desc" style="grid-row:4; grid-column:5;">Text 11</div><div class="cvc-desc" style="grid-row:4; grid-column:6;">Text 12</div><div class="cvc-desc" style="grid-row:4; grid-column:7;">Text 13</div><div class="cvc-desc" style="grid-row:4; grid-column:8;">Text 14</div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>32</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">32  decision_fork</div>
+    <h1 class="title">分岐と判断</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="fork"><div class="fork-q">問い 1：検討すべき問いを記載</div><div class="fork-branches"><div class="fork-branch"><h3 class="fork-branch-label">ラベル1</h3><p class="fork-branch-copy">Text 1</p><p class="fork-branch-outcome">Text 2</p></div><div class="fork-branch recommended"><h3 class="fork-branch-label">ラベル2</h3><p class="fork-branch-copy">Text 3</p><p class="fork-branch-outcome">Text 4</p></div><div class="fork-branch"><h3 class="fork-branch-label">ラベル3</h3><p class="fork-branch-copy">Text 5</p><p class="fork-branch-outcome">Text 6</p></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>33</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">33  roadmap</div>
+    <h1 class="title">ロードマップ</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="roadmap"><div class="phase"><div class="phase-year">タイトル 2</div><div class="phase-copy">Text 1</div></div><div class="phase"><div class="phase-year">タイトル 3</div><div class="phase-copy">Text 2</div></div><div class="phase"><div class="phase-year">タイトル 4</div><div class="phase-copy">Text 3</div></div><div class="phase"><div class="phase-year">タイトル 5</div><div class="phase-copy">Text 4</div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>34</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">34  gantt</div>
+    <h1 class="title">ガントチャート</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="gantt2"><div class="g2-corner" style="grid-row:1; grid-column:1/3;"></div><div class="g2-bandrow" style="grid-row:1; grid-column:3; grid-template-columns: repeat(12, 1fr);"><div class="g2-band" style="grid-column: span 9;">ラベル13</div><div class="g2-band" style="grid-column: span 3;">ラベル14</div></div><div class="g2-corner" style="grid-row:2; grid-column:1/3;"></div><div class="g2-monthrow" style="grid-row:2; grid-column:3; grid-template-columns: repeat(12, 1fr);"><div class="g2-month">ラベル1</div><div class="g2-month">ラベル2</div><div class="g2-month">ラベル3</div><div class="g2-month">ラベル4</div><div class="g2-month">ラベル5</div><div class="g2-month">ラベル6</div><div class="g2-month">ラベル7</div><div class="g2-month">ラベル8</div><div class="g2-month">ラベル9</div><div class="g2-month">ラベル10</div><div class="g2-month">ラベル11</div><div class="g2-month">ラベル12</div></div><div class="g2-corner g2-mscorner" style="grid-row:3; grid-column:1/3;">マイルストーン</div><div class="g2-msrow" style="grid-row:3; grid-column:3;"><div class="g2-ms" style="left:4.17%;"><div class="g2-diamond" aria-hidden="true">&#9650;</div><div class="g2-mslab">ラベル15</div></div><div class="g2-ms" style="left:20.83%;"><div class="g2-diamond" aria-hidden="true">&#9650;</div><div class="g2-mslab">ラベル16</div></div><div class="g2-ms" style="left:45.83%;"><div class="g2-diamond" aria-hidden="true">&#9650;</div><div class="g2-mslab">ラベル17</div></div><div class="g2-ms" style="left:70.83%;"><div class="g2-diamond" aria-hidden="true">&#9650;</div><div class="g2-mslab">ラベル18</div></div><div class="g2-ms" style="left:95.83%;"><div class="g2-diamond" aria-hidden="true">&#9650;</div><div class="g2-mslab">ラベル19</div></div></div><div class="g2-group" style="grid-row:4 / span 1; grid-column:1;">ラベル20</div><div class="g2-rowlabel" style="grid-row:4; grid-column:2;">ラベル21</div><div class="g2-track" style="grid-row:4; grid-column:3; --gcols:12;"><div class="g2-bar plan" style="left:0%; width:8.333333333333332%;"></div></div><div class="g2-group" style="grid-row:5 / span 1; grid-column:1;">ラベル22</div><div class="g2-rowlabel" style="grid-row:5; grid-column:2;">ラベル23</div><div class="g2-track" style="grid-row:5; grid-column:3; --gcols:12;"><div class="g2-bar plan" style="left:8.333333333333332%; width:16.666666666666664%;"></div></div><div class="g2-group" style="grid-row:6 / span 1; grid-column:1;">ラベル24</div><div class="g2-rowlabel" style="grid-row:6; grid-column:2;">ラベル25</div><div class="g2-track" style="grid-row:6; grid-column:3; --gcols:12;"><div class="g2-bar build" style="left:16.666666666666664%; width:8.333333333333332%;"></div></div><div class="g2-group" style="grid-row:7 / span 1; grid-column:1;">ラベル26</div><div class="g2-rowlabel" style="grid-row:7; grid-column:2;">ラベル27</div><div class="g2-track" style="grid-row:7; grid-column:3; --gcols:12;"><div class="g2-bar build" style="left:25%; width:16.666666666666664%;"></div></div><div class="g2-group" style="grid-row:8 / span 1; grid-column:1;">ラベル28</div><div class="g2-rowlabel" style="grid-row:8; grid-column:2;">ラベル29</div><div class="g2-track" style="grid-row:8; grid-column:3; --gcols:12;"><div class="g2-bar build" style="left:33.33333333333333%; width:16.666666666666664%;"></div></div><div class="g2-group" style="grid-row:9 / span 1; grid-column:1;">ラベル30</div><div class="g2-rowlabel" style="grid-row:9; grid-column:2;">ラベル31</div><div class="g2-track" style="grid-row:9; grid-column:3; --gcols:12;"><div class="g2-bar scale" style="left:66.66666666666666%; width:16.666666666666664%;"></div></div><div class="g2-group" style="grid-row:10 / span 1; grid-column:1;">ラベル32</div><div class="g2-rowlabel" style="grid-row:10; grid-column:2;">ラベル33</div><div class="g2-track" style="grid-row:10; grid-column:3; --gcols:12;"><div class="g2-bar scale ongoing" style="left:83.33333333333334%; width:16.666666666666664%;"></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>35</span></footer>
+  </div>
+</section>
+
+<section class="slide slide--no-title-rule">
+  <div class="sinner">
+    <div class="kicker">35  decision_page</div>
+    <h1 class="title">意思決定ページ</h1>
+    <div class="rule"></div>
+    <div class="content"><div class="decision-layout"><div class="decision-ask"><div class="decision-ask-title">推奨する意思決定</div><div class="decision-ask-copy">Text 1</div></div><div class="decision-list"><div class="decision-item"><div class="decision-num">1</div><div>Text 2</div></div><div class="decision-item"><div class="decision-num">2</div><div>Text 3</div></div><div class="decision-item"><div class="decision-num">3</div><div>Text 4</div></div></div></div></div>
+    <footer class="footer"><span class="source">出典：Source 1</span><span>36</span></footer>
+  </div>
+</section>
+</main>
+</body></html>

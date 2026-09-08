@@ -3,7 +3,7 @@
 //   1. フッター（.foot / .footer）と本文要素の重なり
 //   2. タイトル（h1 / .title）の右端はみ出し（nowrap + overflow:hidden の黙殺検出）
 //   3. スライド外への要素はみ出し
-// 使い方: node check_layout.mjs deck.html   （playwright 必須。PLAYWRIGHT_MODULE_DIR / NODE_PATH で解決可）
+// 使い方: node scripts/check_layout.mjs deck.html   （playwright 必須: リポ直下で `npm run setup`。PLAYWRIGHT_MODULE_DIR でも解決可）
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -11,6 +11,8 @@ async function loadPlaywright() {
   const cands = [
     process.env.PLAYWRIGHT_MODULE_DIR,
     path.join(process.cwd(), "node_modules", "playwright"),
+    path.join(path.dirname(new URL(import.meta.url).pathname), "..", "node_modules", "playwright"),
+    path.join(path.dirname(new URL(import.meta.url).pathname), "..", "_archive", "pipeline", "node_modules", "playwright"),
   ].filter(Boolean);
   for (const c of cands) {
     try { return (await import(pathToFileURL(path.join(c, "index.mjs")).href)); } catch {}
