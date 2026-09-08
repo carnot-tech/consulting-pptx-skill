@@ -83,7 +83,8 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 | `scripts/check_deck.py` | 規約の機械チェック（HTML / PPTX 両対応。テンプレ集の検査は `--template`）。タイトルの「N段階」と本文の連番の食い違いも FAIL にする |
 | `scripts/check_layout.mjs` | HTMLデッキの実レンダリング検査（フッターとの重なり・右端/下端のはみ出し） |
 | `assets/SlideCatalog_16x9.pdf` | **62型のスライド型カタログ（両パーツ集を印刷した62ページ）。型を探すときの入口** |
-| `_archive/pipeline/` | 旧 SlideSpec パイプライン（JSON → HTMLプレビュー → 編集可能PPTX）。編集可能PPTXが必要なときだけ参照。`_archive/assets/SuperTemplate_62type.pptx` はその見本帳 |
+| `assets/SuperTemplate_62type.pptx` | 旧パイプラインが書き出した62型のPPTX見本帳（全スライド編集可能）。PowerPointで手動コピーして使うときの見本。パーツ集の正本ではない |
+| `_archive/pipeline/` | 旧 SlideSpec パイプライン（JSON → HTMLプレビュー → 編集可能PPTX）。編集可能PPTXが必要なときだけ参照 |
 
 ## カスタマイズ
 
