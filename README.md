@@ -3,6 +3,8 @@
 **AIに「まじ」なPowerPointを作らせるためのClaude Codeスキル。**
 スライド作成規約（約110項目）＋機械チェック＋**62型のスライド型カタログ**（すべて SlideSpec から編集可能PPTXで書き出せる）＋自由記述HTMLパーツ集＋生成パイプライン（HTMLプレビュー→編集可能PPTX）の一式です。
 
+作り方の本線は**自由記述**（HTMLパーツ集をコピーして1枚ずつ組む）で、SlideSpec パイプラインは「たたき台を秒で出す」「編集可能PPTXで渡す」ときの補助経路です。どちらで作っても、規約 → 機械チェック → 別エージェントのレビュー、の順は同じです。
+
 A Claude Code skill for generating boardroom-quality decks: a 62-archetype slide catalog, every archetype exportable as natively editable PPTX from a JSON SlideSpec, a freeform HTML parts library, a render pipeline (HTML preview → editable PPTX), a slide-design rulebook, and an automated rule checker.
 
 私たちが実際に毎週の提案書・報告書づくりで使っている仕組みの公開版です。解説記事はこちら → [AIにまじなスライド作らせる（note）](https://note.com/jinbaflow/n/nc8372b84e572)
@@ -34,43 +36,11 @@ A Claude Code skill for generating boardroom-quality decks: a 62-archetype slide
 
 「62型」は作れる見せ方の上限ではありません。実際のデッキでは、型を組み合わせたり崩したりして規約の範囲で自由に組むので、見せ方のパターンはこれより多くなります。型カタログは「レイアウトの発想帳」として使い、合わなければ捨ててください。
 
-内訳は、もともとの SlideSpec 36型のうち表紙を除く35型と、自由記述パーツ集の27パーツを SlideSpec の型として実装したもの（`pipeline/scripts/archetypes/`、型ID一覧は下）。`pipeline/slide-spec/super_template.json` には63型（36＋27）の完成 SlideSpec が入っており、どの型も `npm run export` で編集可能PPTXになります。もともとの36型は [docs/catalog/](docs/catalog/) に1枚ずつ画像でも置いています（テンプレ再描画: `TEMPLATE_MODE=1 npm run render -- slide-spec/super_template.json generated/super_template.html`。型名だけのタイトルは通常の最短字数チェックに引っかかるため、この環境変数で検証を外します）。
+内訳は、もともとの SlideSpec 36型のうち表紙を除く35型と、自由記述パーツ集の27パーツを SlideSpec の型として実装したもの（`pipeline/scripts/archetypes/`、型ID一覧は下）。`pipeline/slide-spec/super_template.json` には63型（36＋27）の完成 SlideSpec が入っており、どの型も `npm run export` で編集可能PPTXになります。もともとの36型は [docs/catalog/](docs/catalog/) に1枚ずつ画像でも置いています（既定の warm スキンで再生成済み）（テンプレ再描画: `TEMPLATE_MODE=1 npm run render -- slide-spec/super_template.json generated/super_template.html`。型名だけのタイトルは通常の最短字数チェックに引っかかるため、この環境変数で検証を外します）。
 
 カタログPDFと62型PPTXの再生成は `python3 scripts/build_slide_catalog.py`（要: `pipeline/` で `npm run setup` 済み、`pip3 install python-pptx`、LibreOffice）。配色は自由記述パーツ集・SlideSpec 生成デッキ・カタログのすべてで同じ暖色系（warm）が既定です。ネイビー系にするときは SlideSpec ルートに `"skin": "cool"`、個別の色は `palette` で上書きできます。
 
-### パーツ由来の27型（`parts` フィールドに中身を書く）
-
-| パーツ | 型ID | 型名 | parts の中身 |
-| --- | --- | --- | --- |
-| 01 | `title_page` | 表紙 | parts.title: 資料タイトル（明朝 34pt）／parts.subtitle: 副題（明朝アクセント 15pt。「ラベル：Text に基づく整理」のように何に基づく資料かを1行で）／parts.lead: 任意。副題の下に置く2〜3行の説明（11pt） |
-| 02 | `overview_map` | 全体マップ | parts.rows: [{label, text, ref}] 3〜6行。label は明朝の見出し語、text は1〜2行の要約、ref は「→ P.n」 |
-| 03 | `table_of_contents` | 目次 | parts.items: [{n, text, page}] 3〜6行。n は「01」等の番号、text は章タイトル（章扉・セパレーターと同じ文言）、page は「P.4」 |
-| 04 | `section_divider` | 章扉 | parts.no: 章番号（「01」などのラベル。明朝アクセント 15pt・字間広め）／parts.title: 章タイトル（明朝 30pt。目次と同じ文言）／parts.desc: 任意。章の一行説明（12pt アクセント） |
-| 05 | `chevron_steps` | 矢羽（プロセス・変遷） | parts.steps: [{n, title, text}] 3〜6個。n は時点・番号（例 YYYY年M月／現在／1）、title は矢羽の見出し、text は1〜2行の補足。色分けするなら legend で凡例を付ける |
-| 06 | `premise_conclusion` | 前提→帰結の2カラム | parts.left: {header, rows:[[軸, 本文], ...]}（見出し行なしの2列表。軸は時点や区分）／parts.right: {header:「だから、〜」, bullets:[]}（語尾は階層内で統一） |
-| 07 | `stat_table_readout` | 大型数値の表＋読み取り | parts.left: {header, rows:[[軸, 大型数値, 補足], ...]}（見出し行なしの3列表。数値は 14pt 太字）／parts.right: {header:「だから、こう読める」, bullets:[]} |
-| 08 | `card_grid_2x2` | 並列カード 2×2 | parts.cards: [{n?, title, bullets:[] ／ body}] 4枚（左上→右上→左下→右下）。title は「主語＋何をする」で統一、bullets は2〜3行。n は任意の番号（省略可） |
-| 09 | `axis_table` | 軸のある表 | parts.headers: 列見出し（先頭が軸）／parts.cols: [{w, axis}] 幅比と軸指定／parts.rows: セルは文字列か {text／bullets:[], bold} |
-| 10 | `back_cover` | 裏表紙 | parts.company: 会社名（明朝 22pt）／parts.contact: 連絡先（明朝アクセント 15pt。部署・メール等を1行）。主張文や CTA は置かない |
-| 11 | `claim_panel_figure` | 主張パネル＋図 | parts.panel: {n: 番号, label: 区分名, claim: この1枚の主張（1文）}／parts.right: {axisTitle: 指標名, unit: 単位・期間（右寄せ）, rows: [[軸ラベル, 大きめの値ラベル, 本文], ...]} 2〜4行。右の表は見出し行なし（軸列＝明朝アクセント＋右太罫、2列目＝14pt太字、3列目＝本文） |
-| 12 | `lever_effect_table` | 打ち手の効果表 | parts.headers: 列見出し3つ [打ち手, 効果の幅（単位）, 前提・制約]／parts.rows: [{axis: 打ち手名, effect: {dir: 'up'／'dn', label: 矢印内の文字（＋00〜00 等）, pct: 0〜1 の幅比}, bullets: [補足1, 補足2]}] 2〜5行。bullets の代わりに text（文字列）も可／parts.legend: {up, dn} 凡例の文言（既定「増やす方向」「減らす方向」） |
-| 13 | `status_heatmap_comment` | 状態ヒートマップ＋右コメント | parts.axisTitle: 左の軸見出し（例「指標カテゴリー別の状況」）／parts.unit: 右寄せの時点（YYYY年M月時点）／parts.colHeaders: 列見出し（先頭が軸列、以降が比較軸。例 [指標カテゴリー, 前月比, 前年比]）／parts.rows: [{label, values: [0〜4, ...]}] 3〜6行。値は 4=大きく改善（濃）… 0=横ばい（淡灰）／parts.legend: [{v: 0〜4, label}] 凡例（既定: 大きく改善/改善/横ばい/悪化）／parts.commentTitle: 右カラム見出し（既定「だから、次に見るべき点」）／parts.comments: [文字列] 2〜4件 |
-| 14 | `harvey_ball_table` | 充足度評価表（ハーベイボール） | parts.headers: 列見出し [評価軸, 案1, 案2, ..., 判断の理由]（先頭が軸列、最後が理由列、その間が玉の列）／parts.rows: [{axis: 評価軸名, values: [0〜4, ...] 案ごとの充足度（4=満たす, 2=半分, 0=満たさない）, bullets: [理由1, 理由2]}] 3〜5行。bullets の代わりに text（文字列）も可／parts.legend: [{q: 0〜4, label}]（既定: 満たす/一部満たす/満たさない） |
-| 15 | `dot_matrix_share` | 割合のドットマトリクス | parts.header: 軸見出し（明朝）／parts.unit: 右端の単位・母数（例「回答者に占める割合、n=ラベル 2、複数回答」）／parts.columns: [{value:'00%', pct:0-100, label}] 2〜5列。pct の分だけ 10×10 の点を左上から行方向に塗る（value は表示文字列） |
-| 16 | `progress_bubble_matrix` | 進捗バブル行列 | parts.header: 軸見出し／parts.unit: 単位・母数（例「件、n=ラベル 1」）／parts.colHeaders: 列見出し（段階）3〜5列／parts.rows: [{axis, values:[number]}] 3〜6行。values は件数（0 は円なし）。円の面積が値に比例し、最大値が最大径になる／parts.legend: 任意。右下の凡例文（例「円の面積＝件数」） |
-| 17 | `ranked_bar_annotated` | 分布の順位棒＋注記 | parts.axisTitle: 軸見出し／parts.unit: 単位行／parts.bars: [{label, value, highlight?}] 降順に並べる（多数可。15本以下なら項目名と値を表示）／parts.topLabel・parts.otherLabel: 凡例の文言（既定「上位N社」「その他」）／parts.readout: {title, bullets:[]} 右の「だから」見出しと箇条書き |
-| 18 | `scatter_annotated` | 注記つき散布図 | parts.axisTitle: 軸見出し（「Text 1とText 2の関係」）／parts.unit: 単位行／parts.points: [{label, x, y, highlight?}] x・y は 0〜100 の位置（実値なら parts.xMax/yMax を与える）／parts.refLines: [{axis:'x'／'y', value, label}] 破線の参照線／parts.annotations: {topLeft, bottomLeft, bottomRight, topRight} 図中の斜体注記 |
-| 19 | `pillars_foundation` | 柱＋土台 | parts.pillars: [{title, text}] 3〜5本（薄い塗り・見出し11pt太字＋本文9pt・縦中央）／parts.bases: [{lead, text}] 1〜3本の濃色帯（lead はアクセント色太字、text は白）。単数なら parts.base:{lead,text} でも可 |
-| 20 | `opposing_chevrons` | 対向シェブロン | parts.left / parts.right: 文字列の配列（各 3〜5項目、10pt、細罫で区切って縦に等分）／parts.center: [{text, alt?}] 中央の目的ブロック 1〜3個（濃色、alt:true はアクセント色。改行は \n）。中央幅は 46mm 固定 |
-| 21 | `evidence_clip_grid` | 外部動向の根拠グリッド | parts.clips: [{tag, date, headline, text}] 4〜6枚（4枚まで2列、5〜6枚は3列）。tag は濃色の小さな分類チップ、date は斜体の日付・媒体、headline は明朝11pt太字、text は要旨 8.5pt。出典は item.source に「Source 1（YYYY年M月D日）」の形で |
-| 22 | `proportional_circles` | 比例円の対比 | parts.axisTitle: 軸見出し／parts.unit: 単位行／parts.items: [{heading, value, size, label}] 左から順。heading=円の上の見出し（「現在（YYYY年）」）、value=円内の大型数値（表示文字列）、size=面積の元になる数値、label=数値の下の説明。2件推奨（3件以上は棒グラフを検討） |
-| 23 | `delta_bars_totals` | 増減の縦棒＋左右合計 | parts.axisTitle: 軸見出し／parts.unit: 単位行／parts.categories: [{label, up, down}] 項目ごとの増分（正数）と減分（正数で与える）／parts.upLabel・parts.downLabel: 「増える分」「減る分」／parts.upTotal・parts.downTotal: 左の大型数値（省略時は合計）／parts.showValues: 棒内に値を出す（既定 false） |
-| 24 | `scenario_lines_cagr` | シナリオ線＋成長率チップ | parts.axisTitle: 軸見出し／parts.unit: 単位行／parts.categories: ['YYYY', ...] 年（3〜8点）／parts.series: [{name, values:[], chip}] 上から濃色→淡色（最大3本）。name は凡例の文言、chip は成長率チップの表示（「27%」）／parts.chipTitle: チップ列の見出し（既定「年平均成長率」）／parts.endLabels: 終点に値を出す（既定 true）／parts.yMin: 値軸の下限（既定 0。高い水準から始まる系列で差を見せたいときだけ） |
-| 25 | `research_basis` | 調査の土台 | parts.methodTitle: 左カラム見出し（既定「調べ方」）／parts.methods: [文字列] 調べ方のブレット 2〜4件／parts.targetTitle: 右カラム見出し（既定「調べた対象」）／parts.targets: [{n: 大型数値＋単位（ラベル 1社 / Nか月）, text: 内訳の説明}] 2〜4行 |
-| 26 | `issue_action_columns` | 課題と打ち手の2カラム | parts.rows: [{issue:{label, text}, action:{label, text}}] 3〜5行（左右で行を対応させる。段階ビルドアップなら action を省いた1枚を先に出す）／parts.headers: {issue, action}（既定「いま起きている課題」「これから打つ手」） |
-| 27 | `agenda_separator` | セパレーター（章扉＝アジェンダ再掲） | parts.items: [{n, text, page, current}] 目次（パーツ03）と並び・文言を完全一致させる。current:true の1行だけ現在地として強調（番号 19pt アクセント・タイトル 21pt 濃色）、他行は補助色 |
-
-型の追加・修正は `pipeline/scripts/archetypes/README.md` の手順で（1ファイル=1型。`QA_OUT=... bash scripts/qa_parts.sh <id>` で HTML パーツと並べて目視QA）。
+型ID・使いどころ・SlideSpec のフィールド仕様（パーツ由来27型の `parts` の中身を含む）は **[references/archetype-catalog.md](references/archetype-catalog.md)** に1本化しています。ここには重複して載せません。
 
 ## 作り方は2経路、型カタログは1本
 
@@ -80,6 +50,8 @@ A Claude Code skill for generating boardroom-quality decks: a 62-archetype slide
 | **SlideSpec パイプライン** | `pipeline/slide-spec/super_template.json`（63型＝36＋パーツ由来27） | **編集可能なPPTX** | たたき台を秒で出す・PowerPointで渡す・カタログの62型どれでも |
 
 どちらの型も **タイトル欄は型名だけ**で、見本の主張文は置いていません。見本文があると文型がそのまま真似され、主張ではなくテンプレを写した資料になるからです（slide-rules §2.8）。タイトルは必ずストーリーラインから起こして差し替えます。
+
+**色と書体も両経路で同じ既定**です（暖色系 warm スキン: 生成りの地・濃茶の文字・茶のアクセント、見出し明朝・本文ゴシック）。トークンの正本は `pipeline/html-css/consulting-slide-system.css` の `:root`、自由記述テンプレの `<style>` 冒頭 `:root` はその写しです。ネイビー系にするときは SlideSpec ルートに `"skin": "cool"`（テンプレ側はコメント同梱の値に差し替え）。
 
 プレースホルダーの書き方は両経路で統一しています: 本文 `Text 1`、項目名 `ラベル 1`、見出し `タイトル 1`、数値 `00`、年 `YYYY年`、指標行 `指標名、単位、YYYY〜YYYY年`、出典 `出典：Source 1`。`check_deck.py` はこれらが納品デッキに残っていたら **FAIL**、タイトルの文型が6割以上同じなら **WARN** にします（テンプレ集そのものを検査するときだけ `--template`）。
 
@@ -179,7 +151,7 @@ Node.jsが無い環境でも、カタログPDFで型を選び、見本帳PPTXか
 ## カスタマイズ
 
 - **いちばん効くのは slide-rules.md への追記**です。レビューで受けた指摘を1行ずつ足していくと、御社専用の資料作成AIに育ちます
-- SlideSpecルートの `palette` でブランドカラーを一括差し替えできます（`schema.json` 参照）
+- 色・書体は自由記述テンプレと SlideSpec で同じ既定（warm）です。ブランド色にするときは、自由記述はテンプレ冒頭の `:root` トークン、SlideSpec はルートの `palette`（個別上書き）か `"skin": "cool"`（ネイビー系）で差し替えます（`schema.json` 参照）
 - 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈が入ります。SlideSpecルートの `attribution` で無効化（`false`）・文言差し替え（文字列）ができます
 
 ## About
