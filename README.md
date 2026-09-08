@@ -158,7 +158,7 @@ node ../scripts/check_layout.mjs generated/deck.html                            
 
 | パス | 内容 |
 | --- | --- |
-| `SKILL.md` | 実運用フロー＋型カタログの一覧（AIへの指示書。これがスキルの本体） |
+| `SKILL.md` | 思想（規約が上位・型は発想帳）と実運用フロー（AIへの指示書。これがスキルの本体。詳細は `references/` に委譲） |
 | `templates/freeform_parts_16x9.html` | 自由記述パーツ集（27パーツ・1パーツ=1スライド・16:9）。本線の作り方 |
 | `pipeline/` | 生成スクリプト（validate / render / qa / export / shots）＋CSS |
 | `pipeline/scripts/archetypes/` | パーツ由来27型の実装（1ファイル=1型。PPTX描画＋example）。`README.md` に追加手順 |
@@ -166,6 +166,7 @@ node ../scripts/check_layout.mjs generated/deck.html                            
 | `pipeline/slide-spec/example_deck.json` | 記入例3枚（上のプレビュー画像の元データ） |
 | `pipeline/slide-spec/schema.json` | SlideSpecスキーマ |
 | `references/slide-rules.md` | スライド作成ルール正典（約110項目） |
+| `references/archetype-catalog.md` | 62型の型カタログ（型ID・使いどころ・SlideSpecのフィールド仕様）。型を選ぶときに読む |
 | `references/content-review-prompt.md` | フレッシュアイ・レビューの指示文。機械チェックのあと、作り方を伏せた別エージェントにデッキのファイルを渡して日本語・論理・破綻を拾わせ、採否表にして直す |
 | `scripts/check_deck.py` | 規約の機械チェック（PPTX / HTML両対応。要 `pip3 install python-pptx`。テンプレ集の検査は `--template`）。タイトルの「N段階」と本文の連番の食い違いも FAIL にする |
 | `scripts/check_layout.mjs` | HTMLデッキの実レンダリング検査（フッターとの重なり・右端/下端のはみ出し） |

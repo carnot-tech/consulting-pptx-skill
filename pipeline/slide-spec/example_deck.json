@@ -105,7 +105,13 @@
           "implication": "連携が必須要件なら自社開発"
         }
       ],
-      "source": "出典：各社提案書より当社作成、2026年8月"
+      "source": "出典：各社提案書より当社作成、2026年8月",
+      "headers": {
+        "criterion": "評価軸",
+        "company": "自社開発",
+        "competitor": "SaaS導入",
+        "implication": "含意"
+      }
     }
   ]
 }
