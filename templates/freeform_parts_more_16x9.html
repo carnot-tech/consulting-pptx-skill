@@ -211,6 +211,9 @@ body {
 .sinner > .content {
   align-self: center;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .footer {
@@ -394,6 +397,10 @@ body {
 .comparison {
   display: grid;
   grid-template-columns: 1.1fr 0.8fr 0.8fr 1.6fr;
+}
+
+.comparison > div:nth-last-child(-n+4) {
+  border-bottom: 0; /* 最終行（4列）の下に罫線を置かない（§5.4） */
 }
 
 .comparison > div {
@@ -684,18 +691,20 @@ body {
   vertical-align: top;
 }
 
+.risk-table tbody tr:last-child td {
+  border-bottom: 0; /* 行き先のない罫線を置かない（§5.4） */
+}
+
 .scenario-table .num {
   color: var(--blue);
   font-size: 19px; /* rule 6: body emphasis must not exceed the header size */
   font-weight: 700;
 }
 
-.risk-high {
-  border-left: 5px solid var(--rose);
-}
-
+/* risk-high / risk-med の左端の赤・黄の帯は信号機3色（ai-smell-lexicon §3）なので廃止。重要セルは太字で立てる */
+.risk-high,
 .risk-med {
-  border-left: 5px solid var(--warning);
+  border-left: 0;
 }
 
 .dashboard {
@@ -831,6 +840,10 @@ body {
 .decision-list {
   display: grid;
   gap: 18px;
+}
+
+.decision-item:last-child {
+  border-bottom: 0;
 }
 
 .decision-item {
@@ -1766,7 +1779,7 @@ body {
 
 .twf-bar.base { background: var(--navy); }
 .twf-bar.up { background: var(--blue); }
-.twf-bar.down { background: var(--rose); }
+.twf-bar.down { background: var(--cyan); } /* 減る分は中立色。赤は「悪化」の意味にだけ使う（§5.8） */
 .twf-bar.total { background: var(--ink); }
 
 .twf-label {
