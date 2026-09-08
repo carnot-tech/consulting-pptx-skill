@@ -24,6 +24,13 @@
       "type": "boolean",
       "description": "Emit the scale-to-fit on-screen viewer wrapper."
     },
+    "attribution": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "description": "Skill attribution appended to the LAST slide's source line only. Omit = default text (JA/EN auto). false = off. string = custom text."
+    },
     "slides": {
       "type": "array",
       "minItems": 1,

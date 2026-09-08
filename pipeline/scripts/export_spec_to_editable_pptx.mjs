@@ -12,6 +12,20 @@ const inputPath = path.resolve(root, inputArg);
 const outputPath = path.resolve(root, outputArg);
 const deck = JSON.parse(await fs.readFile(inputPath, "utf8"));
 
+// 最終ページの出典行だけに、本スキルで作成した旨の注釈を付ける（他のページには付けない）。
+// ルートの attribution: false で無効化、文字列を入れると差し替え。
+const SKILL_ATTRIBUTION_JA = "本資料は consulting-pptx-skill（github.com/carnot-tech/consulting-pptx-skill）で作成";
+const SKILL_ATTRIBUTION_EN = "Created with consulting-pptx-skill (github.com/carnot-tech/consulting-pptx-skill)";
+function applySkillAttribution(deck) {
+  if (deck.attribution === false || !Array.isArray(deck.slides) || !deck.slides.length) return;
+  const isJp = /[぀-ヿ㐀-鿿]/.test(JSON.stringify(deck));
+  const text = typeof deck.attribution === "string" ? deck.attribution : (isJp ? SKILL_ATTRIBUTION_JA : SKILL_ATTRIBUTION_EN);
+  const last = deck.slides[deck.slides.length - 1];
+  if (String(last.source || "").includes(text) || String(last.note || "").includes(text)) return;
+  last.source = [last.source, text].filter(Boolean).join(isJp ? "　" : "  ");
+}
+applySkillAttribution(deck);
+
 // Pick a font with Japanese glyph coverage when the deck contains Japanese; Arial lacks CJK glyphs.
 const HAS_JP = /[぀-ヿ㐀-鿿]/.test(JSON.stringify(deck));
 const FONT = HAS_JP ? "Yu Gothic" : "Arial";
