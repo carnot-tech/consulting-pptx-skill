@@ -11,27 +11,27 @@
     （テンプレートのタイトルに引っ張られない）。
     実デッキでは h1 を必ずストーリーラインから起こした主張文に差し替える（slide-rules §2.8）。
   納品前: check_deck.py で FAIL 0 → PDF化して全ページ目視。
-  配色・書体は <style> 冒頭の :root トークンで一括管理（Bレーンの cool スキンと同一の既定）。自ブランドにするときはトークンだけ差し替える。
+  配色・書体は <style> 冒頭の :root トークンで一括管理（Bレーンの既定 warm スキンと同一）。自ブランドにするときはトークンだけ差し替える。
   ============================================================
 -->
 <style>
-/* ── デザイントークン（Bレーン pipeline/html-css/consulting-slide-system.css の cool スキンと同一。A/B で既定の色・書体を揃える） ── */
+/* ── デザイントークン（Bレーン pipeline/html-css/consulting-slide-system.css の既定 warm スキンと同一。A/B で既定の色・書体を揃える） ── */
 :root{
-  --page-bg:#f2f2f0; --slide-bg:#ffffff;
-  --ink:#050505;        /* 本文 */
-  --navy:#071b2c;       /* 見出し・罫線・濃色パネル */
-  --accent:#1e5f8c;     /* 軸ラベル・番号・強調 */
-  --cyan:#79c8dc;       /* 三角矢印・濃色パネル上の小見出し・淡い強調 */
-  --muted:#666b70;      /* 出典・注記 */
-  --rule:#b9bec3;       /* 行間罫 */
-  --hairline:#d9dcdf;   /* さらに薄い罫・非強調セル */
-  --soft:#e7f4f8;       /* 塗りカード・矢羽・ステップ */
+  --page-bg:#f2efe9; --slide-bg:#ffffff;
+  --ink:#322014;        /* 本文 */
+  --navy:#322014;       /* 見出し・罫線・濃色パネル（変数名は Bレーン CSS と共通のため navy のまま） */
+  --accent:#5a3921;     /* 軸ラベル・番号・強調 */
+  --cyan:#c5a681;       /* 三角矢印・濃色パネル上の小見出し・淡い強調 */
+  --muted:#8a7b6b;      /* 出典・注記 */
+  --rule:#c5a681;       /* 行間罫 */
+  --hairline:#e2dcd2;   /* さらに薄い罫・非強調セル */
+  --soft:#efeee8;       /* 塗りカード・矢羽・ステップ */
   --font-sans:"Helvetica Neue",Arial,Helvetica,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
   --font-serif:"Hiragino Mincho ProN","Yu Mincho","Songti SC",Georgia,"Times New Roman",serif;
 }
-/* warm スキン（Bレーンの {"skin":"warm"} と同一）にするときは :root を次に差し替える:
-   --page-bg:#efece5; --slide-bg:#fffdf9; --ink:#241a10; --navy:#241a10; --accent:#6b4a2b; --cyan:#c9a97e;
-   --muted:#8a7c6c; --rule:#c7b69e; --hairline:#e3dccf; --soft:#f1ebe0; */
+/* cool スキン（ネイビー。Bレーンの {"skin":"cool"} と同一）にするときは :root を次に差し替える:
+   --page-bg:#f2f2f0; --slide-bg:#ffffff; --ink:#050505; --navy:#071b2c; --accent:#1e5f8c; --cyan:#79c8dc;
+   --muted:#666b70; --rule:#b9bec3; --hairline:#d9dcdf; --soft:#e7f4f8; */
 @page{size:338.67mm 190.5mm;margin:0}
 html,body{margin:0;background:var(--page-bg);font-family:var(--font-sans);color:var(--navy)}
 .s{width:338.67mm;height:190.5mm;background:var(--slide-bg);position:relative;margin:8mm auto;box-sizing:border-box;padding:9mm 16mm 0 16mm;overflow:hidden;page-break-after:always;display:flex;flex-direction:column;align-items:stretch}

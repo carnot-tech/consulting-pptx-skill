@@ -104,10 +104,10 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 
 ## カラーカスタマイズ
 
-**A・B 両レーンの既定は同じ**（ネイビー系 cool スキン。本文ゴシック・見出し明朝）。トークンの正本は `pipeline/html-css/consulting-slide-system.css` の `:root` で、`templates/freeform_parts_16x9.html` の `<style>` 冒頭 `:root` はその写し。片方を変えたらもう片方も揃える。
+**A・B 両レーンの既定は同じ**（暖色系 warm スキン: 生成りの地・濃茶の文字・茶のアクセント。本文ゴシック・見出し明朝）。ネイビー系は `cool` スキンとして残してある。トークンの正本は `pipeline/html-css/consulting-slide-system.css` の `:root` で、`templates/freeform_parts_16x9.html` の `<style>` 冒頭 `:root` はその写し。片方を変えたらもう片方も揃える。
 
-- Aレーン: テンプレ冒頭の `:root` トークンを差し替える（warm 用の値はコメントで同梱）
-- Bレーン: SlideSpecのルートに `"skin": "warm"` を入れると HTML・PPTX とも warm に切り替わる。`palette` オブジェクトで個別の色を上書きできる（`schema.json` 参照）
+- Aレーン: テンプレ冒頭の `:root` トークンを差し替える（cool 用の値はコメントで同梱）
+- Bレーン: SlideSpecのルートに `"skin": "cool"` を入れると HTML・PPTX ともネイビー系に切り替わる。`palette` オブジェクトで個別の色を上書きできる（`schema.json` 参照）
 
 その際も以下は守る:
 

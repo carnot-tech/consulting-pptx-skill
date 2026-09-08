@@ -34,8 +34,8 @@ FONTS_CONF = """<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fo
 <alias binding="strong"><family>Yu Mincho Demibold</family><prefer><family>Yu Mincho Demibold</family><family>YuMincho</family><family>Yu Mincho</family><family>Hiragino Mincho ProN</family></prefer></alias>
 </fontconfig>"""
 
-# カタログは HTML パーツ集（ブラウン系）と配色を揃える。SlideSpec に palette が無いときだけ注入する。
-# 生成デッキの既定色（ネイビー）は変えない。自社色にするときは SlideSpec ルートの palette を使う。
+# カタログの配色。生成デッキの既定（warm）・HTML パーツ集と同じ値（pipeline/html-css の :root と export の既定が正本）。
+# SlideSpec に palette が無いときだけ注入する（既定と同値なので見た目は変わらない）。
 CATALOG_PALETTE = {"ink": "322014", "navy": "322014", "blue": "5A3921", "cyan": "C5A681", "muted": "8A7B6B",
                    "hair": "E2DCD2", "rose": "A22727", "softBlue": "EFEEE8", "green": "5A3921", "warning": "C5A681"}
 
