@@ -3,3 +3,8 @@ generated/
 __pycache__/
 .DS_Store
 package-lock.json
+
+# Microsoft Office temporary files
+~$*.pptx
+~$*.xlsx
+~$*.docx
