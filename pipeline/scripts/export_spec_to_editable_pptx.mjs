@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import pptxgen from "pptxgenjs";
+import { fixPptxShapeIds } from "./fix_pptx_shape_ids.mjs";
 
 const inputArg = process.argv[2] || "slide-spec/example_deck.json";
 const outputArg = process.argv[3] || "generated/example_deck_editable.pptx";
@@ -1761,5 +1762,9 @@ deck.slides.forEach((item, i) => {
 flushBalancedSlides();
 
 await fs.mkdir(path.dirname(outputPath), { recursive: true });
-await pptx.writeFile({ fileName: outputPath });
-console.log(JSON.stringify({ outputPath, slideCount: deck.slides.length, editable: true }, null, 2));
+const rawBuffer = await pptx.write({ outputType: "nodebuffer" });
+const { buffer: fixedBuffer, report: shapeIdFixes } = await fixPptxShapeIds(rawBuffer);
+await fs.writeFile(outputPath, fixedBuffer);
+console.log(
+  JSON.stringify({ outputPath, slideCount: deck.slides.length, editable: true, shapeIdFixes }, null, 2),
+);

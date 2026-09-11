@@ -13,6 +13,9 @@ import { applyTargetedRevision } from "../scripts/apply_targeted_revision.mjs";
 import { runPipeline } from "../scripts/run_pipeline.mjs";
 import { logExperience } from "../scripts/log_experience.mjs";
 import { parseStorylineReview, parseFreshEyeReview, parseVisualQa } from "../scripts/review_output_parser.mjs";
+import { dedupeSlideShapeIds, fixPptxShapeIds } from "../scripts/fix_pptx_shape_ids.mjs";
+import { auditPptxStructure } from "../scripts/audit_pptx_structure.mjs";
+import JSZip from "jszip";
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -363,4 +366,68 @@ test("run_pipeline: does not resume past an LLM stage whose output file fails va
 
   const result = await runPipeline({ mode: "standard", ghostDeckPath, specPath, outDir });
   assert.equal(result.nextAction.stage, "visual_qa_llm");
+});
+
+test("fix_pptx_shape_ids: renumbers a table's cNvPr id that collides with an earlier shape's id", () => {
+  // Reproduces the real pptxgenjs@4.0.1 bug: a table's graphicFrame id is computed as
+  // `intTableNum * slide._slideNum + 1`, unrelated to how many shapes already exist on the
+  // slide, so it can collide with an already-used <p:cNvPr id>. This is invalid OOXML and is
+  // what caused a real PowerPoint "repair" prompt on a generated deck.
+  const xml = `<p:spTree><p:cNvPr id="1" name=""/><p:cNvPr id="2" name="Text 0"/><p:cNvPr id="3" name="Text 1"/><p:cNvPr id="4" name="Shape 2"/><p:cNvPr id="4" name="Table 0"/></p:spTree>`;
+  const { xml: fixed, changed, renumbered } = dedupeSlideShapeIds(xml);
+  assert.equal(changed, true);
+  assert.deepEqual(renumbered, [{ from: 4, to: 5 }]);
+  const ids = [...fixed.matchAll(/id="(\d+)"/g)].map((m) => m[1]);
+  assert.deepEqual(ids, ["1", "2", "3", "4", "5"]);
+  assert.equal(new Set(ids).size, ids.length, "every cNvPr id must be unique after the fix");
+});
+
+test("fix_pptx_shape_ids: leaves an already-unique slide untouched", () => {
+  const xml = `<p:spTree><p:cNvPr id="1" name=""/><p:cNvPr id="2" name="Text 0"/><p:cNvPr id="3" name="Table 0"/></p:spTree>`;
+  const { xml: fixed, changed } = dedupeSlideShapeIds(xml);
+  assert.equal(changed, false);
+  assert.equal(fixed, xml);
+});
+
+test("fix_pptx_shape_ids: repairs duplicate ids inside a real generated .pptx zip", async () => {
+  const zip = new JSZip();
+  const dupSlide = `<p:sld><p:cSld><p:spTree><p:cNvPr id="1" name=""/><p:cNvPr id="2" name="Text 0"/><p:cNvPr id="3" name="Text 1"/><p:cNvPr id="4" name="Shape 2"/><p:cNvPr id="4" name="Table 0"/></p:spTree></p:cSld></p:sld>`;
+  zip.file("ppt/slides/slide1.xml", dupSlide);
+  zip.file("ppt/slides/slide2.xml", `<p:sld><p:cSld><p:spTree><p:cNvPr id="1" name=""/><p:cNvPr id="2" name="Text 0"/></p:spTree></p:cSld></p:sld>`);
+  const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+  const { buffer: fixedBuffer, report } = await fixPptxShapeIds(buffer);
+  assert.equal(report.length, 1, "only the slide with a real collision should be reported");
+  assert.equal(report[0].slide, "ppt/slides/slide1.xml");
+
+  const fixedZip = await JSZip.loadAsync(fixedBuffer);
+  const fixedSlide1 = await fixedZip.file("ppt/slides/slide1.xml").async("string");
+  const ids = [...fixedSlide1.matchAll(/id="(\d+)"/g)].map((m) => m[1]);
+  assert.equal(new Set(ids).size, ids.length);
+  const fixedSlide2 = await fixedZip.file("ppt/slides/slide2.xml").async("string");
+  assert.equal(fixedSlide2, `<p:sld><p:cSld><p:spTree><p:cNvPr id="1" name=""/><p:cNvPr id="2" name="Text 0"/></p:spTree></p:cSld></p:sld>`);
+});
+
+test("audit_pptx_structure: flags a duplicate cNvPr id (the class of defect that triggers PowerPoint repair)", async () => {
+  const zip = new JSZip();
+  const dupSlide = `<p:sld><p:cSld><p:spTree><p:cNvPr id="1" name=""/><p:cNvPr id="2" name="Text 0"/><p:cNvPr id="2" name="Table 0"/></p:spTree></p:cSld></p:sld>`;
+  zip.file("[Content_Types].xml", `<Types><Default Extension="xml" ContentType="application/xml"/></Types>`);
+  zip.file("ppt/slides/slide1.xml", dupSlide);
+  const buffer = await zip.generateAsync({ type: "nodebuffer" });
+  const result = await auditPptxStructure(buffer);
+  assert.equal(result.passed, false);
+  assert.ok(result.errors.some((e) => e.includes('duplicate <p:cNvPr id="2">')));
+});
+
+test("audit_pptx_structure: a freshly exported deck (with a table slide) passes with zero findings", async () => {
+  const outPath = path.join(tmpDir, "audit-fixture.pptx");
+  await fs.mkdir(tmpDir, { recursive: true });
+  await execFileAsync("node", [
+    path.join(root, "scripts/export_spec_to_editable_pptx.mjs"),
+    path.join(root, "test/integration/ma-investment-committee/spec.json"),
+    outPath,
+  ]);
+  const buffer = await fs.readFile(outPath);
+  const result = await auditPptxStructure(buffer);
+  assert.deepEqual(result, { passed: true, errors: [] });
 });
