@@ -21,6 +21,7 @@ import {
   preFamilyIrToIssueTree,
   preFamilyIrToRoadmapPhases,
   preFamilyIrToKpiDashboard,
+  preFamilyIrToComparisonTable,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -376,6 +377,129 @@ test("kpi_dashboard end to end: 3/4/5-KPI fixtures (incl. the full standard vari
     const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
     assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
   }
+});
+
+// --- RP-COMPARISON-TABLE-01 (Library v0.2, second pattern) ---
+
+function cmpCandidateElements(gid, label, cells, opts = {}) {
+  const els = [{ semanticRole: "title", groupId: gid, value: label, ...(opts.highlight ? { emphasis: true } : {}) }];
+  cells.forEach((cell) => els.push({ semanticRole: "value", groupId: gid, value: cell }));
+  if (opts.recommendationValue) els.push({ semanticRole: "recommendationValue", groupId: gid, value: opts.recommendationValue });
+  return els;
+}
+
+test("reference_pattern_selector: 2-5 candidates x matching criteria/value counts select RP-COMPARISON-TABLE-01", async () => {
+  const criteria = ["Fit", "Risk"];
+  const irOf = (n) => ({
+    elements: [
+      ...criteria.map((c) => ({ semanticRole: "title", groupId: "criteria", value: c })),
+      ...Array.from({ length: n }, (_, i) => cmpCandidateElements(`c${i}`, `Candidate ${i}`, ["○|ok", "○|ok"])).flat(),
+    ],
+    relationships: [],
+  });
+  const two = await selectPattern({ family: "comparison-table", variant: "standard" }, irOf(2));
+  assert.equal(two.eligibility, "PASS");
+  assert.equal(two.selectedPattern, "RP-COMPARISON-TABLE-01");
+
+  const five = await selectPattern({ family: "comparison-table", variant: "standard" }, irOf(5));
+  assert.equal(five.eligibility, "PASS");
+
+  const one = await selectPattern({ family: "comparison-table", variant: "standard" }, irOf(1));
+  assert.equal(one.eligibility, "FAIL", "1 candidate is nothing to compare");
+
+  const six = await selectPattern({ family: "comparison-table", variant: "standard" }, irOf(6));
+  assert.equal(six.eligibility, "FAIL", "6+ candidates should defer to a dense table");
+});
+
+test("reference_pattern_selector: a candidate with a mismatched cell count (missing/extra value) is rejected", async () => {
+  const ir = {
+    elements: [
+      { semanticRole: "title", groupId: "criteria", value: "Fit" },
+      { semanticRole: "title", groupId: "criteria", value: "Risk" },
+      ...cmpCandidateElements("a", "A", ["○|ok", "○|ok"]),
+      ...cmpCandidateElements("b", "B", ["○|ok"]), // missing 1 value cell
+    ],
+    relationships: [],
+  };
+  const result = await selectPattern({ family: "comparison-table", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: comparison_table adapter builds candidates/cells, highlight, recommendation row, and summary panel", () => {
+  const ir = {
+    elements: [
+      { semanticRole: "title", groupId: "criteria", value: "Strategic Fit" },
+      { semanticRole: "title", groupId: "criteria", value: "Synergy" },
+      ...cmpCandidateElements("cand-a", "候補A", ["○|方向性は一致", "○|中程度"], { recommendationValue: "△|非推奨" }),
+      ...cmpCandidateElements("cand-b", "候補B", ["◎|中核戦略に合致", "◎|大きい"], { highlight: true, recommendationValue: "◎|最有力" }),
+      { semanticRole: "title", groupId: "recommendation", value: "Recommendation" },
+      { semanticRole: "title", groupId: "comparisonSummary", value: "総括" },
+      { semanticRole: "bullets", groupId: "comparisonSummary", value: "候補Bが最良" },
+      { semanticRole: "body", groupId: "comparisonSummary", value: "候補Bを推奨する。" },
+      { semanticRole: "chartCaption", groupId: "comparisonSummary", value: "結論" },
+    ],
+    relationships: [],
+  };
+  const result = preFamilyIrToComparisonTable(ir);
+  assert.deepEqual(result.comparison.criteria, ["Strategic Fit", "Synergy"]);
+  assert.equal(result.comparison.candidates.length, 2);
+  assert.deepEqual(result.comparison.candidates[0].cells[0], { symbol: "○", caption: "方向性は一致" });
+  assert.equal(result.comparison.candidates[0].highlight, undefined);
+  assert.equal(result.comparison.candidates[1].highlight, true);
+  assert.deepEqual(result.comparison.recommendation, {
+    label: "Recommendation",
+    cells: [{ symbol: "△", caption: "非推奨" }, { symbol: "◎", caption: "最有力" }],
+  });
+  assert.deepEqual(result.comparisonSummary, { points: ["候補Bが最良"], title: "総括", conclusion: "候補Bを推奨する。", conclusionLabel: "結論" });
+});
+
+test("pre_family_ir_to_slide_spec: comparison_table adapter rejects an unknown rating symbol", () => {
+  const ir = {
+    elements: [
+      { semanticRole: "title", groupId: "criteria", value: "Fit" },
+      { semanticRole: "title", groupId: "criteria", value: "Risk" },
+      ...cmpCandidateElements("a", "A", ["★|ok", "○|ok"]), // ★ is not a valid rating symbol
+      ...cmpCandidateElements("b", "B", ["○|ok", "○|ok"]),
+    ],
+    relationships: [],
+  };
+  assert.throws(() => preFamilyIrToComparisonTable(ir), /◎\/○\/△\/×/);
+});
+
+test("comparison_table end to end: the reference image's own 5-criteria x 3-candidate + recommendation + summary composition renders with 0 QA findings and exports to a clean PPTX", async () => {
+  const criteria = ["Strategic Fit（戦略との整合性）", "Synergy Potential（シナジー創出の可能性）", "Execution Risk（実行リスク）", "Investment Size（投資規模）", "PMI Complexity（PMIの複雑性）"];
+  const ir = {
+    elements: [
+      ...criteria.map((c) => ({ semanticRole: "title", groupId: "criteria", value: c })),
+      ...cmpCandidateElements("cand-a", "候補A", ["○|方向性は一致", "○|中程度", "○|管理可能", "△|大きい", "△|高い"], { recommendationValue: "△|非推奨" }),
+      ...cmpCandidateElements("cand-b", "候補B", ["◎|中核戦略に合致", "◎|大きい", "○|管理可能", "○|中程度", "○|中程度"], { highlight: true, recommendationValue: "◎|最有力" }),
+      ...cmpCandidateElements("cand-c", "候補C", ["○|一部で整合", "△|限定的", "△|不確実性が高い", "○|小さい", "○|低い"], { recommendationValue: "△|慎重に検討" }),
+      { semanticRole: "title", groupId: "recommendation", value: "Recommendation（総合評価）" },
+      { semanticRole: "title", groupId: "comparisonSummary", value: "総括" },
+      { semanticRole: "bullets", groupId: "comparisonSummary", value: "候補Bは戦略適合とシナジーのバランスが最良" },
+      { semanticRole: "bullets", groupId: "comparisonSummary", value: "候補Aは投資負担が重い" },
+      { semanticRole: "bullets", groupId: "comparisonSummary", value: "候補Cは実行リスクが相対的に高い" },
+      { semanticRole: "body", groupId: "comparisonSummary", value: "中長期の成長に向けて、候補Bを優先的に検討することを推奨する。" },
+    ],
+    relationships: [],
+  };
+  const selection = await selectPattern({ family: "comparison-table", variant: "standard" }, ir);
+  assert.equal(selection.eligibility, "PASS", JSON.stringify(selection.rejectedCandidates));
+  const slide = preFamilyIrToSlideSpec(selection, ir, { title: "戦略オプションを主要評価軸で比較する", source: "Source: test" });
+
+  const specPath = path.join(tmpDir, "cmp-e2e-spec.json");
+  const htmlPath = path.join(tmpDir, "cmp-e2e.html");
+  await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+  const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+  const gateReport = JSON.parse(gateResult.stdout);
+  assert.equal(gateReport.passed, true, JSON.stringify(gateReport.errors));
+
+  const pptxPath = path.join(tmpDir, "cmp-e2e.pptx");
+  await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+  const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+  assert.deepEqual(auditResult, { passed: true, errors: [] });
 });
 
 test("render_html_screenshots: an issue_tree root box does not false-positive as overflow (matches qa_html_deck.mjs's own .ltree exclusion)", async () => {

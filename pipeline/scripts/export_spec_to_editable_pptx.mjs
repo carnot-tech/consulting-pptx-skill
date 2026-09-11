@@ -545,7 +545,88 @@ function addWaterfall(item, pageNum) {
   addInsightPanel(slide, item.sections?.[0], 7.5, 2.15, 4.7, 1.45);
 }
 
+const CMP_SYMBOL_COLOR = { "◎": BLUE, "○": INK, "△": WARNING, "×": ROSE };
+
+// symbol + caption as 2 text runs (symbol colored/bold) — mirrors render_spec_to_html.mjs's
+// cmpCellHtml, native-table cell instead of a styled <span> pair.
+function cmpCellRuns(cell, opts = {}) {
+  if (!cell) return "";
+  const runs = [];
+  if (cell.symbol) runs.push({ text: `${cell.symbol}  `, options: { color: CMP_SYMBOL_COLOR[cell.symbol] || INK, bold: true, ...opts } });
+  runs.push({ text: cell.caption, options: { color: opts.color || INK, bold: !!opts.bold } });
+  return runs;
+}
+
+// N-candidate matrix mode mirror of render_spec_to_html.mjs#renderComparisonMatrix — a native
+// pptxgenjs table (criteria rows x candidate columns, symbol+caption per cell) plus an
+// optional 総括 summary panel beside it.
+function addComparisonMatrix(item, pageNum) {
+  const slide = addShell(item, pageNum);
+  const c = item.comparison;
+  const s = item.comparisonSummary;
+  const tableW = s ? 8.1 : W - M * 2;
+  const critW = 2.5;
+  const candW = (tableW - critW) / c.candidates.length;
+
+  const headerRow = [
+    { text: "", options: { fill: { color: NAVY } } },
+    ...c.candidates.map((cand) => ({
+      text: cand.label,
+      options: { bold: true, color: WHITE, align: "center", valign: "middle", fontSize: 12.5, fill: { color: cand.highlight ? BLUE : NAVY } },
+    })),
+  ];
+  const bodyRows = c.criteria.map((criterion, ri) => [
+    { text: criterion, options: { bold: true, fontSize: 10.5, align: "left", valign: "middle", border: [{ type: "none" }, { type: "none" }, { type: "solid", pt: 0.5, color: HAIR }, { type: "none" }] } },
+    ...c.candidates.map((cand) => ({
+      text: cmpCellRuns(cand.cells[ri]),
+      options: { align: "center", valign: "middle", fontSize: 10, fill: cand.highlight ? { color: SOFTBLUE } : undefined, border: [{ type: "none" }, { type: "none" }, { type: "solid", pt: 0.5, color: HAIR }, { type: "solid", pt: 0.5, color: HAIR }] },
+    })),
+  ]);
+  if (c.recommendation) {
+    bodyRows.push([
+      { text: c.recommendation.label, options: { bold: true, fontSize: 10.5, align: "left", valign: "middle" } },
+      ...c.candidates.map((cand, ci) => {
+        const highlight = cand.highlight;
+        return {
+          text: cmpCellRuns(c.recommendation.cells[ci], highlight ? { color: WHITE, bold: true } : { bold: true }),
+          options: { align: "center", valign: "middle", fontSize: 10.5, fill: { color: highlight ? NAVY : WHITE }, border: [{ type: "none" }, { type: "none" }, { type: "none" }, { type: "solid", pt: 0.5, color: HAIR }] },
+        };
+      }),
+    ]);
+  }
+  const headerH = 0.4;
+  const bodyH = Math.min(0.85, (FOOTER_Y - 0.3 - (2.22 + headerH)) / bodyRows.length);
+  slide.addTable([headerRow, ...bodyRows], {
+    x: M, y: 2.22, w: tableW, h: headerH + bodyH * bodyRows.length,
+    colW: [critW, ...Array(c.candidates.length).fill(candW)],
+    rowH: [headerH, ...bodyRows.map(() => bodyH)],
+    fontFace: FONT, autoPage: false,
+  });
+
+  if (s) {
+    const x = M + tableW + 0.4;
+    const w = W - M - x;
+    slide.addShape(pptx.ShapeType.rect, { x, y: 2.22, w, h: FOOTER_Y - 2.22, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+    const pad = 0.18;
+    addBodyText(slide, s.title || "総括", x + pad, 2.22 + pad, w - pad * 2, 0.26, { fontSize: 12, bold: true });
+    let y = 2.22 + pad + 0.36;
+    s.points.forEach((text, i) => {
+      slide.addShape(pptx.ShapeType.ellipse, { x: x + pad, y: y + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
+      addBodyText(slide, String(i + 1), x + pad, y + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+      addBodyText(slide, text, x + pad + 0.32, y, w - pad * 2 - 0.32, 0.5, { fontSize: 11.5 });
+      y += 0.5;
+    });
+    if (s.conclusion) {
+      y += 0.14;
+      slide.addShape(pptx.ShapeType.line, { x: x + pad, y, w: w - pad * 2, h: 0, line: { color: HAIR, width: 0.75 } });
+      addBodyText(slide, s.conclusionLabel || "結論", x + pad, y + 0.12, w - pad * 2, 0.2, { fontSize: 9.5, bold: true, color: MUTED });
+      addBodyText(slide, s.conclusion, x + pad, y + 0.34, w - pad * 2, FOOTER_Y - (y + 0.34), { fontSize: 12, bold: true });
+    }
+  }
+}
+
 function addComparison(item, pageNum) {
+  if (item.comparison) return addComparisonMatrix(item, pageNum);
   const slide = addShell(item, pageNum);
   const h = item.headers || {};
   const headers = [h.criterion || "評価軸", h.company || "自社", h.competitor || "他社", h.implication || "読み取り"];

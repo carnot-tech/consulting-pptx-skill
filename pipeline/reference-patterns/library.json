@@ -94,6 +94,32 @@
       ],
       "slideSpecTemplate": "kpi_dashboard",
       "slideSpecShape": "kpiDashboard"
+    },
+    {
+      "patternId": "RP-COMPARISON-TABLE-01",
+      "name": "Comparison Table",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-COMPARISON-TABLE-01.jpg — Library v0.2, second pattern implemented (independently defined for this project, not part of the external Visual Planner project's own library). The existing comparison_table template already had a 2-candidate + per-row-implication flat shape (proven in the M&A investment-committee deck) — this pattern adds a second, richer shape (N candidates x criteria grid + a side 総括 summary panel) rather than replacing it.",
+      "useWhen": "2-5 named candidates/options are evaluated against a SHARED set of qualitative criteria (not raw numeric comparison), each cell rated on a closed ◎/○/△/× scale with a short caption — and the slide's point is which candidate to pick, not a per-criterion narrative implication.",
+      "requiredSemanticRoles": ["title (criterion label) per criterion, >=2 criteria", "title (candidate label) + value (rated cell, one per criterion) per candidate, 2-5 candidates"],
+      "optionalSemanticRoles": [
+        "emphasis=true on a candidate's title element to highlight that column as the leading option",
+        "a recommendation group (title = row label, one value cell per candidate) as a bottom summary row inside the table itself",
+        "a slide-level comparisonSummary panel beside the table: numbered points + a highlighted conclusion sentence"
+      ],
+      "relationshipsRequired": [],
+      "visualIntent": "compare",
+      "densityRange": "medium",
+      "emphasisModel": "at most 1 candidate column may be highlighted (authored, never inferred from which column 'looks' best).",
+      "supportingBand": "optional — the comparisonSummary panel (総括 + 結論), distinct from any single cell.",
+      "doNotUseWhen": [
+        "only 1 candidate exists — there is nothing to compare",
+        "6+ candidates — this becomes a dense table, not this pattern",
+        "cell content is raw comparable numbers rather than a qualitative rating — a chart or a plain data table is more honest",
+        "the point is a per-criterion narrative read-out for exactly 自社 vs 他社 — the existing flat table/headers shape (criterion+company+competitor+implication) already covers that case and stays supported"
+      ],
+      "slideSpecTemplate": "comparison_table",
+      "slideSpecShape": "comparisonTable"
     }
   ]
 }

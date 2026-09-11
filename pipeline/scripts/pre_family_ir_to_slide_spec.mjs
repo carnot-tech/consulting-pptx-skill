@@ -269,6 +269,83 @@ export function preFamilyIrToKpiDashboard({ elements, relationships }) {
   return result;
 }
 
+const CMP_RESERVED_GROUP_IDS = new Set(["criteria", "recommendation", "comparisonSummary"]);
+function isCmpCandidateGroup(groupId) {
+  return groupId != null && !CMP_RESERVED_GROUP_IDS.has(groupId);
+}
+const CMP_SYMBOLS = new Set(["◎", "○", "△", "×"]);
+
+// "◎|中核戦略に合致" -> {symbol:"◎", caption:"中核戦略に合致"} (a symbol is optional: a bare
+// caption with no "|" is valid too). Mirrors kpi_dashboard's comma-separated `spark` encoding
+// — one element carrying a small structured value, rather than a relationship/sub-group, for
+// a leaf-level cell that doesn't need its own identity.
+function parseCmpCell(raw, context) {
+  const parts = raw.split("|");
+  if (parts.length > 2) throw new Error(`comparison_table adapter: ${context} value "${raw}" has more than one "|" separator`);
+  if (parts.length === 2) {
+    const [symbol, caption] = parts;
+    if (!CMP_SYMBOLS.has(symbol)) throw new Error(`comparison_table adapter: ${context} symbol "${symbol}" is not one of ◎/○/△/×`);
+    return { symbol, caption };
+  }
+  return { caption: parts[0] };
+}
+
+export function preFamilyIrToComparisonTable({ elements }) {
+  const byGroup = elementsByGroupId(elements);
+
+  const criteria = (byGroup.get("criteria") || []).filter((e) => e.semanticRole === "title").map((e) => e.value);
+  if (criteria.length < 2) throw new Error(`comparison_table adapter: expected >=2 criteria, found ${criteria.length}`);
+
+  const candidateEntries = [...byGroup.entries()].filter(([gid]) => isCmpCandidateGroup(gid));
+  if (candidateEntries.length < 2 || candidateEntries.length > 5) {
+    throw new Error(`comparison_table adapter: expected 2-5 candidates, found ${candidateEntries.length}`);
+  }
+  const candidates = candidateEntries.map(([gid, els]) => {
+    const label = findRole(els, "title");
+    if (!label) throw new Error(`comparison_table adapter: candidate group "${gid}" has no title (label) element`);
+    const valueEls = els.filter((e) => e.semanticRole === "value");
+    if (valueEls.length !== criteria.length) {
+      throw new Error(`comparison_table adapter: candidate group "${gid}" has ${valueEls.length} value cells, expected ${criteria.length} (one per criterion)`);
+    }
+    const candidate = { label, cells: valueEls.map((e, i) => parseCmpCell(e.value, `candidate "${gid}" criterion[${i}]`)) };
+    if (els.some((e) => e.semanticRole === "title" && e.emphasis === true)) candidate.highlight = true;
+    return candidate;
+  });
+
+  const result = { comparison: { criteria, candidates } };
+
+  const recEls = byGroup.get("recommendation");
+  if (recEls) {
+    const label = findRole(recEls, "title");
+    if (!label) throw new Error('comparison_table adapter: "recommendation" group has no title (row label) element');
+    const cells = candidateEntries.map(([gid, els]) => {
+      const raw = findRole(els, "recommendationValue");
+      if (raw == null) throw new Error(`comparison_table adapter: candidate group "${gid}" has no recommendationValue (required once a "recommendation" group is authored)`);
+      return parseCmpCell(raw, `candidate "${gid}" recommendation`);
+    });
+    result.comparison.recommendation = { label, cells };
+  }
+
+  const summaryEls = byGroup.get("comparisonSummary");
+  if (summaryEls) {
+    const points = summaryEls.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+    if (points.length) {
+      const summary = { points };
+      const title = findRole(summaryEls, "title");
+      if (title) summary.title = title;
+      const conclusion = findRole(summaryEls, "body");
+      if (conclusion) {
+        summary.conclusion = conclusion;
+        const conclusionLabel = findRole(summaryEls, "chartCaption");
+        if (conclusionLabel) summary.conclusionLabel = conclusionLabel;
+      }
+      result.comparisonSummary = summary;
+    }
+  }
+
+  return result;
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -303,6 +380,7 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   else if (selection.slideSpecShape === "tree") body = preFamilyIrToIssueTree(preFamilyIR);
   else if (selection.slideSpecShape === "phases") body = preFamilyIrToRoadmapPhases(preFamilyIR);
   else if (selection.slideSpecShape === "kpiDashboard") body = preFamilyIrToKpiDashboard(preFamilyIR);
+  else if (selection.slideSpecShape === "comparisonTable") body = preFamilyIrToComparisonTable(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {

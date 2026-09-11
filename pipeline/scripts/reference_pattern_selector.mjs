@@ -47,6 +47,7 @@ const FAMILY_VARIANT_MAP = {
   "hierarchy|standard": ["RP-HIERARCHY-WORKSTREAM-01"],
   "roadmap-phaseband|standard": ["RP-PMI-ROADMAP-01"],
   "kpi-dashboard|standard": ["RP-KPI-EXEC-DASHBOARD-01"],
+  "comparison-table|standard": ["RP-COMPARISON-TABLE-01"],
 };
 
 export async function runRegistryConsistencyGate(registry, library) {
@@ -190,6 +191,33 @@ function checkKpiCountInRange(elements, min, max) {
   return { pass: qualifying.length >= min && qualifying.length <= max, count: qualifying.length };
 }
 
+// Comparison-table groups are identified by convention, same idiom as KPI tiles: any group
+// that isn't the 2 reserved container ids ("criteria", "recommendation") is a candidate
+// column. No relationship type is needed here either — the grid is entirely positional (row
+// order = criteria's own array order; a candidate's Nth "value" element answers the Nth
+// criterion), same discipline KPI tiles already established for order-without-relationships.
+const CMP_RESERVED_GROUP_IDS = new Set(["criteria", "recommendation", "comparisonSummary"]);
+function isCmpCandidateGroup(groupId) {
+  return groupId != null && !CMP_RESERVED_GROUP_IDS.has(groupId);
+}
+function checkComparisonShapeValid(elements, minCandidates, maxCandidates, minCriteria) {
+  const byGroup = elementsByGroupId(elements);
+  const criteriaEls = (byGroup.get("criteria") || []).filter((e) => e.semanticRole === "title");
+  if (criteriaEls.length < minCriteria) return { pass: false, reason: `only ${criteriaEls.length} criteria (need >=${minCriteria})` };
+  const candidateEntries = [...byGroup.entries()].filter(([gid]) => isCmpCandidateGroup(gid));
+  if (candidateEntries.length < minCandidates || candidateEntries.length > maxCandidates) {
+    return { pass: false, reason: `${candidateEntries.length} candidates (need ${minCandidates}-${maxCandidates})` };
+  }
+  for (const [gid, els] of candidateEntries) {
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `candidate group "${gid}" has no title (label) element` };
+    const values = els.filter((e) => e.semanticRole === "value");
+    if (values.length !== criteriaEls.length) {
+      return { pass: false, reason: `candidate group "${gid}" has ${values.length} value cells, expected ${criteriaEls.length} (one per criterion)` };
+    }
+  }
+  return { pass: true, candidateCount: candidateEntries.length, criteriaCount: criteriaEls.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -257,6 +285,11 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
       const r = checkKpiCountInRange(elements, min, max);
       if (r.pass) evidence.push(`KPI_COUNT_IN_RANGE passed: ${r.count} qualifying KPI groups (${min}-${max})`);
       else failedChecks.push(`KPI_COUNT_IN_RANGE failed: ${r.count} qualifying KPI groups, need ${min}-${max}`);
+    } else if (checkName === "COMPARISON_SHAPE_VALID") {
+      const def = registryEntry.structuralCheckDefinitions?.COMPARISON_SHAPE_VALID || {};
+      const r = checkComparisonShapeValid(elements, def.minCandidates ?? 2, def.maxCandidates ?? 5, def.minCriteria ?? 2);
+      if (r.pass) evidence.push(`COMPARISON_SHAPE_VALID passed: ${r.candidateCount} candidates x ${r.criteriaCount} criteria`);
+      else failedChecks.push(`COMPARISON_SHAPE_VALID failed: ${r.reason}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }

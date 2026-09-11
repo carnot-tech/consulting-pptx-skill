@@ -305,6 +305,12 @@
         "keyMessage": {
           "type": "string"
         },
+        "comparison": {
+          "$ref": "#/$defs/comparisonTable"
+        },
+        "comparisonSummary": {
+          "$ref": "#/$defs/comparisonSummary"
+        },
         "multiples": {
           "type": "array",
           "minItems": 2,
@@ -660,6 +666,21 @@
           "then": {
             "required": [
               "kpis"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "template": {
+                "const": "comparison_table"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              { "required": ["table"] },
+              { "required": ["comparison"] }
             ]
           }
         },
@@ -1497,6 +1518,71 @@
             "type": "string"
           }
         }
+      }
+    },
+    "comparisonCell": {
+      "type": "object",
+      "required": ["caption"],
+      "properties": {
+        "symbol": {
+          "enum": ["◎", "○", "△", "×"]
+        },
+        "caption": {
+          "type": "string"
+        }
+      }
+    },
+    "comparisonTable": {
+      "type": "object",
+      "required": ["criteria", "candidates"],
+      "properties": {
+        "criteria": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" }
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["label", "cells"],
+            "properties": {
+              "label": { "type": "string" },
+              "highlight": { "type": "boolean" },
+              "cells": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/comparisonCell" }
+              }
+            }
+          }
+        },
+        "recommendation": {
+          "type": "object",
+          "required": ["label", "cells"],
+          "properties": {
+            "label": { "type": "string" },
+            "cells": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/comparisonCell" }
+            }
+          }
+        }
+      }
+    },
+    "comparisonSummary": {
+      "type": "object",
+      "required": ["points"],
+      "properties": {
+        "title": { "type": "string" },
+        "points": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "conclusionLabel": { "type": "string" },
+        "conclusion": { "type": "string" }
       }
     },
     "kpiTrendChart": {

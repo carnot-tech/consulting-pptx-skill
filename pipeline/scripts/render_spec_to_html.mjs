@@ -293,7 +293,53 @@ function renderWaterfall(slide, n) {
   );
 }
 
+// ◎/○/△/× -> CSS class names (avoids relying on unicode class selectors in the stylesheet).
+const CMP_SYMBOL_CLASS = { "◎": "great", "○": "good", "△": "caution", "×": "poor" };
+
+function cmpCellHtml(cell) {
+  if (!cell) return "";
+  const symbol = cell.symbol ? `<span class="cmp-symbol ${CMP_SYMBOL_CLASS[cell.symbol] || ""}">${esc(cell.symbol)}</span>` : "";
+  return `${symbol}<span class="cmp-caption">${esc(cell.caption)}</span>`;
+}
+
+// N-candidate matrix mode (RP-COMPARISON-TABLE-01): evaluation criteria as rows, candidates
+// as columns, each cell a rating symbol (◎/○/△/×) + short caption, an optional recommendation
+// row, and an optional 総括 summary panel (numbered points + a highlighted conclusion) beside
+// the table. Used when the spec authors `comparison` instead of `table`/`headers` — the old
+// flat shape (fixed company/competitor/implication columns) is unchanged and still supported.
+function renderComparisonMatrix(slide, n) {
+  const c = slide.comparison;
+  const nCand = c.candidates.length;
+  const cols = `1.3fr repeat(${nCand}, 1fr)`;
+  const headCells = c.candidates
+    .map((cand) => `<div class="cmp-candhead${cand.highlight ? " highlight" : ""}">${esc(cand.label)}</div>`)
+    .join("");
+  const rows = c.criteria
+    .map((criterion, ri) => {
+      const cells = c.candidates
+        .map((cand) => `<div class="cmp-cell${cand.highlight ? " highlight" : ""}">${cmpCellHtml(cand.cells[ri])}</div>`)
+        .join("");
+      return `<div class="cmp-criterion">${esc(criterion)}</div>${cells}`;
+    })
+    .join("");
+  const recRow = c.recommendation
+    ? `<div class="cmp-criterion cmp-reclabel">${esc(c.recommendation.label)}</div>${c.candidates
+        .map((cand, ci) => `<div class="cmp-cell cmp-rec${cand.highlight ? " highlight" : ""}">${cmpCellHtml(c.recommendation.cells[ci])}</div>`)
+        .join("")}`
+    : "";
+  const table = `<div class="cmp-grid" style="grid-template-columns: ${cols};"><div class="cmp-corner"></div>${headCells}${rows}${recRow}</div>`;
+
+  const s = slide.comparisonSummary;
+  const summary = s
+    ? `<div class="cmp-summary"><div class="section-label">${esc(s.title || "総括")}</div><ol class="cmp-points">${s.points
+        .map((p, i) => `<li><span class="ki-num">${i + 1}</span><span>${esc(p)}</span></li>`)
+        .join("")}</ol>${s.conclusion ? `<div class="cmp-conclusion"><div class="cmp-conclusion-label">${esc(s.conclusionLabel || "結論")}</div><div>${esc(s.conclusion)}</div></div>` : ""}</div>`
+    : "";
+  return shell(slide, n, `<div class="cmp-wrap${s ? "" : " single"}">${table}${summary}</div>`);
+}
+
 function renderComparison(slide, n) {
+  if (slide.comparison) return renderComparisonMatrix(slide, n);
   // Column headers are localizable via slide.headers (English defaults keep old specs working).
   const h = slide.headers || {};
   const heads = [

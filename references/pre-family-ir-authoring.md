@@ -142,6 +142,41 @@ multi-period time-series comparison in its own right rather than a snapshot (→
 template), or the point is comparing named options against each other (→
 RP-COMPARISON-TABLE-01).
 
+## Comparison table (RP-COMPARISON-TABLE-01, Library v0.2) → `comparison_table` (`comparisonTable` shape)
+
+Independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-COMPARISON-TABLE-01.jpg`. The existing
+`comparison_table` template's flat shape (`headers`/`table`: fixed criterion+company+
+competitor+implication columns, proven in the M&A investment-committee deck) is unchanged and
+stays the right choice for a plain 自社 vs 他社 per-row narrative. This pattern is a second,
+richer shape for N candidates rated against shared criteria.
+
+- **Criteria**: a group literally named `"criteria"` containing ordered `"title"` elements —
+  one per evaluation row. >=2 required.
+- **2 to 5 candidate groups** (any groupId except the 3 reserved ones below), each:
+  - `"title"` — the candidate's label. Mark `emphasis: true` on it to highlight that column
+    as the leading option (at most 1 candidate should carry this).
+  - `"value"` elements, exactly one per criterion, in the SAME order as the `criteria` group —
+    the Nth value answers the Nth criterion. Each value's `value` string is
+    `"<symbol>|<caption>"` (e.g. `"◎|中核戦略に合致"`) where symbol is one of `◎`/`○`/`△`/`×`
+    — or just a bare caption with no `|` when no rating symbol applies.
+- **Optional recommendation row**: a group literally named `"recommendation"` with one
+  `"title"` element (the row's own label, e.g. "Recommendation（総合評価）"). Once authored,
+  EVERY candidate group must also carry a `"recommendationValue"` element (same
+  `"symbol|caption"` encoding) — this becomes a distinct, bolded bottom row in the table.
+- **Optional summary panel**: a group literally named `"comparisonSummary"` beside the table —
+  `"bullets"` elements (the numbered 総括 points), an optional `"title"` (panel heading,
+  defaults to "総括"), and an optional `"body"` element (the 結論 conclusion sentence — only
+  rendered as its own highlighted block if present) with an optional `"chartCaption"` element
+  for the conclusion's own label (defaults to "結論").
+- No relationship type is required — like KPI tiles, this grid is entirely positional (row
+  order = `criteria`'s own array order; a candidate's Nth value answers the Nth criterion).
+
+**Do not use when**: only 1 candidate exists, 6+ candidates are authored (→ a dense table is
+more honest), cell content is raw comparable numbers rather than a qualitative rating (→ a
+chart or plain data table), or the point is a per-criterion narrative read-out for exactly
+自社 vs 他社 (→ the existing flat `table`/`headers` shape, still fully supported).
+
 ## What NOT to do
 
 - Don't author a pattern's `elements`/`relationships` first and decide the family afterward —

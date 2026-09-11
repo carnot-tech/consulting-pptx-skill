@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "1d27568612770d13f64041f9af2b78a7a4eaf0a6bf9cd0ee8e1eb1235704ebea"
+    "sha256": "6eec069161a87ab13d98ddb17a02f8cac281b76e7b4452f6caeabc074b8234f6"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
@@ -77,6 +77,21 @@
           "min": 3,
           "max": 5,
           "description": "count of groupIds that are not a reserved container id (\"insights\"/\"trendChart\"/\"trendChart-*\") and have both a title and a value element — must be 3-5."
+        }
+      },
+      "disqualifiers": []
+    },
+    "RP-COMPARISON-TABLE-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [],
+      "structuralChecks": ["COMPARISON_SHAPE_VALID"],
+      "structuralCheckDefinitions": {
+        "COMPARISON_SHAPE_VALID": {
+          "minCandidates": 2,
+          "maxCandidates": 5,
+          "minCriteria": 2,
+          "description": "the \"criteria\" group has >=minCriteria title elements; every non-reserved group (a candidate) has a title element and exactly as many value elements as there are criteria."
         }
       },
       "disqualifiers": []
