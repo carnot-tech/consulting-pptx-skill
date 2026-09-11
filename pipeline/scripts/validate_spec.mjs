@@ -21,11 +21,18 @@ const slideDef = defs.slide;
 const slideProps = slideDef.properties;
 const templateEnum = new Set(slideProps.template.enum);
 
+// Most templates' `then` is a flat { required: [...] } (AND — every field must be present).
+// A few (e.g. matrix_2x2, which accepts either the scatter `items` shape or the quadrant-
+// panel `quadrants` shape) instead use { anyOf: [{required:[...]}, ...] } (OR — at least one
+// alternative's fields must all be present). Both are recorded uniformly as an array of
+// alternatives so the per-slide check below only has one code path to run.
 const conditionalRequired = new Map();
 for (const clause of slideDef.allOf || []) {
   const tmpl = clause?.if?.properties?.template?.const;
-  const req = clause?.then?.required || [];
-  if (tmpl && req.length) conditionalRequired.set(tmpl, req);
+  if (!tmpl) continue;
+  const then = clause?.then || {};
+  const alternatives = then.anyOf ? then.anyOf.map((alt) => alt.required || []) : then.required ? [then.required] : [];
+  if (alternatives.some((alt) => alt.length)) conditionalRequired.set(tmpl, alternatives);
 }
 
 const errors = [];
@@ -95,9 +102,13 @@ if (!spec.deckTitle || !Array.isArray(spec.slides) || spec.slides.length === 0) 
     return;
   }
   if (isEmpty(slide.title)) errors.push(`${at}: title is required`);
-  for (const field of conditionalRequired.get(slide.template) || []) {
-    if (isEmpty(slide[field])) {
-      errors.push(`${at}: template "${slide.template}" requires field "${field}" but it is missing/empty`);
+  const alternatives = conditionalRequired.get(slide.template) || [];
+  if (alternatives.length) {
+    const satisfied = alternatives.some((fields) => fields.every((field) => !isEmpty(slide[field])));
+    if (!satisfied) {
+      const describe = (fields) => (fields.length > 1 ? `all of [${fields.join(", ")}]` : `field "${fields[0]}"`);
+      const options = alternatives.map(describe).join(" OR ");
+      errors.push(`${at}: template "${slide.template}" requires ${options}, but none are fully present`);
     }
   }
   // Deep-validate every present, schema-known field.

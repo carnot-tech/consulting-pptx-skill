@@ -442,7 +442,57 @@ function addChartInsight(item, pageNum) {
   addInsightPanel(slide, item.sections?.[0], 7.5, 2.25, 4.8, 1.55);
 }
 
+// quadrant-panel mode mirror of render_spec_to_html.mjs#renderMatrixQuadrants — same
+// QUADRANT_ORDER, same field semantics (priorityLabel/title/body/evidence vs plain label).
+const QUADRANT_ORDER = ["top-left", "top-right", "bottom-left", "bottom-right"];
+
+function addMatrixQuadrants(item, pageNum) {
+  const slide = addShell(item, pageNum);
+  const x = M;
+  const y = 2.08;
+  const w = 6.8;
+  const h = 3.95;
+  const gap = 0.04;
+  const cw = (w - gap) / 2;
+  const ch = (h - gap) / 2;
+  const yAxis = item.matrix?.yAxis || "";
+  const xAxis = item.matrix?.xAxis || "";
+  addBodyText(slide, yAxis, x, y - 0.3, 3.2, 0.22, { fontSize: 10.5, bold: true, color: MUTED });
+  addBodyText(slide, xAxis, x + w - 3.2, y + h + 0.06, 3.2, 0.22, { fontSize: 10.5, bold: true, color: MUTED, align: "right" });
+
+  const byPosition = new Map((item.quadrants || []).map((q) => [q.position, q]));
+  QUADRANT_ORDER.forEach((pos, i) => {
+    const q = byPosition.get(pos);
+    const cx = x + (i % 2) * (cw + gap);
+    const cy = y + Math.floor(i / 2) * (ch + gap);
+    const fill = q?.emphasis ? NAVY : WHITE;
+    const textColor = q?.emphasis ? WHITE : INK;
+    slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: cw, h: ch, fill: { color: fill }, line: { color: INK, width: 0.75 } });
+    if (!q) return;
+    const pad = 0.16;
+    let ty = cy + pad;
+    if (q.priorityLabel) {
+      addBodyText(slide, q.priorityLabel, cx + pad, ty, cw - pad * 2, 0.24, { fontSize: 9.5, bold: true, color: textColor });
+      ty += 0.3;
+    }
+    const isHero = Boolean(q.title || q.body);
+    if (isHero) {
+      addBodyText(slide, q.title || "", cx + pad, ty, cw - pad * 2, 0.5, { fontSize: 13, bold: true, color: textColor });
+      ty += 0.5;
+      if (q.body) {
+        addBodyText(slide, q.body, cx + pad, ty, cw - pad * 2, ch - (ty - cy) - pad - (q.evidence ? 0.3 : 0), { fontSize: 10.5, color: q.emphasis ? WHITE : MUTED });
+      }
+      if (q.evidence) {
+        addBodyText(slide, q.evidence, cx + pad, cy + ch - pad - 0.24, cw - pad * 2, 0.24, { fontSize: 9, color: q.emphasis ? WHITE : MUTED });
+      }
+    } else {
+      addBodyText(slide, q.label || q.title || "", cx + pad, ty, cw - pad * 2, ch - (ty - cy) - pad, { fontSize: 12.5, bold: true, color: textColor });
+    }
+  });
+}
+
 function addMatrix(item, pageNum) {
+  if (Array.isArray(item.quadrants)) return addMatrixQuadrants(item, pageNum);
   const slide = addShell(item, pageNum);
   const x = M;
   const y = 2.08;

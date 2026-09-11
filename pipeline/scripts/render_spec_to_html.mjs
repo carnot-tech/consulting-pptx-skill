@@ -230,7 +230,34 @@ function renderChartInsight(slide, n) {
   );
 }
 
+// quadrant-panel mode: each quadrant is a labeled panel (priorityLabel + title + body +
+// evidence, or just a single-sentence label for the "plain" variant), not a plotted point.
+// Used when the spec authors `quadrants` instead of `items` — see RP-MATRIX-HERO-01 /
+// RP-MATRIX-PLAIN-01 in the Reference Pattern Library, which require 2 authored axes plus
+// per-quadrant content richer than a scattered label can hold.
+const QUADRANT_ORDER = ["top-left", "top-right", "bottom-left", "bottom-right"];
+
+function renderMatrixQuadrants(slide, n) {
+  const byPosition = new Map((slide.quadrants || []).map((q) => [q.position, q]));
+  const cells = QUADRANT_ORDER.map((pos) => {
+    const q = byPosition.get(pos);
+    if (!q) return `<div class="mq-cell"></div>`;
+    const isHero = Boolean(q.title || q.body);
+    const badge = q.priorityLabel ? `<span class="mq-badge">${esc(q.priorityLabel)}</span>` : "";
+    const inner = isHero
+      ? `${badge}<div class="mq-title">${esc(q.title || "")}</div>${q.body ? `<div class="mq-body">${esc(q.body)}</div>` : ""}${q.evidence ? `<div class="mq-evidence">${esc(q.evidence)}</div>` : ""}`
+      : `${badge}<div class="mq-label">${esc(q.label || q.title || "")}</div>`;
+    return `<div class="mq-cell${q.emphasis ? " emphasis" : ""}">${inner}</div>`;
+  }).join("");
+  return shell(
+    slide,
+    n,
+    `<div class="matrix-quad"><div class="matrix-axis-y">${esc(slide.matrix?.yAxis || "")}</div><div class="matrix-axis-x">${esc(slide.matrix?.xAxis || "")}</div><div class="mq-grid">${cells}</div></div>`,
+  );
+}
+
 function renderMatrix(slide, n) {
+  if (Array.isArray(slide.quadrants)) return renderMatrixQuadrants(slide, n);
   const points = (slide.items || [])
     .map(
       (item) =>

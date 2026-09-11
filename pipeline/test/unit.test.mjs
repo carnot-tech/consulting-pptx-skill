@@ -181,6 +181,53 @@ test("render_spec_to_html: chart_insight renders a negative value as a real (non
 
 // ---- Overlap / overflow detection (geometry) --- exercised via qa_html_deck.mjs on a
 // synthetic HTML fixture that deliberately overflows its slide box.
+test("render_spec_to_html: matrix_2x2 with `quadrants` renders 4 panels, emphasis, and axis labels (RP-MATRIX-HERO-01 shape)", async () => {
+  // matrix_2x2 originally only supported a scatter-plot shape (`items`, points plotted by
+  // x/y%). The Reference Pattern Library's RP-MATRIX-HERO-01/PLAIN-01 need a 2-axis
+  // 4-quadrant PANEL composition instead (each quadrant is a labeled box, not a plotted
+  // point) — this is a structurally different visual, so it's a second data shape on the
+  // same template (`quadrants`), not a variant of the old one.
+  const spec = {
+    deckTitle: "t",
+    slides: [{
+      template: "matrix_2x2", title: "後任体制の早期確定が最優先課題である",
+      matrix: { yAxis: "対応緊急度", xAxis: "事業影響度" },
+      quadrants: [
+        { position: "top-right", priorityLabel: "最優先", title: "後任体制の早期確定", body: "6か月以内に一部退任予定のため急務。", evidence: "6か月以内に一部退任予定", emphasis: true },
+        { position: "top-left", priorityLabel: "優先", title: "主要顧客との関係維持", body: "経営陣交代の影響を早期にモニタリングする。" },
+        { position: "bottom-right", priorityLabel: "中", title: "オペレーション体制の見直し", body: "中期的な体制強化を進める。" },
+        { position: "bottom-left", priorityLabel: "低", title: "バックオフィス機能の統合", body: "他の施策が一巡した後で着手する。" },
+      ],
+    }],
+  };
+  const specPath = path.join(tmpDir, "matrix-quadrant-spec.json");
+  const htmlPath = path.join(tmpDir, "matrix-quadrant.html");
+  await fs.writeFile(specPath, JSON.stringify(spec));
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+  const html = await fs.readFile(htmlPath, "utf8");
+  assert.equal((html.match(/class="mq-cell/g) || []).length, 4, "exactly 4 quadrant cells");
+  assert.match(html, /mq-cell emphasis/, "the emphasized quadrant carries the emphasis class");
+  assert.match(html, /対応緊急度/);
+  assert.match(html, /事業影響度/);
+
+  const outPath = path.join(tmpDir, "matrix-quadrant-qa.json");
+  await execFileAsync("node", [path.join(root, "scripts/qa_html_deck.mjs"), htmlPath, outPath]).catch(() => {});
+  const report = JSON.parse(await fs.readFile(outPath, "utf8"));
+  assert.equal(report.slideOverflow.length, 0, `expected no overflow, got: ${JSON.stringify(report.slideOverflow)}`);
+
+  const pptxPath = path.join(tmpDir, "matrix-quadrant.pptx");
+  await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+  const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+  assert.deepEqual(auditResult, { passed: true, errors: [] });
+});
+
+test("validate_spec: matrix_2x2 requires either `items` or `quadrants`", async () => {
+  const spec = { deckTitle: "t", slides: [{ template: "matrix_2x2", title: "軸もitemsもquadrantsも無い行き先不明の資料である" }] };
+  const specPath = path.join(tmpDir, "matrix-no-shape-spec.json");
+  await fs.writeFile(specPath, JSON.stringify(spec));
+  await assert.rejects(() => execFileAsync("node", [path.join(root, "scripts/validate_spec.mjs"), specPath]));
+});
+
 test("qa_html_deck: detects an element that overflows its slide", async () => {
   const overflowingHtml = `<!doctype html><html><body>
     <div class="slide" style="position:relative;width:400px;height:300px;overflow:hidden">

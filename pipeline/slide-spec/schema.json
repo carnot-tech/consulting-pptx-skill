@@ -614,6 +614,21 @@
           "if": {
             "properties": {
               "template": {
+                "const": "matrix_2x2"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              { "required": ["items"] },
+              { "required": ["quadrants"] }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "template": {
                 "const": "kpi_dashboard"
               }
             }
