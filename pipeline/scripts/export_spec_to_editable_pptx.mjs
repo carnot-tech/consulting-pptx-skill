@@ -494,48 +494,88 @@ function addMatrixQuadrants(item, pageNum) {
 // Shared "示唆" numbered-list panel — same field/shape as kpi_dashboard's own item.insights
 // (title? + items:[string]), factored out here so RP-MATRIX-BADGELIST-01 doesn't duplicate the
 // rendering kpi_dashboard's addKpiDashboard already implements inline.
-function addInsightsList(slide, insights, x, y, w, h) {
-  const pad = 0.18;
-  slide.addShape(pptx.ShapeType.rect, { x, y, w, h, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
-  addBodyText(slide, insights.title || "示唆", x + pad, y + pad, w - pad * 2, 0.26, { fontSize: 12, bold: true });
-  let ty = y + pad + 0.36;
-  insights.items.forEach((text, i) => {
-    slide.addShape(pptx.ShapeType.ellipse, { x: x + pad, y: ty + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
-    addBodyText(slide, String(i + 1), x + pad, ty + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
-    addBodyText(slide, text, x + pad + 0.32, ty, w - pad * 2 - 0.32, 0.45, { fontSize: 11.5 });
-    ty += 0.46;
+const MQB_PALE_HEADER = "F3EBDC";
+const MQB_PANEL_BG = "F2EEE6";
+
+// A bulb glyph hand-composed from primitives (no native pptxgenjs preset) — same technique as
+// org-chart/people/gear: a circle "bulb" + a small rounded "base" beneath it.
+function addBulbGlyph(slide, x, y, size, color) {
+  const bulbR = size * 0.32;
+  const cx = x + size / 2;
+  slide.addShape(pptx.ShapeType.ellipse, { x: cx - bulbR, y: y + size * 0.06, w: bulbR * 2, h: bulbR * 2, fill: { color }, line: { type: "none" } });
+  slide.addShape(pptx.ShapeType.roundRect, { x: cx - bulbR * 0.5, y: y + size * 0.06 + bulbR * 1.5, w: bulbR, h: size * 0.24, fill: { color }, line: { type: "none" }, rectRadius: 0.3 });
+}
+
+// Matrix Badge List's own insight panel — bulb badge + numbered WHITE CARDS on a
+// grayish-beige panel background, a deliberately different visual treatment from
+// kpi_dashboard's own flat-bullet insights panel even though it reads the exact same
+// {title?, items:[string]} data shape (reused verbatim for the DATA, not the presentation).
+function addMatrixInsights(slide, insights, x, y, w, h) {
+  slide.addShape(pptx.ShapeType.rect, { x, y, w, h, fill: { color: MQB_PANEL_BG }, line: { type: "none" } });
+  const pad = 0.2;
+  const bulbSize = 0.44;
+  slide.addShape(pptx.ShapeType.ellipse, { x: x + pad, y: y + pad, w: bulbSize, h: bulbSize, fill: { color: NAVY }, line: { type: "none" } });
+  const glyphSize = bulbSize * 0.56;
+  addBulbGlyph(slide, x + pad + (bulbSize - glyphSize) / 2, y + pad + (bulbSize - glyphSize) / 2, glyphSize, WHITE);
+  const titleY = y + pad + bulbSize + 0.12;
+  addBodyText(slide, insights.title || "示唆", x + pad, titleY, w - pad * 2, 0.26, { fontSize: 13, bold: true });
+  const ruleY = titleY + 0.34;
+  slide.addShape(pptx.ShapeType.line, { x: x + pad, y: ruleY, w: w - pad * 2, h: 0, line: { color: HAIR, width: 0.75 } });
+  let ty = ruleY + 0.18;
+  const numR = 0.13;
+  insights.items.forEach((text) => {
+    slide.addShape(pptx.ShapeType.ellipse, { x: x + pad, y: ty, w: numR * 2, h: numR * 2, fill: { color: BLUE }, line: { type: "none" } });
+    ty += numR * 2 + 0.08;
+    const cardH = Math.max(Math.ceil(text.length / 15) * 0.2 + 0.14, 0.4);
+    slide.addShape(pptx.ShapeType.rect, { x: x + pad, y: ty, w: w - pad * 2, h: cardH, fill: { color: WHITE }, line: { type: "none" } });
+    addBodyText(slide, text, x + pad + 0.12, ty + 0.06, w - pad * 2 - 0.24, cardH - 0.1, { fontSize: 10.5, bold: true });
+    ty += cardH + 0.18;
   });
 }
 
 // badge-list mode (RP-MATRIX-BADGELIST-01) mirror of render_spec_to_html.mjs#renderMatrixBadgeList
 // — a 3rd quadrant shape, detected via `quadrants[].items`. Priority-numbered header + optional
-// summary + individually-iconed badge-pill items per quadrant, plus explicit low/high axis
-// endpoint labels and a mandatory right-side insights panel (addInsightsList above).
+// summary + individually-iconed badge-pill items per quadrant, arrow-drawn axes (native
+// upArrow/rightArrow presets), and a mandatory right-side insights panel (addMatrixInsights).
 function addMatrixBadgeList(item, pageNum) {
   const slide = addShell(item, pageNum);
   const panelW = 2.6;
   const gap = 0.3;
-  const axisYW = 0.3;
+  const axisYW = 0.4;
   const top = 2.0;
   const xAxisH = 0.3;
   const bottom = FOOTER_Y - xAxisH - 0.08;
-  const gridX = M + axisYW + 0.08;
-  const gridW = W - M * 2 - axisYW - 0.08 - panelW - gap;
+  const gridX = M + axisYW + 0.1;
+  const gridW = W - M * 2 - axisYW - 0.1 - panelW - gap;
   const gridH = bottom - top;
-  const cellGap = 0.08;
+  const cellGap = 0.1;
   const cw = (gridW - cellGap) / 2;
   const ch = (gridH - cellGap) / 2;
 
   const m = item.matrix || {};
-  addBodyText(slide, m.yAxisHigh || "", M, top, axisYW, 0.2, { fontSize: 9, bold: true, color: MUTED, align: "center" });
-  addBodyText(slide, m.yAxisLow || "", M, bottom - 0.2, axisYW, 0.2, { fontSize: 9, bold: true, color: MUTED, align: "center" });
+  const endH = 0.2;
+  addBodyText(slide, m.yAxisHigh || "", M, top, axisYW, endH, { fontSize: 9, bold: true, color: MUTED, align: "center" });
+  addBodyText(slide, m.yAxisLow || "", M, bottom - endH, axisYW, endH, { fontSize: 9, bold: true, color: MUTED, align: "center" });
+  const yArrowY = top + endH + 0.05;
+  const yArrowH = gridH - endH * 2 - 0.1;
+  slide.addShape(pptx.ShapeType.upArrow, { x: M + axisYW / 2 - 0.045, y: yArrowY, w: 0.09, h: yArrowH, fill: { color: MUTED }, line: { type: "none" } });
   slide.addText(m.yAxis || "", {
-    x: M - gridH / 2 + axisYW / 2, y: top + gridH / 2 - axisYW / 2, w: gridH, h: axisYW,
+    x: M - yArrowH / 2 + axisYW / 2, y: yArrowY + yArrowH / 2 - 0.18, w: yArrowH, h: 0.36,
     fontFace: FONT, fontSize: 9.5, bold: true, color: MUTED, align: "center", valign: "middle", rotate: 270,
+    fill: { color: WHITE },
   });
-  addBodyText(slide, m.xAxisLow || "", gridX, bottom + 0.06, 1.2, xAxisH, { fontSize: 9, bold: true, color: MUTED });
-  addBodyText(slide, m.xAxis || "", gridX, bottom + 0.06, gridW, xAxisH, { fontSize: 9.5, bold: true, color: MUTED, align: "center" });
-  addBodyText(slide, m.xAxisHigh || "", gridX + gridW - 1.2, bottom + 0.06, 1.2, xAxisH, { fontSize: 9, bold: true, color: MUTED, align: "right" });
+
+  const xEndW = 0.55;
+  addBodyText(slide, m.xAxisLow || "", gridX, bottom + 0.06, xEndW, xAxisH, { fontSize: 9, bold: true, color: MUTED });
+  addBodyText(slide, m.xAxisHigh || "", gridX + gridW - xEndW, bottom + 0.06, xEndW, xAxisH, { fontSize: 9, bold: true, color: MUTED, align: "right" });
+  const xArrowX = gridX + xEndW + 0.05;
+  const xArrowW = gridW - xEndW * 2 - 0.1;
+  slide.addShape(pptx.ShapeType.rightArrow, { x: xArrowX, y: bottom + 0.06 + xAxisH / 2 - 0.045, w: xArrowW, h: 0.09, fill: { color: MUTED }, line: { type: "none" } });
+  slide.addText(m.xAxis || "", {
+    x: gridX, y: bottom + 0.06, w: gridW, h: xAxisH,
+    fontFace: FONT, fontSize: 9.5, bold: true, color: MUTED, align: "center", valign: "middle",
+    fill: { color: WHITE },
+  });
 
   const byPosition = new Map((item.quadrants || []).map((q) => [q.position, q]));
   QUADRANT_ORDER.forEach((pos, i) => {
@@ -544,33 +584,46 @@ function addMatrixBadgeList(item, pageNum) {
     const cy = top + Math.floor(i / 2) * (ch + cellGap);
     slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: cw, h: ch, fill: { type: "none" }, line: { color: q?.emphasis ? NAVY : HAIR, width: q?.emphasis ? 1.75 : 0.75 } });
     if (!q) return;
-    const headH = 0.34;
-    slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: cw, h: headH, fill: { color: q.emphasis ? NAVY : SOFTBLUE }, line: { type: "none" } });
-    const textColor = q.emphasis ? WHITE : INK;
-    const numR = 0.13;
-    slide.addShape(pptx.ShapeType.ellipse, { x: cx + 0.1, y: cy + headH / 2 - numR, w: numR * 2, h: numR * 2, fill: { color: q.emphasis ? WHITE : NAVY }, line: { type: "none" } });
-    addBodyText(slide, q.number || "", cx + 0.1, cy + headH / 2 - numR, numR * 2, numR * 2, { fontSize: 9, bold: true, color: q.emphasis ? NAVY : WHITE, align: "center", valign: "middle" });
-    const labelX = cx + 0.1 + numR * 2 + 0.08;
-    addBodyText(slide, q.label || "", labelX, cy, cw - (labelX - cx) - 0.1, headH, { fontSize: 11, bold: true, color: textColor, valign: "middle" });
-
-    let iy = cy + headH + 0.08;
-    if (q.summary) {
-      addBodyText(slide, q.summary, cx + 0.12, iy, cw - 0.24, 0.34, { fontSize: 8, color: q.emphasis ? "D9D9D9" : MUTED });
-      iy += 0.36;
+    const headH = 0.44;
+    slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: cw, h: headH, fill: { color: q.emphasis ? NAVY : MQB_PALE_HEADER }, line: { type: "none" } });
+    // Reference image: only the HEADER turns solid navy — the body gets a visibly tinted tan
+    // wash, not the whole cell, so it still reads as "the highlighted zone" without needing
+    // white-on-white-risking text color changes in the body below.
+    if (q.emphasis) {
+      slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy + headH, w: cw, h: ch - headH, fill: { color: CYAN, transparency: 68 }, line: { type: "none" } });
     }
-    (q.items || []).forEach((it) => {
-      const pillH = 0.26;
-      const iconSize = pillH - 0.06;
-      slide.addShape(pptx.ShapeType.roundRect, { x: cx + 0.12, y: iy, w: cw - 0.24, h: pillH, fill: { type: "none" }, line: { color: q.emphasis ? WHITE : HAIR, width: 0.75 }, rectRadius: 0.13 });
-      if (it.icon) addPatternIcon(slide, it.icon, cx + 0.16, iy + 0.03, iconSize, q.emphasis ? BLUE : NAVY, { filled: true });
-      const textX = cx + 0.16 + iconSize + 0.08;
-      addBodyText(slide, it.title, textX, iy, cx + cw - 0.12 - textX, pillH, { fontSize: 9, bold: true, color: q.emphasis ? WHITE : INK, valign: "middle" });
-      iy += pillH + 0.06;
+    const textColor = q.emphasis ? WHITE : INK;
+    const numR = 0.17;
+    slide.addShape(pptx.ShapeType.ellipse, { x: cx + 0.12, y: cy + headH / 2 - numR, w: numR * 2, h: numR * 2, fill: { color: q.emphasis ? WHITE : NAVY }, line: { type: "none" } });
+    addBodyText(slide, q.number || "", cx + 0.12, cy + headH / 2 - numR, numR * 2, numR * 2, { fontSize: 11, bold: true, color: q.emphasis ? NAVY : WHITE, align: "center", valign: "middle" });
+    const labelX = cx + 0.12 + numR * 2 + 0.1;
+    addBodyText(slide, q.label || "", labelX, cy, cw - (labelX - cx) - 0.1, headH, { fontSize: 12.5, bold: true, color: textColor, valign: "middle" });
+
+    let iy = cy + headH + 0.1;
+    if (q.summary) {
+      addBodyText(slide, q.summary, cx + 0.14, iy, cw - 0.28, 0.3, { fontSize: 8, color: q.emphasis ? "E9DFCC" : MUTED });
+      iy += 0.32;
+    }
+    const items = q.items || [];
+    const pillH = 0.4;
+    const pillGap = 0.09;
+    const totalItemsH = items.length * pillH + Math.max(items.length - 1, 0) * pillGap;
+    const itemsBottom = cy + ch - 0.12;
+    let py = iy + Math.max((itemsBottom - iy - totalItemsH) / 2, 0);
+    const pillW = Math.min(cw * 0.66, cw - 0.28);
+    items.forEach((it) => {
+      const px = cx + (cw - pillW) / 2;
+      slide.addShape(pptx.ShapeType.roundRect, { x: px, y: py, w: pillW, h: pillH, fill: { color: WHITE }, line: { color: q.emphasis ? CYAN : HAIR, width: 0.75 }, rectRadius: 0.5 });
+      const iconSize = pillH - 0.14;
+      if (it.icon) addPatternIcon(slide, it.icon, px + 0.09, py + 0.07, iconSize, q.emphasis ? BLUE : NAVY, { filled: true });
+      const textX = px + 0.09 + iconSize + 0.1;
+      addBodyText(slide, it.title, textX, py, px + pillW - 0.1 - textX, pillH, { fontSize: 10.5, bold: true, color: INK, valign: "middle" });
+      py += pillH + pillGap;
     });
   });
 
   if (item.insights) {
-    addInsightsList(slide, item.insights, gridX + gridW + gap, top, panelW, gridH);
+    addMatrixInsights(slide, item.insights, gridX + gridW + gap, top, panelW, gridH);
   }
 }
 

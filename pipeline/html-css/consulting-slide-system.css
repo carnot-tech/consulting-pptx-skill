@@ -920,8 +920,11 @@ body {
 
 /* Matrix Badge List (RP-MATRIX-BADGELIST-01) — a 3rd quadrant shape (see renderMatrixBadgeList
    / renderMatrixQuadrants in render_spec_to_html.mjs): priority-numbered quadrant panels with
-   individually-iconed badge-pill items, plus a mandatory right-side insights panel and
-   explicit low/high axis endpoint labels. Independent of .mq-* (Hero/Plain) — no shared rules. */
+   individually-iconed badge-pill items, arrow-drawn axes, and a mandatory right-side insights
+   panel. Independent of .mq-* (Hero/Plain) — no shared rules. Colors follow this project's own
+   brown/tan House Style, but the ROLE each color plays is deliberately matched to the
+   reference image: dark = primary/emphasis, pale beige = quadrant header, faint tan wash =
+   emphasized body, grayish-beige = the insights panel. */
 .mqb-wrap {
   display: flex;
   gap: 22px;
@@ -932,42 +935,103 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .mqb-row {
   display: flex;
-  gap: 12px;
-  height: 430px;
+  gap: 14px;
+  height: 500px;
 }
 
+/* Axis arrows: a line spanning the full grid edge with a CSS-triangle arrowhead at the
+   "high" end, and the axis title sitting on top of the line with a slide-bg patch behind it
+   so the line reads as passing "through" the label — the reference image's own convention.
+   The OUTER container (not the thin line itself) is the positioned ancestor for the
+   absolutely-placed title, so the title escaping the line's own 2px box never registers as
+   that box's overflow. */
 .mqb-axis-y {
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  width: 20px;
-  padding: 6px 0;
+  width: 34px;
+  padding: 2px 0;
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+/* A real normal-flow triangle (not an absolutely-offset pseudo-element) — a negative offset
+   would push the arrowhead outside the line's own layout box, which registers as that box's
+   own scrollHeight overflowing its clientHeight regardless of the (visible) `overflow` value,
+   a false positive the geometry QA gate would otherwise flag. */
+.mqb-axis-y-arrow {
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  margin-bottom: 2px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid var(--muted);
+}
+
+.mqb-axis-y-line {
+  flex: 1;
+  width: 2px;
+  margin: 0 0 4px;
+  background: var(--muted);
 }
 
 .mqb-axis-title-y {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   writing-mode: vertical-rl;
   letter-spacing: 1px;
+  background: var(--slide-bg);
+  padding: 6px 3px;
+  white-space: nowrap;
 }
 
 .mqb-axis-x {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 0 32px;
+  padding: 0 4px 0 36px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.mqb-axis-x-line {
+  flex: 1;
+  height: 2px;
+  margin: 0 0 0 10px;
+  background: var(--muted);
+}
+
+.mqb-axis-x-arrow {
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--muted);
+}
+
+.mqb-axis-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--slide-bg);
+  padding: 0 8px;
+  white-space: nowrap;
 }
 
 .mqb-axis-end {
@@ -981,7 +1045,7 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -999,9 +1063,9 @@ body {
 .mqb-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 8px 14px;
-  background: var(--slide-bg-alt, #F4F1EA);
+  background: #F3EBDC;
 }
 
 .mqb-cell.emphasis .mqb-head {
@@ -1014,12 +1078,12 @@ body {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--navy);
   color: #fff;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -1029,7 +1093,7 @@ body {
 }
 
 .mqb-label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -1056,27 +1120,34 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   overflow: hidden;
 }
 
-/* Reference image: only the quadrant HEADER turns solid navy — the body stays light with a
-   soft accent-color wash, badge pills stay light with an accent border, and pill TEXT stays
+/* Reference image: only the quadrant HEADER turns solid navy — the body gets a visibly
+   tinted tan wash (strong enough to read as "the highlighted zone" at a glance, not a
+   barely-there overlay), badge pills stay light with an accent border, and pill TEXT stays
    dark throughout (never a white-on-light or white-on-white combination). */
 .mqb-cell.emphasis .mqb-items {
-  background: rgba(197, 166, 129, 0.16);
+  background: rgba(197, 166, 129, 0.3);
 }
 
 .mqb-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
+  gap: 10px;
+  align-self: center;
+  width: 66%;
+  min-width: fit-content;
+  max-width: 100%;
+  padding: 9px 16px;
   border: 1px solid var(--hairline);
   border-radius: 999px;
   background: var(--slide-bg);
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--navy);
 }
@@ -1090,8 +1161,8 @@ body {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--navy);
   color: #fff;
@@ -1103,12 +1174,88 @@ body {
 }
 
 .mqb-item-icon svg {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
 }
 
+/* Insights panel — a distinct visual treatment from .kpi-insights (renderKpiInsights):
+   grayish-beige panel, a large bulb badge over the title, and each insight as its own
+   numbered WHITE CARD rather than a flat bulleted list. */
 .mqb-insight {
   flex: 0 0 230px;
+}
+
+.mqb-panel {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: 16px;
+  background: #F2EEE6;
+}
+
+.mqb-panel-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.mqb-panel-bulb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+}
+
+.mqb-panel-bulb svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mqb-panel-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.mqb-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mqb-panel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mqb-panel-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mqb-panel-card {
+  padding: 10px 12px;
+  background: var(--slide-bg);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
 }
 
 .issue-tree {

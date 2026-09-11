@@ -256,11 +256,22 @@ function renderMatrixQuadrants(slide, n) {
   );
 }
 
+// Matrix Badge List's own insight panel presentation — bulb icon header + numbered WHITE
+// CARDS (not a flat bullet list) — a deliberately different visual treatment from
+// renderKpiInsights even though it reads the exact same {title?, items:[string]} data shape
+// (kpi_dashboard's own insights field, reused verbatim for the DATA — only the presentation
+// is pattern-specific, same as every other per-pattern renderer in this file).
+function renderMatrixInsights(insights) {
+  const items = insights.items
+    .map((text, i) => `<div class="mqb-panel-item"><span class="mqb-panel-num">${i + 1}</span><div class="mqb-panel-card">${esc(text)}</div></div>`)
+    .join("");
+  return `<div class="mqb-panel"><div class="mqb-panel-head"><div class="mqb-panel-bulb">${PATTERN_ICONS.bulb}</div><div class="mqb-panel-title">${esc(insights.title || "示唆")}</div></div><div class="mqb-panel-list">${items}</div></div>`;
+}
+
 // badge-list mode (RP-MATRIX-BADGELIST-01): a 3rd quadrant shape, detected via
 // `quadrants[].items` — a priority number + label + optional summary header, a stack of
-// individually-iconed badge-pill items, and a mandatory right-side insights panel (reuses
-// renderKpiInsights verbatim — same field/shape as kpi_dashboard's own insights panel).
-// Deliberately does NOT reuse renderMatrixQuadrants' title/body/evidence markup — see
+// individually-iconed badge-pill items, arrow-drawn axes, and a mandatory right-side insights
+// panel. Deliberately does NOT reuse renderMatrixQuadrants' title/body/evidence markup — see
 // references/pre-family-ir-authoring.md's Matrix Badge List section for why.
 function renderMatrixBadgeList(slide, n) {
   const byPosition = new Map((slide.quadrants || []).map((q) => [q.position, q]));
@@ -279,11 +290,11 @@ function renderMatrixBadgeList(slide, n) {
     return `<div class="mqb-cell${q.emphasis ? " emphasis" : ""}"><div class="mqb-head"><span class="mqb-num">${esc(q.number || "")}</span><span class="mqb-label">${esc(q.label || "")}</span>${summary}</div><div class="mqb-items">${items}</div></div>`;
   }).join("");
   const m = slide.matrix || {};
-  const insights = slide.insights ? renderKpiInsights(slide.insights) : "";
+  const insights = slide.insights ? renderMatrixInsights(slide.insights) : "";
   return shell(
     slide,
     n,
-    `<div class="mqb-wrap"><div class="mqb-main"><div class="mqb-row"><div class="mqb-axis-y"><span class="mqb-axis-end">${esc(m.yAxisHigh || "")}</span><span class="mqb-axis-title-y">${esc(m.yAxis || "")}</span><span class="mqb-axis-end">${esc(m.yAxisLow || "")}</span></div><div class="mqb-grid">${cells}</div></div><div class="mqb-axis-x"><span class="mqb-axis-end">${esc(m.xAxisLow || "")}</span><span class="mqb-axis-title">${esc(m.xAxis || "")}</span><span class="mqb-axis-end">${esc(m.xAxisHigh || "")}</span></div></div><div class="mqb-insight">${insights}</div></div>`,
+    `<div class="mqb-wrap"><div class="mqb-main"><div class="mqb-row"><div class="mqb-axis-y"><span class="mqb-axis-end">${esc(m.yAxisHigh || "")}</span><div class="mqb-axis-y-arrow"></div><div class="mqb-axis-y-line"></div><span class="mqb-axis-title-y">${esc(m.yAxis || "")}</span><span class="mqb-axis-end">${esc(m.yAxisLow || "")}</span></div><div class="mqb-grid">${cells}</div></div><div class="mqb-axis-x"><span class="mqb-axis-end">${esc(m.xAxisLow || "")}</span><div class="mqb-axis-x-line"></div><div class="mqb-axis-x-arrow"></div><span class="mqb-axis-title">${esc(m.xAxis || "")}</span><span class="mqb-axis-end">${esc(m.xAxisHigh || "")}</span></div></div><div class="mqb-insight">${insights}</div></div>`,
     { noTitleRule: true, className: "slide--top-align" },
   );
 }
@@ -930,6 +941,9 @@ const PATTERN_ICONS = {
   tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3h7a2 2 0 0 1 2 2v7a1 1 0 0 1-.3.7l-8 8a1 1 0 0 1-1.4 0l-7-7a1 1 0 0 1 0-1.4l8-8A1 1 0 0 1 11 3Z"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
   cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20.5 8H6"/><circle cx="9.5" cy="20" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="20" r="1.3" fill="currentColor" stroke="none"/></svg>',
   truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="7" width="13" height="9"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6" fill="currentColor" stroke="none"/><circle cx="17" cy="18.5" r="1.6" fill="currentColor" stroke="none"/></svg>',
+  // Decorative header icon for the Matrix Badge List insights panel — not part of any
+  // per-item closed vocabulary.
+  bulb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M8.5 14.6A5.5 5.5 0 1 1 15.5 14.6c-.75.9-1.5 1.6-1.5 2.9H10c0-1.3-.75-2-1.5-2.9Z"/></svg>',
 };
 
 function kpiTileHtml(k) {
