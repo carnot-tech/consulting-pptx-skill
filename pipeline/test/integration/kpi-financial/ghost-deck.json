@@ -1,0 +1,70 @@
+{
+  "deckTitle": "2026年度上期 経営指標レビュー",
+  "audience": "経営会議（月次レビュー）",
+  "decisionAsked": "下期の重点施策（在庫圧縮・粗利改善）への追加投資を承認するかどうか",
+  "slides": [
+    {
+      "slide_number": 1,
+      "role": "cover",
+      "action_title": "2026年度上期 経営指標レビュー",
+      "key_message": "主要KPIの上期実績と下期の重点施策を報告する",
+      "evidence_needed": [],
+      "transition_from_previous": null,
+      "transition_to_next": "主要KPIから確認する"
+    },
+    {
+      "slide_number": 2,
+      "role": "executive_summary",
+      "action_title": "売上は計画超過も粗利率が2.1pt悪化し、在庫回転が課題である",
+      "key_message": "成長は順調だが、収益性と在庫効率の2点に課題が集中する",
+      "evidence_needed": ["主要KPI実績値"],
+      "transition_from_previous": "表紙の次に、上期の総括から述べる",
+      "transition_to_next": "主要KPIの実績を確認する"
+    },
+    {
+      "slide_number": 3,
+      "role": "evidence",
+      "action_title": "売上・新規顧客数は計画を上回ったが、粗利率のみ未達である",
+      "key_message": "4つのKPIのうち3つは順調、粗利率だけが唯一の赤信号",
+      "evidence_needed": ["KPIダッシュボードの数値"],
+      "transition_from_previous": "総括の裏付けとして、KPIを確認する",
+      "transition_to_next": "粗利率悪化の内訳を分解する"
+    },
+    {
+      "slide_number": 4,
+      "role": "analysis",
+      "action_title": "粗利率悪化の主因は原材料費の上昇であり、値上げでは吸収しきれていない",
+      "key_message": "コスト増加分に対して価格転嫁が追いついていない",
+      "evidence_needed": ["粗利率変動要因の内訳"],
+      "transition_from_previous": "粗利率が唯一の課題である理由を分解する",
+      "transition_to_next": "在庫の状況も確認する"
+    },
+    {
+      "slide_number": 5,
+      "role": "analysis",
+      "action_title": "在庫回転日数は3四半期連続で悪化し、下期改善が急務である",
+      "key_message": "在庫の滞留が資金効率を悪化させ続けている",
+      "evidence_needed": ["四半期別在庫回転日数の推移"],
+      "transition_from_previous": "収益性に加え、在庫効率も確認する",
+      "transition_to_next": "以上を踏まえた下期の重点施策を提案する"
+    },
+    {
+      "slide_number": 6,
+      "role": "recommendation",
+      "action_title": "下期は価格改定と在庫圧縮の2施策に追加投資すべきである",
+      "key_message": "2つの課題は独立した打ち手で対応可能であり、投資対効果も見込める",
+      "evidence_needed": [],
+      "transition_from_previous": "2つの課題を踏まえた提案",
+      "transition_to_next": "以上で報告を終える"
+    },
+    {
+      "slide_number": 7,
+      "role": "back_cover",
+      "action_title": "本資料に関するお問い合わせ先（裏表紙）",
+      "key_message": "裏表紙（メッセージなし）",
+      "evidence_needed": [],
+      "transition_from_previous": null,
+      "transition_to_next": null
+    }
+  ]
+}

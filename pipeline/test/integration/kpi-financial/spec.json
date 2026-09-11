@@ -1,0 +1,100 @@
+{
+  "deckTitle": "2026年度上期 経営指標レビュー",
+  "skin": "warm",
+  "sources": [
+    { "id": "src_kpi_2026h1", "label": "月次KPIレポート（2026年度上期）" },
+    { "id": "src_cost_analysis_2026", "label": "原価分析（経理部、2026年8月）" }
+  ],
+  "slides": [
+    {
+      "template": "cover",
+      "title": "2026年度上期 経営指標レビュー",
+      "kicker": "経営会議",
+      "subtitle": "主要KPI実績と下期の重点施策",
+      "ghostSlideNumber": 1
+    },
+    {
+      "template": "executive_summary",
+      "title": "売上は計画超過も粗利率が2.1pt悪化し、在庫回転が課題である",
+      "ghostSlideNumber": 2,
+      "sections": [
+        { "title": "売上", "copy": "計画比+6%で着地。新規顧客数も計画を上回る" },
+        { "title": "粗利率", "copy": "前年同期比-2.1pt。原材料費上昇が主因" },
+        { "title": "在庫", "copy": "回転日数が3四半期連続で悪化" }
+      ],
+      "source": "出典：月次KPIレポート（2026年度上期）",
+      "claims": [{ "text": "粗利率-2.1pt", "sourceId": "src_kpi_2026h1" }]
+    },
+    {
+      "template": "kpi_dashboard",
+      "title": "売上・新規顧客数は計画を上回ったが、粗利率のみ未達である",
+      "ghostSlideNumber": 3,
+      "kpis": [
+        { "label": "売上高", "value": "128億円", "delta": "計画比+6%", "note": "上期累計" },
+        { "label": "新規顧客数", "value": "412社", "delta": "計画比+9%", "note": "上期累計" },
+        { "label": "粗利率", "value": "31.4%", "delta": "前年比-2.1pt", "note": "計画未達" },
+        { "label": "在庫回転日数", "value": "58日", "delta": "前年比+7日", "note": "3四半期連続悪化" }
+      ],
+      "source": "出典：月次KPIレポート（2026年度上期）",
+      "claims": [
+        { "text": "売上高128億円", "sourceId": "src_kpi_2026h1" },
+        { "text": "粗利率31.4%", "sourceId": "src_kpi_2026h1" },
+        { "text": "在庫回転日数58日", "sourceId": "src_kpi_2026h1" }
+      ]
+    },
+    {
+      "template": "true_waterfall",
+      "title": "粗利率悪化の主因は原材料費の上昇であり、値上げでは吸収しきれていない",
+      "ghostSlideNumber": 4,
+      "chart": {
+        "unit": "粗利率への影響、pt",
+        "series": [
+          { "label": "前年粗利率", "value": 33.5, "kind": "base" },
+          { "label": "値上げ効果", "value": 1.8, "kind": "up" },
+          { "label": "原材料費上昇", "value": 3.2, "kind": "down" },
+          { "label": "物流費上昇", "value": 0.7, "kind": "down" },
+          { "label": "今期粗利率", "value": 31.4, "kind": "total" }
+        ]
+      },
+      "sections": [{ "title": "So What", "copy": "値上げ効果の2倍近いコスト増を吸収できていない" }],
+      "source": "出典：原価分析（経理部、2026年8月）",
+      "claims": [
+        { "text": "原材料費上昇-3.2pt", "sourceId": "src_cost_analysis_2026" },
+        { "text": "値上げ効果+1.8pt", "sourceId": "src_cost_analysis_2026" }
+      ]
+    },
+    {
+      "template": "chart_insight",
+      "title": "在庫回転日数は3四半期連続で悪化し、下期改善が急務である",
+      "ghostSlideNumber": 5,
+      "chart": {
+        "unit": "在庫回転日数",
+        "series": [
+          { "label": "Q3", "value": 44 },
+          { "label": "Q4", "value": 49 },
+          { "label": "Q1", "value": 53 },
+          { "label": "Q2", "value": 58 }
+        ]
+      },
+      "sections": [{ "title": "So What", "copy": "改善しない限り運転資金の圧迫が続く" }],
+      "source": "出典：月次KPIレポート（2026年度上期）",
+      "claims": [{ "text": "Q2在庫回転日数58日", "sourceId": "src_kpi_2026h1" }]
+    },
+    {
+      "template": "recommendation_pillars",
+      "title": "下期は価格改定と在庫圧縮の2施策に追加投資すべきである",
+      "ghostSlideNumber": 6,
+      "sections": [
+        { "title": "価格改定", "copy": "主要品目の価格を原材料費上昇分だけ改定する", "bullets": ["対象: 上位20品目", "実施: 10月"] },
+        { "title": "在庫圧縮", "copy": "発注リードタイムの短縮と安全在庫の見直し", "bullets": ["対象: 回転の遅い上位30品目", "実施: 10〜12月"] }
+      ],
+      "source": "出典：月次KPIレポート（2026年度上期）／原価分析（経理部、2026年8月）"
+    },
+    {
+      "template": "back_cover",
+      "title": "本資料に関するお問い合わせ先（裏表紙）",
+      "ghostSlideNumber": 7,
+      "parts": { "company": "株式会社サンプル", "contact": "経理部 finance@example.com" }
+    }
+  ]
+}

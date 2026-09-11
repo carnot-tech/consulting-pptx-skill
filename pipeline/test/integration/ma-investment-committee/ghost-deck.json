@@ -1,0 +1,70 @@
+{
+  "deckTitle": "株式会社ターゲット社 買収提案",
+  "audience": "投資委員会",
+  "decisionAsked": "ターゲット社の買収（企業価値XX億円）を承認するかどうか",
+  "slides": [
+    {
+      "slide_number": 1,
+      "role": "cover",
+      "action_title": "株式会社ターゲット社 買収提案",
+      "key_message": "買収の意思決定を投資委員会に求める",
+      "evidence_needed": [],
+      "transition_from_previous": null,
+      "transition_to_next": "結論から述べる"
+    },
+    {
+      "slide_number": 2,
+      "role": "executive_summary",
+      "action_title": "ターゲット社の買収は3年以内の投資回収が見込め、承認を提案する",
+      "key_message": "財務・シナジー・リスクの3面から見て買収は妥当と判断する",
+      "evidence_needed": ["買収価格と回収期間の試算"],
+      "transition_from_previous": "表紙の次に、結論から述べる",
+      "transition_to_next": "候補社との比較で優位性を示す"
+    },
+    {
+      "slide_number": 3,
+      "role": "analysis",
+      "action_title": "ターゲット社は候補3社の中で技術力・収益性ともに最も優れる",
+      "key_message": "比較表で見ると、ターゲット社が唯一両方の軸で高評価",
+      "evidence_needed": ["候補社比較データ"],
+      "transition_from_previous": "結論の妥当性を候補社比較で確認する",
+      "transition_to_next": "想定されるリスクを確認する"
+    },
+    {
+      "slide_number": 4,
+      "role": "risk",
+      "action_title": "主要リスクは人材流出と統合コストであり、対応策を用意している",
+      "key_message": "リスクは特定済みで、いずれも対応策とセットで管理可能",
+      "evidence_needed": ["リスクと対応策の一覧"],
+      "transition_from_previous": "優位性に加え、リスクも確認する",
+      "transition_to_next": "投資回収の試算を示す"
+    },
+    {
+      "slide_number": 5,
+      "role": "evidence",
+      "action_title": "買収費用は統合後シナジーにより2.8年で回収できる",
+      "key_message": "累積キャッシュフローが2.8年目にプラス転換する",
+      "evidence_needed": ["投資回収シミュレーション"],
+      "transition_from_previous": "リスクを踏まえた上での投資回収性",
+      "transition_to_next": "以上を踏まえた意思決定を依頼する"
+    },
+    {
+      "slide_number": 6,
+      "role": "decision_ask",
+      "action_title": "本買収の実行、および統合準備チームの組成を承認いただきたい",
+      "key_message": "承認いただきたい事項を明確にする",
+      "evidence_needed": [],
+      "transition_from_previous": "以上を踏まえた依頼事項",
+      "transition_to_next": "以上で提案を終える"
+    },
+    {
+      "slide_number": 7,
+      "role": "back_cover",
+      "action_title": "本資料に関するお問い合わせ先（裏表紙）",
+      "key_message": "裏表紙（メッセージなし）",
+      "evidence_needed": [],
+      "transition_from_previous": null,
+      "transition_to_next": null
+    }
+  ]
+}

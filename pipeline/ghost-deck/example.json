@@ -1,0 +1,34 @@
+{
+  "deckTitle": "DX投資による生産性改善提案",
+  "audience": "経営会議（意思決定者向け）",
+  "decisionAsked": "3年間で総額XX億円のDX投資を承認するかどうか",
+  "slides": [
+    {
+      "slide_number": 1,
+      "role": "executive_summary",
+      "action_title": "DX投資は3年間で営業利益率を2.4pt改善する",
+      "key_message": "改善効果の約6割は生産工程の自動化から生じる",
+      "evidence_needed": ["工程別工数", "設備投資額", "利益改善額"],
+      "transition_from_previous": null,
+      "transition_to_next": "改善余地を工程別に分解する"
+    },
+    {
+      "slide_number": 2,
+      "role": "analysis",
+      "action_title": "組立工程が全工数の42%を占め、最大のDX余地となる",
+      "key_message": "工数配分の偏りが、投資の優先順位を決める",
+      "evidence_needed": ["工程別工数の内訳"],
+      "transition_from_previous": "改善余地を工程別に分解すると、組立工程に集中している",
+      "transition_to_next": "この工程を自動化した場合の効果を試算する"
+    },
+    {
+      "slide_number": 3,
+      "role": "recommendation",
+      "action_title": "組立工程の自動化投資を初年度に先行実施すべきである",
+      "key_message": "投資回収期間が最短で、他工程への波及効果も見込める",
+      "evidence_needed": ["投資回収シミュレーション"],
+      "transition_from_previous": "組立工程が最大の余地であることを踏まえ、着手順を提案する",
+      "transition_to_next": null
+    }
+  ]
+}

@@ -1,13 +1,20 @@
 ---
 name: consulting-pptx-skill
-description: スライド設計規約 slide-rules.md（実務レビュー由来・約80項目の正典）を核に、経営会議品質のスライドを作るスキル。作成前に規約を読み、HTMLパーツ集（基本27＋追加35の62型）から該当パーツをコピーして組み、規約の範囲で型に囚われず調整し、check_deck.py の機械チェック FAIL 0 で仕上げる。型カタログはレイアウトの発想帳であり、合わせる対象ではない。トリガー例:「コンサル品質のスライドを作って」「規約に沿ったデッキで」「型カタログから選んで」。
+description: スライド設計規約 slide-rules.md（実務レビュー由来・約80項目の正典）を核に、経営会議品質のスライドを作るスキル。Lane A（自由記述HTML、速い）とLane B（Ghost Deck→Slide IR→編集可能PPTX、Mechanical/Visual/Fresh-eye QAを一通り通す厳格ルート）の2系統を持つ。作成前に規約を読み、HTMLパーツ集（基本27＋追加35の62型）から該当パーツをコピーして組む、または`pipeline/`のSlide IRパイプラインでPPTXまで生成し、規約の範囲で型に囚われず調整し、機械チェック FAIL 0 で仕上げる。型カタログはレイアウトの発想帳であり、合わせる対象ではない。トリガー例:「コンサル品質のスライドを作って」「規約に沿ったデッキで」「型カタログから選んで」「編集可能なPPTXで」。
 ---
 
 # コンサル型スライド作成スキル
 
-主軸は `references/slide-rules.md`（実務のレビュー指摘を1行ずつ蓄積した約80項目の規約）。作成前に全文を読み、HTMLパーツ集でたたき台を組み、規約の範囲で調整し、機械チェック FAIL 0 と目視で仕上げる。パーツ集と型カタログは規約を効率よく満たす道具であり、**スライドを型に合わせるのではなく、型をストーリーに合わせて選び、合わなければ捨てて自由に組む。**
+主軸は `references/slide-rules.md`（実務のレビュー指摘を1行ずつ蓄積した約80項目の規約）。作成前に全文を読み、
+Lane A（下の手順1〜9・自由記述HTML）でたたき台を組むか、Lane B（`pipeline/`・Ghost Deck→Slide IR→編集可能PPTX、
+「PowerPoint（.pptx）が要るとき」節を参照）でSlide IRから一気通貫に生成する。規約の範囲で調整し、機械チェック
+FAIL 0 と目視で仕上げる。パーツ集と型カタログは規約を効率よく満たす道具であり、**スライドを型に合わせるのでは
+なく、型をストーリーに合わせて選び、合わなければ捨てて自由に組む。**
 
-成果物は HTML（16:9・1 section = 1スライド）と、Chrome で印刷した PDF。
+成果物は Lane A なら HTML（16:9・1 section = 1スライド）と、Chrome で印刷した PDF。Lane B ならそれに加えて
+編集可能PPTX（`pptxgenjs`書き出し、text/shape/table/chartがPowerPoint上でネイティブ編集可能）。
+どちらを使うかは要件次第——「PDFで十分」「型カタログの見せ方をそのまま自由に崩したい」ならLane A、
+「PowerPoint納品が必須」「Ghost Deck段階でストーリーを確定してから厳格にQAを通したい」ならLane B。
 
 ## ファイルと読むタイミング
 
@@ -24,6 +31,13 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
 | `scripts/check_deck.py` | 規約の機械チェック（HTML は標準ライブラリのみ） | 手順6 |
 | `scripts/check_layout.mjs` | 重なり・はみ出しの実レンダリング検査（`npm run setup` で playwright を入れる） | 手順7 |
 | `assets/SuperTemplate_62type.pptx` | 62型のPPTX見本帳（全スライド編集可能） | PPTX が要るとき |
+| `pipeline/ghost-deck/schema.json` | Ghost Deckのスキーマ（slide_number/role/action_title/key_message/evidence_needed/transition） | Lane B・手順1 |
+| `references/storyline-review-prompt.md` | Storyline Reviewの指示文（action_titleだけの通し読み） | Lane B・手順2 |
+| `pipeline/slide-spec/schema.json` | Slide IRのスキーマ（62型対応。claims/sourcesで出典管理） | Lane B・手順3 |
+| `pipeline/scripts/run_mechanical_gate.mjs` | schema/content/numerical/geometryを1本のJSONに統合したMechanical Quality Gate | Lane B・手順4 |
+| `references/visual-qa-prompt.md` | Visual QAの指示文（画像を見た見た目のレビュー） | Lane B・手順6 |
+| `references/rule-index.json` | slide-rules.md各項目のID・カテゴリ索引（QA/Reviewerが指摘を紐付ける） | 随時 |
+| `pipeline/scripts/run_pipeline.mjs` | CLIオーケストレーター（--mode fast/standard/rigorous） | Lane B 全体 |
 
 ## 規約の要点（入口。全文は必ず読む）
 
@@ -59,13 +73,87 @@ description: スライド設計規約 slide-rules.md（実務レビュー由来�
      --no-pdf-header-footer --print-to-pdf=mydeck.pdf mydeck.html
    ```
 
-## PowerPoint（.pptx）が要るとき
+## PowerPoint（.pptx）が要るとき — Lane B（Slide IR駆動パイプライン）
 
-HTML から編集可能な PPTX への変換はこのスキルに含めない。次のどれかにする:
+上の手順（Lane A・自由記述HTML）は速いが、成果物はHTML/PDFまで。**編集可能PPTXが要る、または
+Ghost Deck→Storyline Review→機械的な数値検証→Fresh-eyeレビューまで一通り厳格に通したいときは
+`pipeline/` の Slide IR駆動パイプラインを使う。** 中身は同じ規約（`references/slide-rules.md`）・
+同じ62型カタログに対応するが、データはHTMLではなく構造化JSON（Slide IR）で持つため、
+`pptxgenjs` でPowerPoint上ネイティブ編集可能な図形・表・テキストとして書き出せる
+（複雑な図だけSVG/画像フォールバック。ログに残す）。HTML/PDFプレビューも同じJSONから出るので、
+Lane A・Lane Bどちらの成果物も併存できる——一方を選んだらもう一方が使えなくなる関係ではない。
 
-- **PDF で渡す**（まずこれを提案する）
-- **見本帳から手で組む**: `assets/SuperTemplate_62type.pptx` の該当スライドを PowerPoint でコピーして文言を差し替える
-- **旧パイプライン**: JSON（SlideSpec）から編集可能PPTXを書き出す仕組みを git タグ `pipeline-archived` の時点のリポジトリに残してある。62型に対応するが、JSONで書き直す手間と型の枠に収まらないページが出る
+### 生成フロー
+
+```
+User Brief → Requirements Normalization → Ghost Deck → Storyline Review →
+Slide Specification (Slide IR) → Layout Selection → Slide Generation →
+Mechanical Quality Gate → Visual Rendering → Visual QA → Fresh-eye Content Review →
+Targeted Revision → Regression QA → Editable PPTX → PDF Preview
+```
+
+**レイアウトを先に描かない。** 必ず Storyline（Ghost Deck）→ Slide Specification → Rendering の順。
+
+1. **Ghost Deck を作る**（`pipeline/ghost-deck/schema.json`）。スライドごとに
+   `slide_number/role/action_title/key_message/evidence_needed/transition_from_previous/transition_to_next`
+   だけを書く。まだ図・表・型は決めない。`node pipeline/scripts/validate_ghost_deck.mjs <gd.json>` で構造チェック。
+2. **Storyline Review**（`references/storyline-review-prompt.md`）: `action_title` だけを通し読みして、
+   結論先行・前ページとの接続・重複・論理ジャンプ・So What・Issue→Analysis→Implication→Recommendationを
+   構造化JSONで確認する。レイアウトを組んだ後にストーリーを直す設計にしない。
+3. **Slide Specification（Slide IR）に展開する**（`pipeline/slide-spec/schema.json`。62型対応、
+   `references/archetype-catalog.md` と1:1）。数値の主張には `claims:[{text, sourceId}]` を付け、
+   ユーザーから与えられていない数字は `basis:"assumption"|"illustrative"|"example"` を明示する
+   （`sources:[{id,label}]` に出典を登録）。`node pipeline/scripts/validate_spec.mjs <spec.json>`。
+4. **Mechanical Quality Gate**（`pipeline/scripts/run_mechanical_gate.mjs <spec.json> [rendered.html]`）:
+   schema・placeholder/TODO/lorem/空chart・数値整合（waterfall/CAGR/%合計/小計）・
+   （レンダリング後は）重なり・はみ出し・フォント・出典欠落を1本のJSONで判定する。Critical 1件でも次工程に進めない。
+5. **Visual Rendering**: `node pipeline/scripts/render_spec_to_html.mjs <spec.json> <out.html>` →
+   `node pipeline/scripts/render_html_screenshots.mjs <out.html> <dir>` でページごとのPNG化。
+6. **Visual QA**（`references/visual-qa-prompt.md`）: 画像を見て一目で分かるか・余白・整列・密度・
+   チャート/表の読みやすさを確認する。機械チェックが拾わない「機械的に正常だが見た目が悪い」を担当する。
+7. **Fresh-eye Content Review**（`references/content-review-prompt.md`）: 作り方・型名・自己評価を伏せて
+   完成物とユーザー要求だけを渡す。severity付き構造化JSONで返す。
+8. **採否判定**: `node pipeline/scripts/log_review_disposition.mjs <dispositions.json> <log.json>`。
+   Criticalは合理的理由なく却下しない。
+9. **Targeted Revision**: `node pipeline/scripts/apply_targeted_revision.mjs <spec.json> <patches.json> -o <out.json>`。
+   採用分だけをSlide IRの該当フィールドにパッチし、影響範囲（該当ページ＋前後1枚）だけを返す。
+   デッキ全体を作り直さない。
+10. **Regression QA**: 影響範囲に対して Mechanical Quality Gate を再実行する。
+11. **Editable PPTX**: `node pipeline/scripts/export_spec_to_editable_pptx.mjs <spec.json> <out.pptx>`。
+    text/shape/table/chartはすべてPowerPoint上でネイティブ編集可能。
+12. **PDF Preview**: `node pipeline/scripts/html_to_pdf.mjs <out.html> <out.pdf>`。
+
+### CLI モード
+
+`node pipeline/scripts/run_pipeline.mjs --mode fast|standard|rigorous --ghost-deck <gd.json> --spec <spec.json> --out-dir <dir>`
+
+| mode | フロー |
+|---|---|
+| fast | Ghost Deck検証 → Mechanical QA → PPTX |
+| standard（既定） | Ghost Deck検証 → Mechanical QA → Visual QA → PPTX |
+| rigorous | Ghost Deck検証 → Storyline Review → Mechanical QA → Visual QA → Fresh-eye Review → Revision → Regression QA → PPTX |
+
+このスクリプトは決定的な工程だけを自動実行し、LLM判断が要る工程（Storyline Review / Visual QA /
+Fresh-eye Review / Targeted Revision）では `nextAction` に「何をどのプロンプトファイルでどう実行し、
+結果をどこに書くか」を返して止まる。Claude はその指示に従って該当レビューを実行し、結果を書き、
+このスクリプトを再実行して続きから進める（決定的チェックはコード、意味判断はLLM、という責任分界を徹底するため）。
+
+### ルールの追跡
+
+`references/rule-index.json` が slide-rules.md の各項目（§N.M）に安定したID（`TITLE-004`等）と
+カテゴリ（storyline/title/composition/typography/chart/table/numerical/language/source/visual/forbidden）
+を割り当てる。slide-rules.md 自体の番号・本文は変えない（このファイルはポインタ表）。
+QA/Reviewerの指摘には可能な範囲でこのIDを添える。
+
+### 再現する失敗の記録
+
+`node pipeline/scripts/log_experience.mjs <candidate.json> <experience-log.json>`。同じ
+`pattern` が3回再現したら `eligibleForPromotion:true` を返す——それでもslide-rules.mdへの追記は
+人手/Claudeの判断（末尾追記）で行い、自動では追記しない。
+
+### レガシー参照
+
+`assets/SuperTemplate_62type.pptx`（型カタログのPPTX見本帳。手でコピーして組みたいときの参照用）。
 
 ## 本スキル使用の注釈
 

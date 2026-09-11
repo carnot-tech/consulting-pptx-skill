@@ -89,7 +89,15 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 - **いちばん効くのは slide-rules.md への追記**です。レビューで受けた指摘を1行ずつ足していくと、御社専用の資料作成AIに育ちます
 - 色・書体は両パーツ集の `<style>` 冒頭 `:root` トークンで差し替えます。ブランドに合わせるときは両ファイルを同じ値にします
 - 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈を入れます
-- PowerPoint（.pptx）が要るときは、PDFで渡す／`assets/SuperTemplate_62type.pptx` から手でコピーする、のどちらかです。HTML から PPTX への自動変換は含めていません。以前あった JSON から編集可能PPTXを書き出す仕組みは、使用頻度が低かったため外しました（git タグ `pipeline-archived` の時点のリポジトリに残っています）
+- PowerPoint（.pptx）が要るときは `pipeline/` の Slide IR 駆動パイプラインを使います（`SKILL.md` の
+  「PowerPoint（.pptx）が要るとき — Lane B」参照）。Ghost Deck → Storyline Review → Slide Specification →
+  Mechanical Quality Gate → Visual QA → Fresh-eye Review → Targeted Revision → 編集可能PPTX
+  の一気通貫パイプラインで、`node pipeline/scripts/run_pipeline.mjs --mode fast|standard|rigorous` から
+  実行します。text/shape/table/chart はPowerPoint上でネイティブ編集可能（複雑な図だけSVG/画像フォールバック）。
+  以前 `pipeline-archived` タグにのみ残っていた仕組みを土台に、Ghost Deck・数値整合チェック・Visual QA・
+  Targeted Revisionを追加して `pipeline/` として復元しています。PDFのみで足りる場合や自由記述の型を
+  そのまま使いたい場合は、これまで通り PDF で渡す／`assets/SuperTemplate_62type.pptx` から手でコピーする
+  のいずれかで十分です。
 
 ## About
 

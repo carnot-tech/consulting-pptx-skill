@@ -2,6 +2,17 @@
 
 機械チェック FAIL 0 のあと、納品前に必ず通す**最終工程**。**作った本人には見えないもの**（微妙な日本語の言い回し、論理展開の飛び・ねじれ、タイトルと図の食い違い、根拠のない評価語、既出ページの焼き直し）を、条件を伏せた別のエージェントに読ませて拾う。
 
+## レビュー担当に渡してはいけないもの（分離の徹底）
+
+以下は**一切渡さない**。渡すと「なぜそう作ったか」を先に知った状態でのレビューになり、独立性が壊れる。
+
+- 作成時の内部reasoning・下書き・検討過程
+- 採用したtemplate名／Slide IRの`template`フィールド／Ghost Deckの`role`
+- Creator自身の自己評価（「ここは弱いかもしれない」等の事前申告）
+- Creatorが想定している弱点・懸念点
+
+渡してよいのは**完成物（HTML／PDF／PPTX）とユーザーの元の要求（依頼文・対象・枚数）だけ**。
+
 ## 使い方
 
 1. **デッキのファイルをそのまま渡す**（HTML／PDF／PPTX のパス。画像化は不要）。レビュー用エージェントは Read でファイル本体を読む。HTML はソースから、PDF・PPTX はテキスト抽出で本文・タイトル・表を読める。版面（余白・重なり・はみ出し）まで見せたいときだけ、補助として `pdftoppm -png -r 60 deck.pdf pages/p` の画像を追加で渡す。
@@ -59,3 +70,30 @@
 - **直すべき順に並べた指摘リスト**（上位5件）。各1〜2文で「どう直すか」まで書く
 
 盛らずに書いてください。欠点を最低3つ挙げてください。無傷の資料はありません。
+
+### 構造化出力（Targeted Revisionが機械的に読む形。上の自由記述に加えて必ず出す）
+
+自由記述の指摘一覧を、severity付きの1件1オブジェクトに変換して末尾に付ける。Targeted Revision
+（`pipeline/scripts/apply_targeted_revision.mjs` の入力）とReviewer disposition log
+（`pipeline/scripts/log_review_disposition.mjs`）はこのJSONだけを読む。
+
+```json
+{
+  "freshEyeReview": {
+    "score": { "story": 8, "oneMessagePerSlide": 7, "structure": 6, "layout": 9, "persuasiveness": 7, "consistency": 8, "integrity": 9, "total": 54 },
+    "findings": [
+      {
+        "slide": 5,
+        "severity": "critical | major | minor",
+        "category": "japanese_phrasing | logic | numerical_consistency | title_figure_mismatch | unsupported_evaluative_word | duplicate_slide | toc_mismatch | source_missing",
+        "issue": "指摘の原文（何が問題か）",
+        "suggested_fix": "言い換え案・直し方"
+      }
+    ]
+  }
+}
+```
+
+`category`は「必ず確認する破綻1〜7」＋「日本語」「論理」の2軸に対応する固定語彙。severityの目安:
+**critical**=数値・事実の矛盾、タイトルと図の食い違い（読み手が誤読する）／**major**=論理の飛び・根拠のない
+評価語・既出ページの焼き直し／**minor**=言い回し・語尾統一等の文章レベルの指摘。

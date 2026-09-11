@@ -1,0 +1,80 @@
+{
+  "deckTitle": "新規事業領域への参入戦略",
+  "skin": "warm",
+  "sources": [
+    { "id": "src_market_scan_2026", "label": "社内市場調査（2026年8月）" },
+    { "id": "src_finance_model_2026", "label": "事業計画財務モデル（2026年8月版）" }
+  ],
+  "slides": [
+    {
+      "template": "cover",
+      "title": "新規事業領域への参入戦略",
+      "kicker": "経営会議",
+      "subtitle": "3領域の比較と着手順位の提案",
+      "ghostSlideNumber": 1
+    },
+    {
+      "template": "executive_summary",
+      "title": "領域Aへの先行参入が投資回収・実現性の両面で最も優れる",
+      "ghostSlideNumber": 2,
+      "sections": [
+        { "title": "実現性", "copy": "領域Aは既存の技術基盤とチームで6か月以内に着手可能" },
+        { "title": "収益性", "copy": "領域Aは3年目に既存事業比+18%の営業利益を生む試算" },
+        { "title": "提案", "copy": "領域Aから着手し、B・Cは市場動向を見て判断する" }
+      ],
+      "source": "出典：社内市場調査（2026年8月）",
+      "claims": [
+        { "text": "6か月以内に着手可能", "sourceId": "src_market_scan_2026" },
+        { "text": "3年目に既存事業比+18%の営業利益", "sourceId": "src_finance_model_2026" }
+      ]
+    },
+    {
+      "template": "matrix_2x2",
+      "title": "領域Aは実現性・収益性ともに他領域を上回る",
+      "ghostSlideNumber": 3,
+      "matrix": { "yAxis": "収益性（高い）", "xAxis": "実現性（高い）" },
+      "items": [
+        { "label": "領域A", "x": 78, "y": 72, "priority": true },
+        { "label": "領域B", "x": 45, "y": 60, "priority": false },
+        { "label": "領域C", "x": 30, "y": 35, "priority": false }
+      ],
+      "sections": [
+        { "title": "読み取り", "bullets": ["領域Aだけが両軸で上位象限に入る", "領域Cは実現性・収益性ともに低い"] }
+      ],
+      "source": "出典：社内市場調査（2026年8月）",
+      "claims": [{ "text": "領域Aが両軸で上位", "sourceId": "src_market_scan_2026" }]
+    },
+    {
+      "template": "waterfall",
+      "title": "領域Aの収益性は既存顧客基盤への追加販売が牽引する",
+      "ghostSlideNumber": 4,
+      "chart": {
+        "unit": "営業利益への寄与、億円",
+        "series": [
+          { "label": "既存事業", "value": 40, "kind": "base" },
+          { "label": "追加販売", "value": 12, "kind": "up" },
+          { "label": "新規顧客", "value": 5, "kind": "up" },
+          { "label": "先行投資", "value": 4, "kind": "down" },
+          { "label": "計画後利益", "value": 53, "kind": "total" }
+        ]
+      },
+      "sections": [{ "title": "So What", "copy": "追加販売だけで新規投資の負担を吸収できる規模がある" }],
+      "source": "出典：事業計画財務モデル（2026年8月版）",
+      "claims": [{ "text": "追加販売+12億円", "sourceId": "src_finance_model_2026" }, { "text": "先行投資-4億円", "sourceId": "src_finance_model_2026" }]
+    },
+    {
+      "template": "decision_page",
+      "title": "領域Aから着手し、B・Cは市場動向を見て判断すべきである",
+      "ghostSlideNumber": 5,
+      "ask": "領域Aへの先行投資（初年度予算XX億円）の承認",
+      "decisions": ["領域Aへの参入体制を今四半期中に立ち上げる", "領域B・Cは半年後に再評価する"],
+      "source": "出典：社内市場調査（2026年8月）／事業計画財務モデル（2026年8月版）"
+    },
+    {
+      "template": "back_cover",
+      "title": "本資料に関するお問い合わせ先（裏表紙）",
+      "ghostSlideNumber": 6,
+      "parts": { "company": "株式会社サンプル", "contact": "経営企画部 planning@example.com" }
+    }
+  ]
+}

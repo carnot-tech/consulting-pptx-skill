@@ -3,3 +3,4 @@ generated/
 __pycache__/
 .DS_Store
 package-lock.json
+pipeline/test/.tmp/

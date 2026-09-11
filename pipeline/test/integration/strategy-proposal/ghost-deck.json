@@ -1,0 +1,61 @@
+{
+  "deckTitle": "新規事業領域への参入戦略",
+  "audience": "経営会議",
+  "decisionAsked": "3つの候補領域のうち、どの領域から参入するかを承認するかどうか",
+  "slides": [
+    {
+      "slide_number": 1,
+      "role": "cover",
+      "action_title": "新規事業領域への参入戦略",
+      "key_message": "3領域を比較し、参入順位を提案する",
+      "evidence_needed": [],
+      "transition_from_previous": null,
+      "transition_to_next": "結論から先に述べる"
+    },
+    {
+      "slide_number": 2,
+      "role": "executive_summary",
+      "action_title": "領域Aへの先行参入が投資回収・実現性の両面で最も優れる",
+      "key_message": "実現性と収益性の両方でAが上回るため、着手順位を明確にできる",
+      "evidence_needed": ["3領域の実現性評価", "3領域の収益性試算"],
+      "transition_from_previous": "表紙の次に、結論から述べる",
+      "transition_to_next": "3領域を実現性と収益性の2軸で比較する"
+    },
+    {
+      "slide_number": 3,
+      "role": "analysis",
+      "action_title": "領域Aは実現性・収益性ともに他領域を上回る",
+      "key_message": "2軸マトリクスで見ると、Aだけが両方の軸で優位にある",
+      "evidence_needed": ["2軸評価データ"],
+      "transition_from_previous": "結論を2軸の比較で裏付ける",
+      "transition_to_next": "収益性の内訳を分解する"
+    },
+    {
+      "slide_number": 4,
+      "role": "evidence",
+      "action_title": "領域Aの収益性は既存顧客基盤への追加販売が牽引する",
+      "key_message": "収益の内訳を見ると、既存顧客への追加販売が最大の要因",
+      "evidence_needed": ["収益要因別の内訳データ"],
+      "transition_from_previous": "収益性の中身を分解すると",
+      "transition_to_next": "着手順位を提案する"
+    },
+    {
+      "slide_number": 5,
+      "role": "recommendation",
+      "action_title": "領域Aから着手し、B・Cは市場動向を見て判断すべきである",
+      "key_message": "Aは今すぐ着手可能、B・Cは条件が整うまで待つのが合理的",
+      "evidence_needed": [],
+      "transition_from_previous": "以上を踏まえた提案",
+      "transition_to_next": "以上で提案を終える"
+    },
+    {
+      "slide_number": 6,
+      "role": "back_cover",
+      "action_title": "裏表紙",
+      "key_message": "裏表紙（メッセージなし）",
+      "evidence_needed": [],
+      "transition_from_previous": null,
+      "transition_to_next": null
+    }
+  ]
+}

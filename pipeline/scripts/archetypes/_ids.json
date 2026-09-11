@@ -1,0 +1,137 @@
+[
+ {
+  "id": "title_page",
+  "name": "表紙",
+  "part": 1
+ },
+ {
+  "id": "overview_map",
+  "name": "全体マップ",
+  "part": 2
+ },
+ {
+  "id": "table_of_contents",
+  "name": "目次",
+  "part": 3
+ },
+ {
+  "id": "section_divider",
+  "name": "章扉",
+  "part": 4
+ },
+ {
+  "id": "chevron_steps",
+  "name": "矢羽（プロセス・変遷）",
+  "part": 5
+ },
+ {
+  "id": "premise_conclusion",
+  "name": "前提→帰結の2カラム",
+  "part": 6
+ },
+ {
+  "id": "stat_table_readout",
+  "name": "大型数値の表＋読み取り",
+  "part": 7
+ },
+ {
+  "id": "card_grid_2x2",
+  "name": "並列カード 2×2",
+  "part": 8
+ },
+ {
+  "id": "axis_table",
+  "name": "軸のある表",
+  "part": 9
+ },
+ {
+  "id": "back_cover",
+  "name": "裏表紙",
+  "part": 10
+ },
+ {
+  "id": "claim_panel_figure",
+  "name": "主張パネル＋図",
+  "part": 11
+ },
+ {
+  "id": "lever_effect_table",
+  "name": "打ち手の効果表",
+  "part": 12
+ },
+ {
+  "id": "status_heatmap_comment",
+  "name": "状態ヒートマップ＋右コメント",
+  "part": 13
+ },
+ {
+  "id": "harvey_ball_table",
+  "name": "充足度評価表（ハーベイボール）",
+  "part": 14
+ },
+ {
+  "id": "dot_matrix_share",
+  "name": "割合のドットマトリクス",
+  "part": 15
+ },
+ {
+  "id": "progress_bubble_matrix",
+  "name": "進捗バブル行列",
+  "part": 16
+ },
+ {
+  "id": "ranked_bar_annotated",
+  "name": "分布の順位棒＋注記",
+  "part": 17
+ },
+ {
+  "id": "scatter_annotated",
+  "name": "注記つき散布図",
+  "part": 18
+ },
+ {
+  "id": "pillars_foundation",
+  "name": "柱＋土台",
+  "part": 19
+ },
+ {
+  "id": "opposing_chevrons",
+  "name": "対向シェブロン",
+  "part": 20
+ },
+ {
+  "id": "evidence_clip_grid",
+  "name": "外部動向の根拠グリッド",
+  "part": 21
+ },
+ {
+  "id": "proportional_circles",
+  "name": "比例円の対比",
+  "part": 22
+ },
+ {
+  "id": "delta_bars_totals",
+  "name": "増減の縦棒＋左右合計",
+  "part": 23
+ },
+ {
+  "id": "scenario_lines_cagr",
+  "name": "シナリオ線＋成長率チップ",
+  "part": 24
+ },
+ {
+  "id": "research_basis",
+  "name": "調査の土台",
+  "part": 25
+ },
+ {
+  "id": "issue_action_columns",
+  "name": "課題と打ち手の2カラム",
+  "part": 26
+ },
+ {
+  "id": "agenda_separator",
+  "name": "セパレーター（章扉＝アジェンダ再掲）",
+  "part": 27
+ }
+]
