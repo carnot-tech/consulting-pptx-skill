@@ -346,6 +346,58 @@ export function preFamilyIrToComparisonTable({ elements }) {
   return result;
 }
 
+const DECISION_RESERVED_GROUP_IDS = new Set(["recommendation", "nextSteps"]);
+function isDecisionCandidateGroup(groupId) {
+  return groupId != null && !DECISION_RESERVED_GROUP_IDS.has(groupId);
+}
+const DECISION_ICON_NAMES = new Set(["org-chart", "bar-chart", "people"]);
+
+export function preFamilyIrToDecisionGroups({ elements }) {
+  const byGroup = elementsByGroupId(elements);
+
+  const groupEntries = [...byGroup.entries()].filter(([gid]) => isDecisionCandidateGroup(gid));
+  if (groupEntries.length < 2 || groupEntries.length > 4) {
+    throw new Error(`decision_page adapter: expected 2-4 decision groups, found ${groupEntries.length}`);
+  }
+  const decisionGroups = groupEntries.map(([gid, els]) => {
+    const number = findRole(els, "number");
+    const title = findRole(els, "title");
+    const actions = els.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+    if (!number) throw new Error(`decision_page adapter: group "${gid}" has no number element`);
+    if (!title) throw new Error(`decision_page adapter: group "${gid}" has no title element`);
+    if (!actions.length) throw new Error(`decision_page adapter: group "${gid}" has no action (bullets) elements`);
+    const group = { number, title, actions };
+    const context = findRole(els, "context");
+    if (context) group.context = context;
+    const icon = findRole(els, "icon");
+    if (icon) {
+      if (!DECISION_ICON_NAMES.has(icon)) throw new Error(`decision_page adapter: group "${gid}" icon "${icon}" is not one of ${[...DECISION_ICON_NAMES].join("/")}`);
+      group.icon = icon;
+    }
+    return group;
+  });
+
+  const result = { decisionGroups };
+
+  const recEls = byGroup.get("recommendation");
+  if (recEls) {
+    const text = findRole(recEls, "body");
+    if (!text) throw new Error('decision_page adapter: "recommendation" group has no body (recommendation text) element');
+    const recommendation = { text };
+    const label = findRole(recEls, "title");
+    if (label) recommendation.label = label;
+    result.recommendation = recommendation;
+  }
+
+  const stepsEls = byGroup.get("nextSteps");
+  if (stepsEls) {
+    const steps = stepsEls.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+    if (steps.length) result.nextSteps = steps;
+  }
+
+  return result;
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -381,12 +433,14 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   else if (selection.slideSpecShape === "phases") body = preFamilyIrToRoadmapPhases(preFamilyIR);
   else if (selection.slideSpecShape === "kpiDashboard") body = preFamilyIrToKpiDashboard(preFamilyIR);
   else if (selection.slideSpecShape === "comparisonTable") body = preFamilyIrToComparisonTable(preFamilyIR);
+  else if (selection.slideSpecShape === "decisionGroups") body = preFamilyIrToDecisionGroups(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {
     template: selection.slideSpecTemplate,
     title: slideMeta.title,
     ...(slideMeta.kicker ? { kicker: slideMeta.kicker } : {}),
+    ...(slideMeta.subtitle ? { subtitle: slideMeta.subtitle } : {}),
     ...(slideMeta.source ? { source: slideMeta.source } : {}),
     ...(slideMeta.note ? { note: slideMeta.note } : {}),
     ...body,

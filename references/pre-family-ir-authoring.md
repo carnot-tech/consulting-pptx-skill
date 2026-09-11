@@ -177,6 +177,43 @@ more honest), cell content is raw comparable numbers rather than a qualitative r
 chart or plain data table), or the point is a per-criterion narrative read-out for exactly
 自社 vs 他社 (→ the existing flat `table`/`headers` shape, still fully supported).
 
+## Decision ask (RP-DECISION-ASK-01, Library v0.2) → `decision_page` (`decisionGroups` shape)
+
+Independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-DECISION-ASK-01.jpg`. The existing
+`decision_page` template's flat shape (a single `ask` + a plain numbered `decisions[]` list)
+is unchanged and stays the right choice for one recommendation with simple follow-up items.
+This pattern is a second shape for multiple parallel decision items, each with its own
+number/context/icon/title/actions, put to a decision-making body in one sitting.
+
+- **2 to 4 decision groups** (any groupId except the 2 reserved ones below), each:
+  - `"number"` — the column's own label (e.g. "01"). Authored directly, not derived from
+    position — a group's number is whatever the author writes, even though in practice it's
+    almost always sequential.
+  - `"title"` — the decisive action being asked for (e.g. "Day60組織案の承認").
+  - `"bullets"` elements, >=1, order preserved — the concrete follow-up actions under that
+    decision (rendered as a numbered list, "①②..." in the reference image).
+  - Optional `"context"` — a 1-2 line framing sentence shown in the column's navy header band
+    above the number.
+  - Optional `"icon"` — one of `org-chart` / `bar-chart` / `people` (a closed vocabulary,
+    shared with kpi_dashboard's icon set for `bar-chart`; pick whichever concept fits —
+    organizational/structural decision → org-chart, metric/target decision → bar-chart,
+    governance/committee decision → people).
+- **Optional recommendation**: a group literally named `"recommendation"` with a `"title"`
+  element (the tag label, defaults to "推奨") and a `"body"` element (the recommendation
+  sentence) — rendered as a highlighted chevron bar below the columns.
+- **Optional next steps**: a group literally named `"nextSteps"` containing ordered
+  `"bullets"` elements (order preserved — this becomes a numbered 1→2→3 sequence beside the
+  recommendation bar, or on its own if there's no recommendation).
+- No relationship type is required — like KPI tiles and comparison candidates, decision
+  columns are plain siblings; order comes from authoring order.
+
+**Do not use when**: the slide is a plain conclusion recap with no decision being requested
+(→ RP-KEY-TAKEAWAYS-01), the point is choosing between named options (→
+RP-COMPARISON-TABLE-01), the point is a multi-week/multi-day execution timeline (→ the
+roadmap/100-Day patterns), or the columns are explanatory rather than decision items with a
+concrete ask (→ plain cards).
+
 ## What NOT to do
 
 - Don't author a pattern's `elements`/`relationships` first and decide the family afterward —

@@ -423,7 +423,41 @@ function renderRoadmap(slide, n) {
   return shell(slide, n, `<div class="roadmap">${phases}</div>`);
 }
 
+// N-column mode (RP-DECISION-ASK-01): each decision is its own column — a navy header band
+// (number + context), an icon + decisive-action title, then numbered concrete actions — plus
+// an optional bottom bar (a chevron-tagged recommendation + a numbered next-steps sequence).
+// Used when the spec authors `decisionGroups` instead of `ask`/`decisions` — the existing
+// flat single-recommendation shape is unchanged and still supported.
+function renderDecisionGroups(slide, n) {
+  const groups = slide.decisionGroups;
+  const cols = groups
+    .map((g) => {
+      const icon = g.icon && PATTERN_ICONS[g.icon] ? `<div class="dq-icon">${PATTERN_ICONS[g.icon]}</div>` : "";
+      const actions = g.actions
+        .map((a, i) => `<li><span class="dq-anum">${i + 1}</span><span>${esc(a)}</span></li>`)
+        .join("");
+      return `<div class="dq-col"><div class="dq-head"><span class="dq-num">${esc(g.number)}</span><span class="dq-context">${esc(g.context || "")}</span></div><div class="dq-body">${icon}<div class="dq-title">${esc(g.title)}</div><ol class="dq-actions">${actions}</ol></div></div>`;
+    })
+    .join("");
+  const rec = slide.recommendation
+    ? `<div class="dq-rec"><span class="dq-rec-tag">${esc(slide.recommendation.label || "推奨")}</span><span class="dq-rec-text">${esc(slide.recommendation.text)}</span></div>`
+    : "";
+  const steps = Array.isArray(slide.nextSteps) && slide.nextSteps.length
+    ? `<div class="dq-steps"><div class="dq-steps-label">次のステップ</div><div class="dq-steps-row">${slide.nextSteps
+        .map((s, i) => `<span class="dq-step"><span class="dq-step-num">${i + 1}</span>${esc(s)}</span>${i < slide.nextSteps.length - 1 ? '<span class="dq-arrow">&rsaquo;</span>' : ""}`)
+        .join("")}</div></div>`
+    : "";
+  const bottom = rec || steps ? `<div class="dq-bottom${rec && steps ? "" : " single"}">${rec}${steps}</div>` : "";
+  return shell(
+    slide,
+    n,
+    `<div class="dq-wrap"><div class="dq-grid" style="grid-template-columns: repeat(${groups.length}, 1fr);">${cols}</div>${bottom}</div>`,
+    { noTitleRule: true },
+  );
+}
+
 function renderDecision(slide, n) {
+  if (Array.isArray(slide.decisionGroups)) return renderDecisionGroups(slide, n);
   const decisions = (slide.decisions || [])
     .map((d, i) => `<div class="decision-item"><div class="decision-num">${i + 1}</div><div>${esc(d)}</div></div>`)
     .join("");
@@ -839,20 +873,23 @@ function kpiRows(kpis) {
   return [kpis.slice(0, 3), kpis.slice(3)];
 }
 
-// 4 fixed, monochrome (stroke=currentColor) line icons — deliberately not a general icon
-// library: RP-KPI-EXEC-DASHBOARD-01's reference image uses exactly these 4 concepts (revenue/
-// bar-chart, EBITDA/coins, margin/pie, turnover/cycle), and staying to a small closed set
+// Fixed, monochrome (stroke=currentColor) line icons shared across Library v0.2 patterns —
+// deliberately not a general/open icon library: each entry exists because a reference image
+// used exactly that concept (RP-KPI-EXEC-DASHBOARD-01: bar-chart/coins/pie/cycle;
+// RP-DECISION-ASK-01: org-chart/people, reusing bar-chart), and staying to a small closed set
 // keeps every icon this renderer can produce house-style-reviewed rather than open-ended.
-const KPI_ICONS = {
+const PATTERN_ICONS = {
   "bar-chart": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="16" y="3" width="4" height="17"/></svg>',
   coins: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>',
   pie: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 12 L12 3 A9 9 0 0 1 19.36 16.5 Z"/></svg>',
   cycle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M17 3v4h-4M7 21v-4h4"/></svg>',
+  "org-chart": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4.5" r="2.3"/><path d="M12 6.8v4M5 15v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="19" cy="18" r="2"/></svg>',
+  people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><path d="M3 19v-1.5A4.5 4.5 0 0 1 7.5 13h2A4.5 4.5 0 0 1 14 17.5V19"/><circle cx="17" cy="9" r="2.2"/><path d="M14.5 19v-1a3.8 3.8 0 0 1 6.5-2.7"/></svg>',
 };
 
 function kpiTileHtml(k) {
   const unit = k.unit ? `<span class="kpi-unit">${esc(k.unit)}</span>` : "";
-  const icon = k.icon && KPI_ICONS[k.icon] ? `<div class="kpi-icon">${KPI_ICONS[k.icon]}</div>` : "";
+  const icon = k.icon && PATTERN_ICONS[k.icon] ? `<div class="kpi-icon">${PATTERN_ICONS[k.icon]}</div>` : "";
   const head = `<div class="kpi-head">${icon}<div class="kpi-headtext"><div class="kpi-label">${esc(k.label)}</div>${k.context ? `<div class="kpi-context">${esc(k.context)}</div>` : ""}</div></div>`;
   const spark = Array.isArray(k.spark) && k.spark.length >= 2 ? renderKpiSpark(k.spark) : "";
   return `<div class="kpi-tile">${head}<div class="kpi-value">${esc(k.value)}${unit}</div>${k.delta ? `<div class="kpi-delta">${esc(k.delta)}</div>` : ""}${spark}${k.note ? `<div class="kpi-note">${esc(k.note)}</div>` : ""}</div>`;

@@ -22,6 +22,7 @@ import {
   preFamilyIrToRoadmapPhases,
   preFamilyIrToKpiDashboard,
   preFamilyIrToComparisonTable,
+  preFamilyIrToDecisionGroups,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -500,6 +501,139 @@ test("comparison_table end to end: the reference image's own 5-criteria x 3-cand
   await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
   const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
   assert.deepEqual(auditResult, { passed: true, errors: [] });
+});
+
+// --- RP-DECISION-ASK-01 (Library v0.2, third pattern) ---
+
+function dqGroupElements(gid, number, title, actions, opts = {}) {
+  const els = [
+    { semanticRole: "number", groupId: gid, value: number },
+    { semanticRole: "title", groupId: gid, value: title },
+    ...actions.map((a) => ({ semanticRole: "bullets", groupId: gid, value: a })),
+  ];
+  if (opts.context) els.push({ semanticRole: "context", groupId: gid, value: opts.context });
+  if (opts.icon) els.push({ semanticRole: "icon", groupId: gid, value: opts.icon });
+  return els;
+}
+
+test("reference_pattern_selector: 2-4 decision groups select RP-DECISION-ASK-01; 1 and 5 are both rejected", async () => {
+  const irOf = (n) => ({
+    elements: Array.from({ length: n }, (_, i) => dqGroupElements(`dg${i}`, String(i + 1).padStart(2, "0"), `Decision ${i}`, ["do the thing"])).flat(),
+    relationships: [],
+  });
+  const two = await selectPattern({ family: "decision-ask", variant: "standard" }, irOf(2));
+  assert.equal(two.eligibility, "PASS");
+  assert.equal(two.selectedPattern, "RP-DECISION-ASK-01");
+
+  const four = await selectPattern({ family: "decision-ask", variant: "standard" }, irOf(4));
+  assert.equal(four.eligibility, "PASS");
+
+  const one = await selectPattern({ family: "decision-ask", variant: "standard" }, irOf(1));
+  assert.equal(one.eligibility, "FAIL", "a single decision item has no need for a multi-column ask layout");
+
+  const five = await selectPattern({ family: "decision-ask", variant: "standard" }, irOf(5));
+  assert.equal(five.eligibility, "FAIL", "5+ decisions overload a single ask slide");
+});
+
+test("reference_pattern_selector: a decision group with no action (bullets) elements is rejected", async () => {
+  const ir = {
+    elements: [
+      ...dqGroupElements("dg0", "01", "Decision A", ["do the thing"]),
+      { semanticRole: "number", groupId: "dg1", value: "02" },
+      { semanticRole: "title", groupId: "dg1", value: "Decision B" }, // no bullets at all
+    ],
+    relationships: [],
+  };
+  const result = await selectPattern({ family: "decision-ask", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: decision_page adapter builds decisionGroups/recommendation/nextSteps and preserves action + step order", () => {
+  const ir = {
+    elements: [
+      ...dqGroupElements("dg0", "01", "Day60組織案の承認", ["営業・調達・人事の責任体制を確定", "新組織への移行準備を開始"], { context: "組織を整える", icon: "org-chart" }),
+      ...dqGroupElements("dg1", "02", "100日目標の承認", ["顧客離反ゼロ・購買30品目・KPI統合"], { context: "成果を出す", icon: "bar-chart" }),
+      { semanticRole: "title", groupId: "recommendation", value: "推奨" },
+      { semanticRole: "body", groupId: "recommendation", value: "2論点を一括承認する" },
+      { semanticRole: "bullets", groupId: "nextSteps", value: "担当者通知" },
+      { semanticRole: "bullets", groupId: "nextSteps", value: "詳細設計" },
+      { semanticRole: "bullets", groupId: "nextSteps", value: "初回レビュー" },
+    ],
+    relationships: [],
+  };
+  const result = preFamilyIrToDecisionGroups(ir);
+  assert.equal(result.decisionGroups.length, 2);
+  assert.deepEqual(result.decisionGroups[0], { number: "01", title: "Day60組織案の承認", actions: ["営業・調達・人事の責任体制を確定", "新組織への移行準備を開始"], context: "組織を整える", icon: "org-chart" });
+  assert.deepEqual(result.recommendation, { text: "2論点を一括承認する", label: "推奨" });
+  assert.deepEqual(result.nextSteps, ["担当者通知", "詳細設計", "初回レビュー"]);
+});
+
+test("pre_family_ir_to_slide_spec: decision_page adapter rejects an icon outside the org-chart/bar-chart/people vocabulary", () => {
+  const ir = { elements: [...dqGroupElements("dg0", "01", "A", ["x"], { icon: "coins" }), ...dqGroupElements("dg1", "02", "B", ["y"])], relationships: [] };
+  assert.throws(() => preFamilyIrToDecisionGroups(ir), /org-chart\/bar-chart\/people/);
+});
+
+test("decision_page end to end: 3 fixtures (reference-faithful 3-decision+recommendation+3-steps, 2-decision adaptive width, 4-decision long-Japanese-text stress test) render with 0 QA findings and export to a clean PPTX", async () => {
+  const fixtures = [
+    {
+      // A: the reference image's own composition — 3 decisions + recommendation + 3 next steps.
+      elements: [
+        ...dqGroupElements("dg0", "01", "Day60組織案の承認", ["営業・調達・人事の責任体制を確定", "新組織への移行準備を開始"], { context: "組織を整え、早期に実行力を立ち上げる", icon: "org-chart" }),
+        ...dqGroupElements("dg1", "02", "100日目標の承認", ["顧客離反ゼロ・購買30品目・KPI統合", "成果指標のモニタリング方法を合意"], { context: "100日で成果を出し、統合の価値を可視化する", icon: "bar-chart" }),
+        ...dqGroupElements("dg2", "03", "PMI会議体の承認", ["週次PMOと月次SteerCoを設置", "意思決定のエスカレーションルールを明確化"], { context: "適切なガバナンスで確実に実行を推進する", icon: "people" }),
+        { semanticRole: "title", groupId: "recommendation", value: "推奨" },
+        { semanticRole: "body", groupId: "recommendation", value: "3論点を一括承認し、Day60までに新体制へ移行" },
+        { semanticRole: "bullets", groupId: "nextSteps", value: "担当者通知" },
+        { semanticRole: "bullets", groupId: "nextSteps", value: "詳細設計" },
+        { semanticRole: "bullets", groupId: "nextSteps", value: "初回レビュー" },
+      ],
+      relationships: [],
+      title: "Day60組織・100日目標・PMI会議体の3論点についてご承認いただきたい",
+      subtitle: "本日ご判断いただきたい主要論点",
+    },
+    {
+      // B: 2 decisions, no recommendation/nextSteps — adaptive-width check.
+      elements: [
+        ...dqGroupElements("dg0", "01", "買収価格の上限承認", ["EV/EBITDA 7倍を上限として交渉する"], { context: "投資判断の前提となる財務影響を確認する", icon: "bar-chart" }),
+        ...dqGroupElements("dg1", "02", "PMI推進体制の承認", ["統合PMOを設置する", "月次で取締役会に報告する"], { context: "統合後のガバナンス体制を確定する", icon: "people" }),
+      ],
+      relationships: [],
+      title: "買収価格の上限とPMI推進体制についてご承認いただきたい",
+      subtitle: "本日ご判断いただきたい2つの論点",
+    },
+    {
+      // C: 4 decisions, long Japanese titles/actions/context — stress test.
+      elements: [
+        ...dqGroupElements("dg0", "01", "アジア3か国における現地法人設立方針の承認", ["現地法人設立に必要な初期投資予算（総額3.2億円）を承認する", "設立スケジュールを2026年度上期に確定する"], { context: "グローバル展開における現地法人設立の要否を判断する", icon: "org-chart" }),
+        ...dqGroupElements("dg1", "02", "基幹システム刷新プロジェクトの投資承認とベンダー選定方針の確定", ["候補ベンダー3社の中から優先交渉先を1社選定する", "移行スケジュールと並行稼働期間を確定する"], { context: "既存基幹システムの刷新可否を判断する", icon: "bar-chart" }),
+        ...dqGroupElements("dg2", "03", "グループ全体の人事評価制度・等級制度の統一方針承認", ["新等級制度の適用開始時期を来期首とする", "移行対象者への説明会実施計画を承認する"], { context: "人事制度統合の方向性を判断する", icon: "people" }),
+        ...dqGroupElements("dg3", "04", "2030年までの温室効果ガス排出削減目標水準の承認", ["削減目標を2019年度比45%に設定する", "進捗モニタリング体制を四半期ごとに構築する"], { context: "サステナビリティ目標の水準を判断する", icon: "org-chart" }),
+      ],
+      relationships: [],
+      title: "現地法人設立・基幹システム刷新・人事制度統合・GHG目標の4論点についてご承認いただきたい",
+      subtitle: "本日ご判断いただきたい4つの主要論点",
+    },
+  ];
+
+  for (const [i, fixture] of fixtures.entries()) {
+    const selection = await selectPattern({ family: "decision-ask", variant: "standard" }, fixture);
+    assert.equal(selection.eligibility, "PASS", `fixture ${i}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, fixture, { title: fixture.title, subtitle: fixture.subtitle, source: "Source: test" });
+
+    const specPath = path.join(tmpDir, `dq-e2e-${i}-spec.json`);
+    const htmlPath = path.join(tmpDir, `dq-e2e-${i}.html`);
+    await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+    await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+    const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+    const gateReport = JSON.parse(gateResult.stdout);
+    assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+    const pptxPath = path.join(tmpDir, `dq-e2e-${i}.pptx`);
+    await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+    const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+    assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
+  }
 });
 
 test("render_html_screenshots: an issue_tree root box does not false-positive as overflow (matches qa_html_deck.mjs's own .ltree exclusion)", async () => {

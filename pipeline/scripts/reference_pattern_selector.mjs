@@ -48,6 +48,7 @@ const FAMILY_VARIANT_MAP = {
   "roadmap-phaseband|standard": ["RP-PMI-ROADMAP-01"],
   "kpi-dashboard|standard": ["RP-KPI-EXEC-DASHBOARD-01"],
   "comparison-table|standard": ["RP-COMPARISON-TABLE-01"],
+  "decision-ask|standard": ["RP-DECISION-ASK-01"],
 };
 
 export async function runRegistryConsistencyGate(registry, library) {
@@ -218,6 +219,27 @@ function checkComparisonShapeValid(elements, minCandidates, maxCandidates, minCr
   return { pass: true, candidateCount: candidateEntries.length, criteriaCount: criteriaEls.length };
 }
 
+// Decision groups are identified by convention, same idiom as KPI tiles / comparison
+// candidates: any group that isn't the 2 reserved container ids ("recommendation",
+// "nextSteps") is a decision column. Column order = authoring order — no relationship needed.
+const DECISION_RESERVED_GROUP_IDS = new Set(["recommendation", "nextSteps"]);
+function isDecisionCandidateGroup(groupId) {
+  return groupId != null && !DECISION_RESERVED_GROUP_IDS.has(groupId);
+}
+function checkDecisionCountInRange(elements, min, max) {
+  const byGroup = elementsByGroupId(elements);
+  const entries = [...byGroup.entries()].filter(([gid]) => isDecisionCandidateGroup(gid));
+  if (entries.length < min || entries.length > max) {
+    return { pass: false, reason: `${entries.length} decision groups (need ${min}-${max})` };
+  }
+  for (const [gid, els] of entries) {
+    if (!els.some((e) => e.semanticRole === "number")) return { pass: false, reason: `decision group "${gid}" has no number element` };
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `decision group "${gid}" has no title element` };
+    if (!els.some((e) => e.semanticRole === "bullets")) return { pass: false, reason: `decision group "${gid}" has no action (bullets) elements` };
+  }
+  return { pass: true, count: entries.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -290,6 +312,11 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
       const r = checkComparisonShapeValid(elements, def.minCandidates ?? 2, def.maxCandidates ?? 5, def.minCriteria ?? 2);
       if (r.pass) evidence.push(`COMPARISON_SHAPE_VALID passed: ${r.candidateCount} candidates x ${r.criteriaCount} criteria`);
       else failedChecks.push(`COMPARISON_SHAPE_VALID failed: ${r.reason}`);
+    } else if (checkName === "DECISION_COUNT_IN_RANGE") {
+      const def = registryEntry.structuralCheckDefinitions?.DECISION_COUNT_IN_RANGE || {};
+      const r = checkDecisionCountInRange(elements, def.min ?? 2, def.max ?? 4);
+      if (r.pass) evidence.push(`DECISION_COUNT_IN_RANGE passed: ${r.count} decision groups`);
+      else failedChecks.push(`DECISION_COUNT_IN_RANGE failed: ${r.reason}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }

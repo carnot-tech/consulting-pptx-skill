@@ -120,6 +120,32 @@
       ],
       "slideSpecTemplate": "comparison_table",
       "slideSpecShape": "comparisonTable"
+    },
+    {
+      "patternId": "RP-DECISION-ASK-01",
+      "name": "Decision Ask",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-DECISION-ASK-01.jpg — Library v0.2, third pattern implemented (independently defined for this project). The existing decision_page template's flat shape (a single ask + a plain numbered decisions[] list) is unchanged — this pattern is a second, richer shape (N decision columns, each with its own numbered header/context/icon/title/actions) plus an optional bottom recommendation + next-steps bar.",
+      "useWhen": "2-4 distinct approval/judgment items are being put to a decision-making body in one sitting, each with its own concrete follow-up action(s) — the slide's primary purpose is obtaining a decision, not summarizing conclusions or comparing options.",
+      "requiredSemanticRoles": ["number + title + bullets (>=1 action) per decision group, 2-4 groups"],
+      "optionalSemanticRoles": [
+        "context (a 1-2 line framing sentence above the title) and icon (org-chart/bar-chart/people) per decision group",
+        "a recommendation group (title = tag label defaulting to \"推奨\", body = the recommendation sentence) as a highlighted chevron bar below the columns",
+        "a nextSteps group (bullets, order preserved) as a numbered sequence beside the recommendation bar"
+      ],
+      "relationshipsRequired": [],
+      "visualIntent": "decide",
+      "densityRange": "medium",
+      "emphasisModel": "no structural emphasis mechanism for this family — every decision column is equally a decision to be made; don't author emphasis here.",
+      "supportingBand": "optional — the recommendation + nextSteps bar, distinct from any single decision column.",
+      "doNotUseWhen": [
+        "the slide is a plain conclusion recap with no decision being requested — use RP-KEY-TAKEAWAYS-01 instead",
+        "the point is choosing between named options — use RP-COMPARISON-TABLE-01 instead",
+        "the point is a multi-week/multi-day execution timeline — use the roadmap/100-Day patterns instead",
+        "the columns are explanatory, not decision items (no concrete action being asked for) — use plain cards instead"
+      ],
+      "slideSpecTemplate": "decision_page",
+      "slideSpecShape": "decisionGroups"
     }
   ]
 }

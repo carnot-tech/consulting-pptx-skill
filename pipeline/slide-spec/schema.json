@@ -311,6 +311,24 @@
         "comparisonSummary": {
           "$ref": "#/$defs/comparisonSummary"
         },
+        "decisionGroups": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/decisionGroup"
+          }
+        },
+        "recommendation": {
+          "$ref": "#/$defs/decisionRecommendation"
+        },
+        "nextSteps": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        },
         "multiples": {
           "type": "array",
           "minItems": 2,
@@ -681,6 +699,21 @@
             "anyOf": [
               { "required": ["table"] },
               { "required": ["comparison"] }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "template": {
+                "const": "decision_page"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              { "required": ["ask"] },
+              { "required": ["decisionGroups"] }
             ]
           }
         },
@@ -1583,6 +1616,29 @@
         },
         "conclusionLabel": { "type": "string" },
         "conclusion": { "type": "string" }
+      }
+    },
+    "decisionGroup": {
+      "type": "object",
+      "required": ["number", "title", "actions"],
+      "properties": {
+        "number": { "type": "string" },
+        "context": { "type": "string" },
+        "icon": { "enum": ["org-chart", "bar-chart", "people"] },
+        "title": { "type": "string" },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "decisionRecommendation": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "label": { "type": "string" },
+        "text": { "type": "string" }
       }
     },
     "kpiTrendChart": {

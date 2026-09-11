@@ -759,7 +759,77 @@ function addRoadmap(item, pageNum) {
   });
 }
 
+// N-column mode mirror of render_spec_to_html.mjs#renderDecisionGroups.
+function addDecisionGroups(item, pageNum) {
+  const slide = addShell(item, pageNum, { titleRule: false });
+  let top = 2.0;
+  if (item.subtitle) {
+    addBodyText(slide, item.subtitle, M, top, W - M * 2, 0.3, { fontSize: 13, bold: true, color: MUTED });
+    top += 0.42;
+  }
+  const groups = item.decisionGroups;
+  const gap = 0.3;
+  const n = groups.length;
+  const colW = (W - M * 2 - gap * (n - 1)) / n;
+  const headH = 0.62;
+  const bottomReserved = item.recommendation || (item.nextSteps || []).length ? 0.95 : 0;
+  const colBottom = FOOTER_Y - bottomReserved - 0.1;
+
+  groups.forEach((g, i) => {
+    const x = M + i * (colW + gap);
+    slide.addShape(pptx.ShapeType.rect, { x, y: top, w: colW, h: colBottom - top, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+    slide.addShape(pptx.ShapeType.rect, { x, y: top, w: colW, h: headH, fill: { color: NAVY }, line: { type: "none" } });
+    // pptxgenjs doesn't support line transparency yet, so this divider is plain white rather
+    // than the subtle translucent one in the reference image — a deliberate simplification.
+    slide.addShape(pptx.ShapeType.line, { x: x + 0.62, y: top + 0.1, w: 0, h: headH - 0.2, line: { color: WHITE, width: 0.75 } });
+    addBodyText(slide, g.number, x + 0.12, top, 0.5, headH, { fontSize: 24, bold: true, color: WHITE, valign: "middle" });
+    addBodyText(slide, g.context || "", x + 0.74, top + 0.08, colW - 0.86, headH - 0.16, { fontSize: 10, color: WHITE, valign: "middle" });
+
+    let by = top + headH + 0.18;
+    const iconSize = 0.5;
+    if (g.icon) {
+      addPatternIcon(slide, g.icon, x + 0.16, by, iconSize, NAVY);
+    }
+    addBodyText(slide, g.title, x + 0.16, by + iconSize + 0.06, colW - 0.32, 0.45, { fontSize: 14.5, bold: true });
+    by += iconSize + 0.58;
+    slide.addShape(pptx.ShapeType.line, { x: x + 0.16, y: by, w: colW - 0.32, h: 0, line: { color: HAIR, width: 0.75 } });
+    by += 0.16;
+    (g.actions || []).forEach((a) => {
+      slide.addShape(pptx.ShapeType.ellipse, { x: x + 0.16, y: by + 0.02, w: 0.22, h: 0.22, fill: { color: CYAN }, line: { type: "none" } });
+      addBodyText(slide, String((g.actions.indexOf(a)) + 1), x + 0.16, by + 0.02, 0.22, 0.22, { fontSize: 9.5, bold: true, color: WHITE, align: "center", valign: "middle" });
+      const lineH = Math.ceil(a.length / 22) * 0.24 + 0.1;
+      addBodyText(slide, a, x + 0.46, by, colW - 0.62, lineH, { fontSize: 11 });
+      by += lineH + 0.14;
+    });
+  });
+
+  if (!bottomReserved) return;
+  const barY = FOOTER_Y - bottomReserved + 0.1;
+  const barH = bottomReserved - 0.2;
+  const bothPresent = item.recommendation && (item.nextSteps || []).length;
+  const recW = bothPresent ? (W - M * 2) * 0.66 : W - M * 2;
+  if (item.recommendation) {
+    slide.addShape(pptx.ShapeType.homePlate, { x: M, y: barY, w: recW, h: barH, fill: { color: NAVY }, line: { type: "none" } });
+    addBodyText(slide, item.recommendation.label || "推奨", M + 0.22, barY, 0.9, barH, { fontSize: 13, bold: true, color: WHITE, valign: "middle" });
+    addBodyText(slide, item.recommendation.text, M + 1.15, barY, recW - 1.55, barH, { fontSize: 14, bold: true, color: WHITE, valign: "middle" });
+  }
+  if ((item.nextSteps || []).length) {
+    const x = bothPresent ? M + recW + 0.3 : M;
+    const w = W - M - x;
+    slide.addShape(pptx.ShapeType.rect, { x, y: barY, w, h: barH, fill: { color: SOFTBLUE }, line: { type: "none" } });
+    addBodyText(slide, "次のステップ", x + 0.16, barY + 0.06, w - 0.32, 0.2, { fontSize: 9.5, bold: true, color: MUTED });
+    const stepW = (w - 0.32) / item.nextSteps.length;
+    item.nextSteps.forEach((s, i) => {
+      const sx = x + 0.16 + i * stepW;
+      slide.addShape(pptx.ShapeType.ellipse, { x: sx, y: barY + 0.34, w: 0.2, h: 0.2, fill: { color: CYAN }, line: { type: "none" } });
+      addBodyText(slide, String(i + 1), sx, barY + 0.34, 0.2, 0.2, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+      addBodyText(slide, s, sx + 0.26, barY + 0.32, stepW - 0.36, 0.24, { fontSize: 10.5, bold: true });
+    });
+  }
+}
+
 function addDecision(item, pageNum) {
+  if (Array.isArray(item.decisionGroups)) return addDecisionGroups(item, pageNum);
   const slide = addShell(item, pageNum);
   slide.addShape(pptx.ShapeType.line, { x: M, y: 2.22, w: 5.7, h: 0, line: { color: BLUE, width: 2.2 } });
   addBodyText(slide, ((item.headers || {}).recommended || "RECOMMENDED DECISION"), M, 2.45, 2.4, 0.24, { fontSize: 10.5, bold: true, color: MUTED });
@@ -1538,7 +1608,7 @@ function kpiRows(kpis) {
 
 // mirrors render_spec_to_html.mjs's KPI_ICONS set — native OOXML preset shapes where a good
 // match exists (donut=coins, pie=pie, circularArrow=cycle), else 3 small bars drawn directly.
-function addKpiIcon(slide, name, x, y, size, color) {
+function addPatternIcon(slide, name, x, y, size, color) {
   slide.addShape(pptx.ShapeType.ellipse, { x, y, w: size, h: size, fill: { color: WHITE }, line: { color, width: 1.2 } });
   const pad = size * 0.28;
   const ix = x + pad;
@@ -1550,6 +1620,21 @@ function addKpiIcon(slide, name, x, y, size, color) {
     slide.addShape(pptx.ShapeType.pie, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { color, width: 0.75 }, angleRange: [270, 90] });
   } else if (name === "cycle") {
     slide.addShape(pptx.ShapeType.circularArrow, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { type: "none" } });
+  } else if (name === "org-chart") {
+    // 1 node on top, 3 below — RP-DECISION-ASK-01's 組織/体制 concept.
+    const nodeR = iw * 0.16;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - nodeR, y: iy, w: nodeR * 2, h: nodeR * 2, fill: { color }, line: { type: "none" } });
+    [0.18, 0.5, 0.82].forEach((frac) => {
+      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - nodeR, y: iy + iw - nodeR * 2, w: nodeR * 2, h: nodeR * 2, fill: { color }, line: { type: "none" } });
+    });
+  } else if (name === "people") {
+    // 2 heads + shoulders — RP-DECISION-ASK-01's 会議体/ガバナンス concept.
+    const headR = iw * 0.17;
+    [0.32, 0.68].forEach((frac, i) => {
+      const r = i === 0 ? headR * 1.1 : headR;
+      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - r, y: iy, w: r * 2, h: r * 2, fill: { color }, line: { type: "none" } });
+      slide.addShape(pptx.ShapeType.roundRect, { x: ix + iw * frac - r * 1.4, y: iy + r * 2 + iw * 0.04, w: r * 2.8, h: iw * 0.34, fill: { color }, line: { type: "none" }, rectRadius: 0.15 });
+    });
   } else {
     // bar-chart (default): 3 small bars, increasing height, bottom-aligned within the badge.
     const bw = iw / 3 - 0.02;
@@ -1587,7 +1672,7 @@ function addKpiRow(slide, row, y, rowH) {
     let ty = y + pad;
     const iconSize = 0.34;
     if (k.icon) {
-      addKpiIcon(slide, k.icon, x + pad, ty, iconSize, BLUE);
+      addPatternIcon(slide, k.icon, x + pad, ty, iconSize, BLUE);
     }
     const textX = x + pad + (k.icon ? iconSize + 0.12 : 0);
     const textW = innerW - (k.icon ? iconSize + 0.12 : 0);

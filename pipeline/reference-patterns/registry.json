@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "6eec069161a87ab13d98ddb17a02f8cac281b76e7b4452f6caeabc074b8234f6"
+    "sha256": "1d4e988ab9ee7b4a46d95e83983b6dc20622387ccfc888e96dde07dbd6073e17"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
@@ -92,6 +92,20 @@
           "maxCandidates": 5,
           "minCriteria": 2,
           "description": "the \"criteria\" group has >=minCriteria title elements; every non-reserved group (a candidate) has a title element and exactly as many value elements as there are criteria."
+        }
+      },
+      "disqualifiers": []
+    },
+    "RP-DECISION-ASK-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [],
+      "structuralChecks": ["DECISION_COUNT_IN_RANGE"],
+      "structuralCheckDefinitions": {
+        "DECISION_COUNT_IN_RANGE": {
+          "min": 2,
+          "max": 4,
+          "description": "count of groupIds that are not a reserved container id (\"recommendation\"/\"nextSteps\") and have a number, a title, and >=1 bullets (action) element — must be 2-4."
         }
       },
       "disqualifiers": []
