@@ -258,6 +258,13 @@ conditional-required both treat `takeaways`/`insightPanel`/`soWhat` as all-or-no
   columns, takeaway columns and insight-panel items are plain siblings; order comes from
   authoring order.
 
+**4-column density (soft warning, not a hard limit)**: the 4-column layout is this pattern's
+narrowest column width. `check_content_structure.mjs` flags (as a warning, not an error) any
+`headline` over 40 chars or `supportText` over 46 chars when `takeaways.length === 4` — those
+thresholds are calibrated to the golden stress fixture's own longest strings (37 / 38 chars),
+which is the accepted maximum density. The fix for a flagged slide is to drop to 3 columns or
+split into two slides, not to let the renderer shrink text to fit.
+
 **Do not use when**: the slide is a decision being put to the room, not a conclusion recap
 already reached (→ RP-DECISION-ASK-01), the point is choosing between named options (→
 RP-COMPARISON-TABLE-01), the point is a multi-week/multi-day execution timeline (→ the

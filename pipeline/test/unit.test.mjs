@@ -993,6 +993,35 @@ test("check_content_structure: catches an empty chart", () => {
   assert.ok(result.errors.some((e) => e.type === "empty_chart"));
 });
 
+test("check_content_structure: flags a 4-column key_takeaways headline/supportText denser than the accepted maximum-density fixture, as a warning not an error", () => {
+  const dense = {
+    deckTitle: "t",
+    slides: [{
+      template: "recommendation_pillars", title: "t", subtitle: "s",
+      takeaways: [
+        { number: "01", category: "A", headline: "あ".repeat(45), supportText: "い".repeat(50) },
+        { number: "02", category: "B", headline: "短い", supportText: "短い" },
+        { number: "03", category: "C", headline: "短い", supportText: "短い" },
+        { number: "04", category: "D", headline: "短い", supportText: "短い" },
+      ],
+      insightPanel: { items: [{ number: "1", title: "t", body: "b" }] },
+      soWhat: { text: "t" },
+    }],
+  };
+  const denseResult = checkContentStructure(dense);
+  assert.equal(denseResult.passed, true, "density issues are a soft warning, not a blocking error");
+  const denseWarnings = denseResult.warnings.filter((w) => w.type === "key_takeaway_4col_density");
+  assert.equal(denseWarnings.length, 2);
+  assert.ok(denseWarnings.some((w) => w.element === "takeaways[0].headline"));
+  assert.ok(denseWarnings.some((w) => w.element === "takeaways[0].supportText"));
+
+  // A 3-column slide with the same long headline is NOT flagged — the soft cap is specific to
+  // the 4-column layout's narrower columns.
+  const threeCol = { ...dense, slides: [{ ...dense.slides[0], takeaways: dense.slides[0].takeaways.slice(0, 3) }] };
+  const threeColResult = checkContentStructure(threeCol);
+  assert.equal(threeColResult.warnings.filter((w) => w.type === "key_takeaway_4col_density").length, 0);
+});
+
 // ---- chart_insight negative-value rendering -----------------------------------
 test("render_spec_to_html: chart_insight renders a negative value as a real (non-negative-height) bar below a zero line", async () => {
   // Regression test for a real bug found during the rigorous-mode E2E run: bar height was

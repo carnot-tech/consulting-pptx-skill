@@ -142,6 +142,34 @@ function checkKpiDeltaDirectionGlyphs(slide, at, errors, warnings) {
   });
 }
 
+// RP-KEY-TAKEAWAYS-01's 4-column layout is already the narrowest column width this pattern
+// supports (2/3 columns have meaningfully more room). Per user review of the 4-column stress
+// fixture: that fixture's own longest headline (37 chars) / supportText (38 chars) is the
+// accepted "maximum density" ceiling — content authored denser than that should be flagged so
+// the author reconsiders the slide (drop to 3 columns, or split into two slides) rather than
+// discovering the problem only as an overflow/shrunk-font rendering artifact later.
+const KEY_TAKEAWAY_4COL_HEADLINE_MAX_CHARS = 40;
+const KEY_TAKEAWAY_4COL_SUPPORT_MAX_CHARS = 46;
+function checkKeyTakeawayDensity(slide, at, errors, warnings) {
+  if (!Array.isArray(slide.takeaways) || slide.takeaways.length !== 4) return;
+  slide.takeaways.forEach((t, i) => {
+    const headline = String(t.headline || "");
+    if (headline.length > KEY_TAKEAWAY_4COL_HEADLINE_MAX_CHARS) {
+      warnings.push({
+        slide: at, type: "key_takeaway_4col_density", element: `takeaways[${i}].headline`,
+        detail: `headline is ${headline.length} chars (soft max ${KEY_TAKEAWAY_4COL_HEADLINE_MAX_CHARS} at 4 columns) — consider 3 columns or a separate slide instead of shrinking to fit`,
+      });
+    }
+    const supportText = String(t.supportText || "");
+    if (supportText.length > KEY_TAKEAWAY_4COL_SUPPORT_MAX_CHARS) {
+      warnings.push({
+        slide: at, type: "key_takeaway_4col_density", element: `takeaways[${i}].supportText`,
+        detail: `supportText is ${supportText.length} chars (soft max ${KEY_TAKEAWAY_4COL_SUPPORT_MAX_CHARS} at 4 columns) — consider 3 columns or a separate slide instead of shrinking to fit`,
+      });
+    }
+  });
+}
+
 export function checkContentStructure(spec) {
   const errors = [];
   const warnings = [];
@@ -152,6 +180,7 @@ export function checkContentStructure(spec) {
     checkEmptyDataObjects(slide, at, errors, warnings);
     checkDuplicateKpiLabels(slide, at, errors, warnings);
     checkKpiDeltaDirectionGlyphs(slide, at, errors, warnings);
+    checkKeyTakeawayDensity(slide, at, errors, warnings);
   });
   return { passed: errors.length === 0, errors, warnings };
 }
