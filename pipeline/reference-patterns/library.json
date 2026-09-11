@@ -1,0 +1,70 @@
+{
+  "label": "Reference Pattern Library — filtered subset for consulting-pptx-skill's Production Integration v1",
+  "sourceNote": "Trimmed copy of REFERENCE-PATTERN-LIBRARY-V0.1.2.json (an external, independently-developed Visual Planner / Reference Pattern Selector project), limited to the 3 families that project's own Selector Holdout rounds 2-3 scored 10/10 with zero wrong selections: matrix, hierarchy, roadmap-phaseband. Fields specific to that project's own golden-fixtures/renderer (groundedIn, revisionNote, referenceAssets, evidenceStatus, renderability, referenceLocator) are dropped — they describe evidence and renderability against THAT project's render.js, not this one. What's kept is the semantic ELIGIBILITY CONTRACT (useWhen/requiredSemanticRoles/relationshipsRequired/doNotUseWhen/etc) each pattern's own spec explicitly scopes as Pattern-Selector-owned, independent of which renderer ultimately draws it. See pipeline/scripts/pre_family_ir_to_slide_spec.mjs for how a selected pattern here maps onto this project's own SlideSpec templates (matrix_2x2/issue_tree/gantt).",
+  "patterns": [
+    {
+      "patternId": "RP-MATRIX-HERO-01",
+      "name": "Matrix Hero (Priority Matrix, rich)",
+      "useWhen": "2 genuinely authored axes (not just 4 box-shaped items) AND at least one quadrant carries more than a single-sentence description — priorityLabel + title + body [+ evidence] authored per quadrant, not merely a label.",
+      "requiredSemanticRoles": ["chartTicks x2 (one per axis)", "label or title per populated quadrant", "body per populated quadrant"],
+      "optionalSemanticRoles": ["secondary (evidence line)"],
+      "relationshipsRequired": ["axis_membership (>=1 per quadrant group, covering 2 distinct axis elements for at least 3 of the 4 possible quadrant groupIds)"],
+      "visualIntent": "prioritize",
+      "densityRange": "medium",
+      "emphasisModel": "0 or 1 quadrant may carry element.emphasis=true (an authored flag, never inferred from which quadrant 'sounds' most important).",
+      "supportingBand": "none — matrix's own quadrant structure already carries the 'so what' per zone.",
+      "doNotUseWhen": [
+        "only 1 axis is authored, or axis words describe the SAME dimension twice",
+        "4 box-shaped items exist but no 2-axis judgment criteria are ever articulated anywhere in the content — use cards instead",
+        "quadrant content is a single plain sentence with no priorityLabel/body richness — use RP-MATRIX-PLAIN-01 instead"
+      ],
+      "slideSpecTemplate": "matrix_2x2",
+      "slideSpecShape": "quadrants"
+    },
+    {
+      "patternId": "RP-MATRIX-PLAIN-01",
+      "name": "Priority Matrix (plain / badge tier)",
+      "useWhen": "2 genuinely authored axes, but each quadrant is a single descriptive sentence — no separate priorityLabel/title/body/evidence fields authored per quadrant.",
+      "requiredSemanticRoles": ["chartTicks x2 (one per axis)", "label per populated quadrant (the single sentence)"],
+      "optionalSemanticRoles": ["a short priority badge per quadrant (最優先/高/中/低)"],
+      "relationshipsRequired": ["axis_membership (same as RP-MATRIX-HERO-01)"],
+      "visualIntent": "prioritize",
+      "densityRange": "medium",
+      "emphasisModel": "same as RP-MATRIX-HERO-01 — 0 or 1 quadrant may carry an authored emphasis flag.",
+      "supportingBand": "none.",
+      "doNotUseWhen": "same near-miss boundary as RP-MATRIX-HERO-01. If richer per-quadrant fields ARE authored, use RP-MATRIX-HERO-01 instead — variant choice is purely about which fields were authored, not a quality judgment.",
+      "slideSpecTemplate": "matrix_2x2",
+      "slideSpecShape": "quadrants"
+    },
+    {
+      "patternId": "RP-HIERARCHY-WORKSTREAM-01",
+      "name": "Workstream Hierarchy",
+      "useWhen": "an authored root node (a named top-level owner/committee) with >=2 child nodes explicitly reporting to it.",
+      "requiredSemanticRoles": ["title (root node name)", "title (child node name) x2+"],
+      "optionalSemanticRoles": ["bullets or body per child (role/responsibility list)"],
+      "relationshipsRequired": ["contains (root -> each child, at least 2 edges)"],
+      "visualIntent": "explain",
+      "densityRange": "low to medium, depends on child count and per-child detail",
+      "emphasisModel": "no structural emphasis mechanism for this family yet — emphasis should stay empty.",
+      "supportingBand": "none.",
+      "doNotUseWhen": "content has only a shared section heading over a flat list, with NO authored root/ownership relationship at all — use cards instead.",
+      "slideSpecTemplate": "issue_tree",
+      "slideSpecShape": "tree"
+    },
+    {
+      "patternId": "RP-PMI-ROADMAP-01",
+      "name": "PMI Roadmap (phase-banded)",
+      "useWhen": "milestones are grouped under authored phase objects (each phase has its own title/description) AND at least one milestone carries an authored emphasis marker.",
+      "requiredSemanticRoles": ["title + subtitle per phase group", "title (milestone name) + date per milestone"],
+      "optionalSemanticRoles": ["a slide-level closing/outcomes group distinct from any single phase or milestone"],
+      "relationshipsRequired": ["contains (phase group -> its milestones)", "sequence (milestone-to-milestone order; phase-to-phase order)"],
+      "visualIntent": "sequence",
+      "densityRange": "medium — roadmap-phaseband's richness comes from phase/milestone COUNT more than field count",
+      "emphasisModel": "milestone-level authored flag — exactly 1 milestone is typically emphasized.",
+      "supportingBand": "often present — a slide-level closing takeaways group distinct from any individual phase or milestone.",
+      "doNotUseWhen": "milestones exist but are NOT grouped under authored phase objects (no contains edges) — use the plain 'roadmap' template's flat `sections` shape instead.",
+      "slideSpecTemplate": "roadmap",
+      "slideSpecShape": "phases"
+    }
+  ]
+}

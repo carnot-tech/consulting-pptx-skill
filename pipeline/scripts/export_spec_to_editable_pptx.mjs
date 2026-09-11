@@ -625,7 +625,47 @@ function addTableLike(slide, headers, rows, widths, y, opts = {}) {
   });
 }
 
+// phase-banded mode mirror of render_spec_to_html.mjs#renderRoadmapPhases.
+function addRoadmapPhases(item, pageNum) {
+  const slide = addShell(item, pageNum);
+  const phases = item.phases || [];
+  const gap = 0.06;
+  const colW = (W - M * 2 - gap * (phases.length - 1)) / phases.length;
+  const outcomes = item.outcomes?.bullets || [];
+  const bottomY = outcomes.length ? 6.55 : FOOTER_Y - 0.15;
+  phases.forEach((p, i) => {
+    const x = M + i * (colW + gap);
+    if (i > 0) slide.addShape(pptx.ShapeType.line, { x: x - gap / 2, y: 2.15, w: 0, h: bottomY - 2.15, line: { color: HAIR, width: 0.5 } });
+    addBodyText(slide, p.title, x, 2.15, colW - 0.15, 0.4, { fontSize: 15, bold: true, color: BLUE });
+    let y = 2.55;
+    if (p.subtitle) {
+      addBodyText(slide, p.subtitle, x, y, colW - 0.15, 0.4, { fontSize: 10.5, color: MUTED });
+      y += 0.4;
+    }
+    y += 0.15;
+    (p.milestones || []).forEach((m) => {
+      const barColor = m.emphasis ? NAVY : HAIR;
+      slide.addShape(pptx.ShapeType.line, { x: x + 0.02, y, w: 0, h: 0.42, line: { color: barColor, width: m.emphasis ? 2.2 : 1.1 } });
+      let my = y;
+      if (m.date) {
+        addBodyText(slide, m.date, x + 0.18, my, colW - 0.3, 0.22, { fontSize: 10, bold: true, color: BLUE });
+        my += 0.22;
+      }
+      addBodyText(slide, m.title, x + 0.18, my, colW - 0.3, 0.4, { fontSize: 11.5, bold: !!m.emphasis });
+      y += 0.62;
+    });
+  });
+  if (outcomes.length) {
+    slide.addShape(pptx.ShapeType.line, { x: M, y: 6.7, w: W - M * 2, h: 0, line: { color: HAIR, width: 0.75 } });
+    const ow = (W - M * 2 - gap * (outcomes.length - 1)) / outcomes.length;
+    outcomes.forEach((b, i) => {
+      addBodyText(slide, b, M + i * (ow + gap), 6.82, ow - 0.1, 0.5, { fontSize: 11.5 });
+    });
+  }
+}
+
 function addRoadmap(item, pageNum) {
+  if (Array.isArray(item.phases)) return addRoadmapPhases(item, pageNum);
   const slide = addShell(item, pageNum);
   const phases = item.sections || [];
   const w = (W - M * 2) / phases.length;

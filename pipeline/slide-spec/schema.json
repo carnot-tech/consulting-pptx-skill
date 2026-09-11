@@ -629,6 +629,21 @@
           "if": {
             "properties": {
               "template": {
+                "const": "roadmap"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              { "required": ["sections"] },
+              { "required": ["phases"] }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "template": {
                 "const": "kpi_dashboard"
               }
             }

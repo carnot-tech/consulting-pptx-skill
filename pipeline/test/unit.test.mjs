@@ -15,7 +15,138 @@ import { logExperience } from "../scripts/log_experience.mjs";
 import { parseStorylineReview, parseFreshEyeReview, parseVisualQa } from "../scripts/review_output_parser.mjs";
 import { dedupeSlideShapeIds, fixPptxShapeIds } from "../scripts/fix_pptx_shape_ids.mjs";
 import { auditPptxStructure } from "../scripts/audit_pptx_structure.mjs";
+import { selectPattern } from "../scripts/reference_pattern_selector.mjs";
+import {
+  preFamilyIrToMatrixQuadrants,
+  preFamilyIrToIssueTree,
+  preFamilyIrToRoadmapPhases,
+  preFamilyIrToSlideSpec,
+} from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
+
+// Shared fixtures for the Reference Pattern Selector / Pre-family Semantic IR tests below —
+// origin="authored" throughout, matching how this pipeline actually produces this IR (an LLM
+// authors it directly against a pattern's contract; nothing here is regex-inferred).
+const MATRIX_HERO_IR = {
+  elements: [
+    { id: "axis-y", semanticRole: "chartTicks", groupId: null, value: "対応緊急度" },
+    { id: "axis-x", semanticRole: "chartTicks", groupId: null, value: "事業影響度" },
+    ...["top-left", "top-right", "bottom-left", "bottom-right"].flatMap((pos) => [
+      { id: `${pos}-title`, semanticRole: "title", groupId: pos, value: `${pos} title` },
+      { id: `${pos}-body`, semanticRole: "body", groupId: pos, value: `${pos} body`, emphasis: pos === "top-right" },
+      { id: `${pos}-secondary`, semanticRole: "secondary", groupId: pos, value: `${pos} evidence` },
+    ]),
+  ],
+  relationships: ["top-left", "top-right", "bottom-left", "bottom-right"].flatMap((pos) => [
+    { type: "axis_membership", from: { kind: "group", id: pos }, to: { kind: "element", id: "axis-y" }, attributes: { axisRole: "urgency", position: "high" }, origin: "authored" },
+    { type: "axis_membership", from: { kind: "group", id: pos }, to: { kind: "element", id: "axis-x" }, attributes: { axisRole: "impact", position: "high" }, origin: "authored" },
+  ]),
+};
+
+test("reference_pattern_selector: matrix content with rich per-quadrant fields selects RP-MATRIX-HERO-01, not PLAIN", async () => {
+  const result = await selectPattern({ family: "matrix", variant: "hero" }, MATRIX_HERO_IR);
+  assert.equal(result.eligibility, "PASS");
+  assert.equal(result.selectedPattern, "RP-MATRIX-HERO-01");
+  assert.equal(result.rejectedCandidates[0]?.patternId, "RP-MATRIX-PLAIN-01");
+});
+
+test("reference_pattern_selector: matrix content with only 1 authored axis is rejected (MATRIX_SINGLE_AXIS)", async () => {
+  const ir = {
+    elements: MATRIX_HERO_IR.elements,
+    relationships: MATRIX_HERO_IR.relationships.filter((r) => r.attributes.axisRole !== "impact"),
+  };
+  const result = await selectPattern({ family: "matrix", variant: "hero" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+  assert.equal(result.selectedPattern, null);
+});
+
+test("reference_pattern_selector: hierarchy root with 2 children selects RP-HIERARCHY-WORKSTREAM-01", async () => {
+  const ir = {
+    elements: [
+      { id: "root", semanticRole: "title", groupId: null, value: "root" },
+      { id: "c1", semanticRole: "title", groupId: "c1", value: "child 1" },
+      { id: "c2", semanticRole: "title", groupId: "c2", value: "child 2" },
+    ],
+    relationships: [
+      { type: "contains", from: { kind: "element", id: "root" }, to: { kind: "group", id: "c1" }, attributes: {}, origin: "authored" },
+      { type: "contains", from: { kind: "element", id: "root" }, to: { kind: "group", id: "c2" }, attributes: {}, origin: "authored" },
+    ],
+  };
+  const result = await selectPattern({ family: "hierarchy", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "PASS");
+  assert.equal(result.selectedPattern, "RP-HIERARCHY-WORKSTREAM-01");
+});
+
+test("reference_pattern_selector: hierarchy with 2 ambiguous roots is rejected, not force-selected", async () => {
+  const ir = {
+    elements: [
+      { id: "r1", semanticRole: "title", groupId: null, value: "r1" },
+      { id: "r2", semanticRole: "title", groupId: null, value: "r2" },
+      { id: "c1", semanticRole: "title", groupId: "c1", value: "child" },
+    ],
+    relationships: [
+      { type: "contains", from: { kind: "element", id: "r1" }, to: { kind: "group", id: "c1" }, attributes: {}, origin: "authored" },
+      { type: "contains", from: { kind: "element", id: "r2" }, to: { kind: "group", id: "c1" }, attributes: {}, origin: "authored" },
+    ],
+  };
+  const result = await selectPattern({ family: "hierarchy", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: matrix adapter output is schema-valid and exports to a clean PPTX", async () => {
+  const selection = await selectPattern({ family: "matrix", variant: "hero" }, MATRIX_HERO_IR);
+  const slide = preFamilyIrToSlideSpec(selection, MATRIX_HERO_IR, { title: "後任体制の早期確定が最優先課題である" });
+  assert.equal(slide.template, "matrix_2x2");
+  assert.equal(slide.quadrants.length, 4);
+  assert.ok(slide.quadrants.find((q) => q.position === "top-right").emphasis);
+
+  const specPath = path.join(tmpDir, "adapter-matrix-spec.json");
+  await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+  await execFileAsync("node", [path.join(root, "scripts/validate_spec.mjs"), specPath]);
+  const pptxPath = path.join(tmpDir, "adapter-matrix.pptx");
+  await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+  assert.deepEqual(await auditPptxStructure(await fs.readFile(pptxPath)), { passed: true, errors: [] });
+});
+
+test("pre_family_ir_to_slide_spec: hierarchy adapter drops body/bullets rather than authoring fields the renderer can't show", () => {
+  const ir = {
+    elements: [
+      { id: "root", semanticRole: "title", groupId: null, value: "root" },
+      { id: "c1", semanticRole: "title", groupId: "c1", value: "child 1" },
+      { id: "c1-body", semanticRole: "body", groupId: "c1", value: "unrendered body text" },
+      { id: "c2", semanticRole: "title", groupId: "c2", value: "child 2" },
+    ],
+    relationships: [
+      { type: "contains", from: { kind: "element", id: "root" }, to: { kind: "group", id: "c1" }, attributes: {}, origin: "authored" },
+      { type: "contains", from: { kind: "element", id: "root" }, to: { kind: "group", id: "c2" }, attributes: {}, origin: "authored" },
+    ],
+  };
+  const result = preFamilyIrToIssueTree(ir);
+  assert.deepEqual(result.tree.branches, [{ label: "child 1" }, { label: "child 2" }]);
+});
+
+test("pre_family_ir_to_slide_spec: roadmap adapter orders phases/milestones via `sequence` and carries the outcomes band", () => {
+  const ir = {
+    elements: [
+      { id: "p1t", semanticRole: "title", groupId: "p1", value: "フェーズ1" },
+      { id: "p2t", semanticRole: "title", groupId: "p2", value: "フェーズ2" },
+      { id: "m1t", semanticRole: "title", groupId: "m1", value: "M1" },
+      { id: "m1d", semanticRole: "date", groupId: "m1", value: "Day0" },
+      { id: "m2t", semanticRole: "title", groupId: "m2", value: "M2", emphasis: true },
+      { id: "oc", semanticRole: "bullets", groupId: "outcomes", value: "outcome 1" },
+    ],
+    relationships: [
+      // phases authored out of order on purpose — `sequence` must be what determines order.
+      { type: "sequence", from: { kind: "group", id: "p1" }, to: { kind: "group", id: "p2" }, attributes: {}, origin: "authored" },
+      { type: "contains", from: { kind: "group", id: "p2" }, to: { kind: "group", id: "m2" }, attributes: {}, origin: "authored" },
+      { type: "contains", from: { kind: "group", id: "p1" }, to: { kind: "group", id: "m1" }, attributes: {}, origin: "authored" },
+    ],
+  };
+  const result = preFamilyIrToRoadmapPhases(ir);
+  assert.deepEqual(result.phases.map((p) => p.title), ["フェーズ1", "フェーズ2"]);
+  assert.equal(result.phases[1].milestones[0].emphasis, true);
+  assert.deepEqual(result.outcomes, { bullets: ["outcome 1"] });
+});
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("..", import.meta.url));

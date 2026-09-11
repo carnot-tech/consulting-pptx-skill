@@ -340,7 +340,37 @@ function renderRisk(slide, n) {
   return shell(slide, n, `<table class="risk-table"><thead><tr>${heads}</tr></thead><tbody>${rows}</tbody></table>`);
 }
 
+// phase-banded mode: each phase is a column with its own title/subtitle and a vertical list
+// of dated milestones (one optionally emphasized), plus an optional slide-level outcomes
+// band below all phases. Used when the spec authors `phases` instead of `sections` — see
+// RP-PMI-ROADMAP-01 in the Reference Pattern Library. `gantt` was considered for this pattern
+// but its schema requires >=2 duration-bar `rows` (start+span), a concept phase-banded
+// roadmaps don't have (discrete dated milestones, not spans of work) — forcing that shape
+// would mean drawing bars that don't represent real data.
+function renderRoadmapPhases(slide, n) {
+  const phases = (slide.phases || [])
+    .map((p) => {
+      const milestones = (p.milestones || [])
+        .map(
+          (m) =>
+            `<div class="phase-milestone${m.emphasis ? " emphasis" : ""}">${m.date ? `<div class="pm-date">${esc(m.date)}</div>` : ""}<div class="pm-title">${esc(m.title)}</div></div>`,
+        )
+        .join("");
+      return `<div class="phase"><div class="phase-title">${esc(p.title)}</div>${p.subtitle ? `<div class="phase-subtitle">${esc(p.subtitle)}</div>` : ""}<div class="phase-milestones">${milestones}</div></div>`;
+    })
+    .join("");
+  const outcomes = slide.outcomes
+    ? `<div class="roadmap-outcomes">${(slide.outcomes.bullets || []).map((b) => `<div class="ro-item">${esc(b)}</div>`).join("")}</div>`
+    : "";
+  return shell(
+    slide,
+    n,
+    `<div class="roadmap" style="grid-template-columns: repeat(${slide.phases.length}, 1fr);">${phases}</div>${outcomes}`,
+  );
+}
+
 function renderRoadmap(slide, n) {
+  if (Array.isArray(slide.phases)) return renderRoadmapPhases(slide, n);
   const phases = (slide.sections || [])
     .map((p) => `<div class="phase"><div class="phase-year">${esc(p.title)}</div><div class="phase-copy">${esc(p.copy)}</div></div>`)
     .join("");

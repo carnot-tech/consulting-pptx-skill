@@ -1,0 +1,71 @@
+{
+  "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
+  "sourceLibraryPin": {
+    "file": "library.json",
+    "sha256": "0ec7a506091a87c950c943a53f0c308ca8796f567ef774b7dbd8703d8854cab0"
+  },
+  "patterns": {
+    "RP-MATRIX-HERO-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [{ "role": "chartTicks", "min": 2 }],
+      "requiredRelationships": [
+        { "type": "axis_membership", "witnessBy": "minimalJointCover", "minDistinctToTargets": 2, "minDistinctFromGroups": 3 }
+      ],
+      "structuralChecks": ["MATRIX_HERO_SHAPE"],
+      "structuralCheckDefinitions": {
+        "MATRIX_HERO_SHAPE": "every groupId that is a `from` of >=1 axis_membership relationship has >=3 elements."
+      },
+      "disqualifiers": ["MATRIX_SINGLE_AXIS", "MATRIX_NOT_HERO_SHAPE"],
+      "disqualifierDefinitions": {
+        "MATRIX_SINGLE_AXIS": "fewer than 2 distinct axis_membership target elements exist",
+        "MATRIX_NOT_HERO_SHAPE": "MATRIX_HERO_SHAPE fails — RP-MATRIX-PLAIN-01 may be the better fit"
+      }
+    },
+    "RP-MATRIX-PLAIN-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [{ "role": "chartTicks", "min": 2 }],
+      "requiredRelationships": [
+        { "type": "axis_membership", "witnessBy": "minimalJointCover", "minDistinctToTargets": 2, "minDistinctFromGroups": 3 }
+      ],
+      "structuralChecks": ["MATRIX_PLAIN_SHAPE"],
+      "structuralCheckDefinitions": {
+        "MATRIX_PLAIN_SHAPE": "every groupId that is a `from` of >=1 axis_membership relationship has <3 elements."
+      },
+      "disqualifiers": ["MATRIX_SINGLE_AXIS", "MATRIX_NOT_PLAIN_SHAPE"],
+      "disqualifierDefinitions": {
+        "MATRIX_SINGLE_AXIS": "fewer than 2 distinct axis_membership target elements exist",
+        "MATRIX_NOT_PLAIN_SHAPE": "MATRIX_PLAIN_SHAPE fails — RP-MATRIX-HERO-01 may be the better fit"
+      }
+    },
+    "RP-HIERARCHY-WORKSTREAM-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [{ "type": "contains", "witnessBy": "minCount", "min": 2 }],
+      "structuralChecks": ["HIERARCHY_SINGLE_ROOT_WITH_2_CHILDREN"],
+      "structuralCheckDefinitions": {
+        "HIERARCHY_SINGLE_ROOT_WITH_2_CHILDREN": "build a directed graph from `contains` relationships; exactly 1 node has in-degree=0 while being a `from` endpoint at all (the root); that root's out-degree is >=2."
+      },
+      "disqualifiers": ["NO_HIERARCHY_ROOT", "MULTIPLE_OR_AMBIGUOUS_ROOTS"],
+      "disqualifierDefinitions": {
+        "NO_HIERARCHY_ROOT": "no contains edges at all",
+        "MULTIPLE_OR_AMBIGUOUS_ROOTS": "more than 1 node qualifies as a root — defer rather than force this pattern"
+      }
+    },
+    "RP-PMI-ROADMAP-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [
+        { "type": "contains", "witnessBy": "minCount", "min": 2 },
+        { "type": "sequence", "witnessBy": "minCount", "min": 1 }
+      ],
+      "structuralChecks": ["PMI_HAS_EMPHASIS_IN_SOME_GROUP"],
+      "structuralCheckDefinitions": {
+        "PMI_HAS_EMPHASIS_IN_SOME_GROUP": "at least 1 element with emphasis=true exists among the groupIds that appear as a `from` or `to` endpoint of this slide's contains/sequence relationships."
+      },
+      "disqualifiers": ["NO_PHASE_GROUPING"],
+      "disqualifierDefinitions": {
+        "NO_PHASE_GROUPING": "sequence relationships exist but no contains relationships pair with them — use the plain 'roadmap' template instead"
+      }
+    }
+  }
+}
