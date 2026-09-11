@@ -148,6 +148,34 @@ test("pre_family_ir_to_slide_spec: roadmap adapter orders phases/milestones via 
   assert.deepEqual(result.outcomes, { bullets: ["outcome 1"] });
 });
 
+test("render_html_screenshots: an issue_tree root box does not false-positive as overflow (matches qa_html_deck.mjs's own .ltree exclusion)", async () => {
+  // Regression for a real drift found while wiring up the Hierarchy Reference Pattern: a
+  // hierarchy slide with a normal-length root label (経営改善タスクフォース) reported an
+  // overflow via render_html_screenshots.mjs's OWN overflow check, even though the identical
+  // HTML passes qa_html_deck.mjs (the actual Mechanical QA gate) cleanly — that script already
+  // excludes .ltree boxes for the documented reason (elbow-connector pseudo-elements overshoot
+  // the box by a few px, confirmed not a real visual defect). render_html_screenshots.mjs had
+  // its own separate, older overflow-detection copy that never got the same exclusion. Fixed
+  // by mirroring qa_html_deck.mjs's exact exclusion there — this test locks both scripts to
+  // agree on the same real hierarchy content, not just a synthetic .ltree fixture.
+  const slide = { template: "issue_tree", title: "経営改善タスクフォースは4ワークストリームで推進する", tree: { root: "経営改善タスクフォース", branches: [{ label: "営業ワークストリーム" }, { label: "調達ワークストリーム" }, { label: "人事ワークストリーム" }, { label: "経営管理ワークストリーム" }] } };
+  const specPath = path.join(tmpDir, "ltree-overflow-regression-spec.json");
+  const htmlPath = path.join(tmpDir, "ltree-overflow-regression.html");
+  await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+  const { stdout: screenshotsStdout } = await execFileAsync("node", [
+    path.join(root, "scripts/render_html_screenshots.mjs"), htmlPath, path.join(tmpDir, "ltree-overflow-regression-screenshots"),
+  ]);
+  const screenshotsReport = JSON.parse(screenshotsStdout);
+  assert.equal(screenshotsReport.overflowCount, 0, `render_html_screenshots.mjs still false-positives: ${JSON.stringify(screenshotsReport.overflow)}`);
+
+  const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+  const gateReport = JSON.parse(gateResult.stdout);
+  assert.equal(gateReport.passed, true);
+  assert.equal(gateReport.tiers.geometry.passed, true);
+});
+
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("..", import.meta.url));
 const tmpDir = path.join(root, "test", ".tmp");

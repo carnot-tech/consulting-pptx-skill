@@ -44,6 +44,16 @@ const overflow = await page.evaluate(() =>
     .filter((el) => {
       const style = getComputedStyle(el);
       if (style.display === "none" || style.visibility === "hidden") return false;
+      // Same 2 known false-positive classes qa_html_deck.mjs's own overflow check already
+      // excludes (that script is the real Mechanical QA gate; this one is a secondary
+      // screenshot/debug report that had drifted out of sync with it):
+      // - .ltree boxes: elbow-connector pseudo-elements overshoot the box by a few px —
+      //   not a real content overflow. Confirmed by direct visual inspection (no clipping)
+      //   when this drift was found (a hierarchy slide's root box false-positived here but
+      //   qa_html_deck.mjs correctly passed the same HTML).
+      // - <svg> (and its <text> children, used by native-chart archetypes): no meaningful
+      //   CSS scrollWidth/clientWidth box semantics, Chromium reports these inconsistently.
+      if (el.closest(".ltree") || el.closest("svg")) return false;
       return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
     })
     .map((el) => ({
