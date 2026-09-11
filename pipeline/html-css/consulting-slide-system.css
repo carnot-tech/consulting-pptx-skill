@@ -3520,6 +3520,15 @@ body {
    色はスキンのトークンに写像（#241a10→--ink/--navy、#6b4a2b→--blue、#c9a97e→--cyan、
    #8a7c6c→--muted、#c7b69e→--rule、#e3dccf→--hairline、#f1ebe0/#efe8da→--soft-blue、#b9b3a9→--rule）。
    ===================================================================== */
+/* Dashboard-style templates (grids/columns of cards, not a single centered statement) anchor
+   to the top and grow downward instead of the default vertical-centering behavior sparse
+   slides otherwise get — a 2-column decision_ask with no recommendation bar is still "a
+   dashboard that happens to be sparse," not "a hero statement," and centering it left a large
+   gap between the title and the first card row. */
+.slide--top-align .slide-inner > .content {
+  align-self: start;
+}
+
 .slide--parts .slide-inner > .content {
   align-self: stretch;
   display: flex;

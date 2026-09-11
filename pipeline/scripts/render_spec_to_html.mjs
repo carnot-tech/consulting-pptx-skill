@@ -452,7 +452,7 @@ function renderDecisionGroups(slide, n) {
     slide,
     n,
     `<div class="dq-wrap"><div class="dq-grid" style="grid-template-columns: repeat(${groups.length}, 1fr);">${cols}</div>${bottom}</div>`,
-    { noTitleRule: true },
+    { noTitleRule: true, className: "slide--top-align" },
   );
 }
 
