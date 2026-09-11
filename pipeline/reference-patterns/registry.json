@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "1f42ddd0ec8d92e12ec654e176830f04277f6ef45db7cd78aebd3fcbe9cea7f5"
+    "sha256": "939b8b30bfe05cc80fdce2fb8ed5c775e9edb099a2cc86bd8ff42a4f608fba78"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
@@ -120,6 +120,18 @@
           "min": 2,
           "max": 4,
           "description": "count of groupIds that are not a reserved id (\"insightPanel\"/\"soWhat\") or an insight-item prefix (\"insightPanel-*\") and have number+category+headline+body — must be 2-4. Additionally (unconditionally, not just for the canonical 3-takeaway count): >=1 \"insightPanel-*\" item group each with number+title+body, and a \"soWhat\" group with a body element."
+        }
+      },
+      "disqualifiers": []
+    },
+    "RP-MATRIX-BADGELIST-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [],
+      "structuralChecks": ["MATRIX_BADGELIST_SHAPE"],
+      "structuralCheckDefinitions": {
+        "MATRIX_BADGELIST_SHAPE": {
+          "description": "all 4 of the canonical quadrant groupIds (\"top-left\"/\"top-right\"/\"bottom-left\"/\"bottom-right\") must be present, each with a number + title element and >=1 item sub-group (groupId prefix \"${position}-item-\") that itself has a title element. Additionally (unconditionally): an \"axisX\" group and an \"axisY\" group, each with a title element and exactly 2 label elements (low, then high); and an \"insights\" group with >=1 bullets element (mandatory, not optional)."
         }
       },
       "disqualifiers": []

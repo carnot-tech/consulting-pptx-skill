@@ -454,6 +454,83 @@ export function preFamilyIrToKeyTakeaways({ elements }) {
   return { takeaways, insightPanel, soWhat };
 }
 
+// Matrix Badge List (RP-MATRIX-BADGELIST-01): a 3rd matrix_2x2 quadrant shape, independent of
+// Hero's title/body/evidence and Plain's single-label text — each quadrant carries a
+// priority number, a label, an optional summary, and a list of individually-iconed badge
+// items; each badge item is its own tiny sub-group nested under `${position}-item-*`
+// (position is always one of the 4 canonical positions this project's matrix family already
+// reserves). The right-side insights panel reuses kpi_dashboard's own "insights" reserved
+// group/bullets-elements convention verbatim — same field (`slide.insights`), same shape,
+// same semantic purpose, so there is no reason to invent a second name for it here.
+const MATRIX_QUADRANT_POSITIONS = ["top-left", "top-right", "bottom-left", "bottom-right"];
+const MATRIX_BADGE_ICON_NAMES = new Set(["person", "people", "bar-chart", "laptop", "tag", "cart", "truck"]);
+
+export function preFamilyIrToMatrixBadgeList({ elements }) {
+  const byGroup = elementsByGroupId(elements);
+
+  const quadrants = MATRIX_QUADRANT_POSITIONS.map((position) => {
+    const els = byGroup.get(position);
+    if (!els) throw new Error(`matrix_2x2 badge-list adapter: missing quadrant group "${position}"`);
+    const number = findRole(els, "number");
+    const label = findRole(els, "title");
+    if (!number) throw new Error(`matrix_2x2 badge-list adapter: quadrant "${position}" has no number element`);
+    if (!label) throw new Error(`matrix_2x2 badge-list adapter: quadrant "${position}" has no title (label) element`);
+    const quadrant = { position, number, label };
+    const summary = findRole(els, "body");
+    if (summary) quadrant.summary = summary;
+    if (els.some((e) => e.emphasis === true)) quadrant.emphasis = true;
+
+    const itemPrefix = `${position}-item-`;
+    const itemEntries = [...byGroup.entries()].filter(([gid]) => gid.startsWith(itemPrefix));
+    if (!itemEntries.length) throw new Error(`matrix_2x2 badge-list adapter: quadrant "${position}" has no items (groupId prefix "${itemPrefix}")`);
+    quadrant.items = itemEntries.map(([gid, itemEls]) => {
+      const title = findRole(itemEls, "title");
+      if (!title) throw new Error(`matrix_2x2 badge-list adapter: item "${gid}" has no title element`);
+      const item = { title };
+      const icon = findRole(itemEls, "icon");
+      if (icon) {
+        if (!MATRIX_BADGE_ICON_NAMES.has(icon)) throw new Error(`matrix_2x2 badge-list adapter: item "${gid}" icon "${icon}" is not one of ${[...MATRIX_BADGE_ICON_NAMES].join("/")}`);
+        item.icon = icon;
+      }
+      if (itemEls.some((e) => e.semanticRole === "title" && e.emphasis === true)) item.emphasis = true;
+      return item;
+    });
+    return quadrant;
+  });
+
+  const axisXEls = byGroup.get("axisX");
+  const axisYEls = byGroup.get("axisY");
+  if (!axisXEls) throw new Error('matrix_2x2 badge-list adapter: no "axisX" group found');
+  if (!axisYEls) throw new Error('matrix_2x2 badge-list adapter: no "axisY" group found');
+  const axisXTitle = findRole(axisXEls, "title");
+  const axisYTitle = findRole(axisYEls, "title");
+  if (!axisXTitle) throw new Error('matrix_2x2 badge-list adapter: "axisX" group has no title element');
+  if (!axisYTitle) throw new Error('matrix_2x2 badge-list adapter: "axisY" group has no title element');
+  // Order preserved from authoring order (elements[] array position), same discipline as
+  // every other Library v0.2 pattern's sibling lists — first authored = low, second = high.
+  const [xLow, xHigh] = axisXEls.filter((e) => e.semanticRole === "label");
+  const [yLow, yHigh] = axisYEls.filter((e) => e.semanticRole === "label");
+  if (!xLow || !xHigh) throw new Error('matrix_2x2 badge-list adapter: "axisX" group needs exactly 2 label elements (low, then high)');
+  if (!yLow || !yHigh) throw new Error('matrix_2x2 badge-list adapter: "axisY" group needs exactly 2 label elements (low, then high)');
+  const matrix = {
+    xAxis: axisXTitle,
+    yAxis: axisYTitle,
+    xAxisLow: xLow.value,
+    xAxisHigh: xHigh.value,
+    yAxisLow: yLow.value,
+    yAxisHigh: yHigh.value,
+  };
+
+  const insightEls = byGroup.get("insights") || [];
+  const insightItems = insightEls.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+  if (!insightItems.length) throw new Error('matrix_2x2 badge-list adapter: no "insights" bullets found — the insights panel is mandatory for this pattern');
+  const insights = { items: insightItems };
+  const insightsTitle = findRole(insightEls, "title");
+  if (insightsTitle) insights.title = insightsTitle;
+
+  return { quadrants, matrix, insights };
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -491,6 +568,7 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   else if (selection.slideSpecShape === "comparisonTable") body = preFamilyIrToComparisonTable(preFamilyIR);
   else if (selection.slideSpecShape === "decisionGroups") body = preFamilyIrToDecisionGroups(preFamilyIR);
   else if (selection.slideSpecShape === "keyTakeaways") body = preFamilyIrToKeyTakeaways(preFamilyIR);
+  else if (selection.slideSpecShape === "matrixBadgeList") body = preFamilyIrToMatrixBadgeList(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {

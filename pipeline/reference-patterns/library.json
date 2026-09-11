@@ -177,6 +177,38 @@
       ],
       "slideSpecTemplate": "recommendation_pillars",
       "slideSpecShape": "keyTakeaways"
+    },
+    {
+      "patternId": "RP-MATRIX-BADGELIST-01",
+      "name": "Priority Matrix (Badge List)",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-MATRIX-BADGELIST-01.jpg — Library v0.2, fifth pattern implemented (independently defined for this project). A 3rd matrix_2x2 quadrant shape alongside RP-MATRIX-HERO-01's title/body/evidence and RP-MATRIX-PLAIN-01's single-sentence label — neither of those two is reused here. Each quadrant instead carries a priority number + label + optional 1-2 line summary, then a stack of individually-iconed named issue badges; the whole slide additionally carries explicit low/high labels on both axes and a mandatory right-side insights panel (reuses kpi_dashboard's own `insights` field/shape verbatim).",
+      "useWhen": "the slide's job is to triage a SET of discrete, individually-nameable issues/items across 2 authored axes into a 2x2 priority grid — several distinct badge-worthy items per quadrant, not one narrative paragraph per quadrant — AND the slide needs to state what to actually do about the highest- and lowest-priority zones.",
+      "canonicalVariant": "4 quadrants (top-left/top-right/bottom-left/bottom-right, always all 4 — this is a fixed 2x2, not a variable-count family like KPI/Decision/Takeaways), each with a roman-numeral priority number + label + 1-2 line summary + 1-3 badge items; exactly one quadrant (the reference image's 最優先/highest-urgency-and-impact zone) carries `emphasis`; a 2-item insights panel closes the slide. 2 and 4-item-per-quadrant counts are both supported ADAPTIVE variants of the SAME canonical composition (there is no separate adaptive axis the way KPI/Decision/Takeaways have a variable column COUNT — Matrix is always exactly 4 quadrants; density varies per-quadrant instead).",
+      "requiredSemanticRoles": [
+        "number + title (label) per quadrant, all 4 of top-left/top-right/bottom-left/bottom-right present",
+        ">=1 item sub-group per quadrant (groupId prefix \"${position}-item-\"), each with a title element",
+        "an axisX group and an axisY group, each with a title (axis name) + exactly 2 label elements (low, then high)",
+        "an insights group with >=1 bullets element (the right-side panel — mandatory, not optional)"
+      ],
+      "optionalSemanticRoles": [
+        "a body element per quadrant (the 1-2 line summary under the header)",
+        "an icon (person/people/bar-chart/laptop/tag/cart/truck) per item — a DIFFERENT closed vocabulary from RP-DECISION-ASK-01's and RP-KEY-TAKEAWAYS-01's own icon sets",
+        "a title element on the insights group (panel heading, defaults to \"示唆\")",
+        "element.emphasis=true on a quadrant's own title element (whole-quadrant highlight: navy header, bordered card) and/or on an individual item's title element (per-item accent) — independent flags, same underlying convention as every other Library v0.2 pattern's emphasis handling"
+      ],
+      "relationshipsRequired": [],
+      "visualIntent": "prioritize",
+      "densityRange": "medium",
+      "emphasisModel": "0 or 1 quadrant typically carries emphasis=true (the single highest-priority zone, matching RP-MATRIX-HERO-01/PLAIN-01's own convention) — authored, never inferred from a quadrant's own content. Items may independently carry their own emphasis flag, though the reference image itself doesn't exercise a distinct per-item visual for it beyond the pill's own styling.",
+      "supportingBand": "mandatory — the insights panel is a load-bearing part of this pattern's own definition (same discipline as RP-KEY-TAKEAWAYS-01's insightPanel/soWhat), not an optional add-on.",
+      "doNotUseWhen": [
+        "a quadrant's content is a single narrative sentence or a title+body+evidence block, not a list of named items — use RP-MATRIX-HERO-01 or RP-MATRIX-PLAIN-01 instead",
+        "only 1 axis is authored, or both axis words describe the same dimension — use cards instead",
+        "the items don't actually need 2-axis triage, just a flat categorized list — use plain cards or a table instead"
+      ],
+      "slideSpecTemplate": "matrix_2x2",
+      "slideSpecShape": "matrixBadgeList"
     }
   ]
 }

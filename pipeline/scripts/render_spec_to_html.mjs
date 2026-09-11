@@ -256,7 +256,40 @@ function renderMatrixQuadrants(slide, n) {
   );
 }
 
+// badge-list mode (RP-MATRIX-BADGELIST-01): a 3rd quadrant shape, detected via
+// `quadrants[].items` — a priority number + label + optional summary header, a stack of
+// individually-iconed badge-pill items, and a mandatory right-side insights panel (reuses
+// renderKpiInsights verbatim — same field/shape as kpi_dashboard's own insights panel).
+// Deliberately does NOT reuse renderMatrixQuadrants' title/body/evidence markup — see
+// references/pre-family-ir-authoring.md's Matrix Badge List section for why.
+function renderMatrixBadgeList(slide, n) {
+  const byPosition = new Map((slide.quadrants || []).map((q) => [q.position, q]));
+  const cells = QUADRANT_ORDER.map((pos) => {
+    const q = byPosition.get(pos);
+    if (!q) return `<div class="mqb-cell"></div>`;
+    const items = (q.items || [])
+      .map((item) => {
+        const icon = item.icon && PATTERN_ICONS[item.icon] ? `<div class="mqb-item-icon">${PATTERN_ICONS[item.icon]}</div>` : "";
+        return `<div class="mqb-item${item.emphasis ? " emphasis" : ""}">${icon}<span class="mqb-item-title">${esc(item.title)}</span></div>`;
+      })
+      .join("");
+    const summary = q.summary
+      ? `<span class="mqb-divider"></span><span class="mqb-summary">${esc(q.summary)}</span>`
+      : "";
+    return `<div class="mqb-cell${q.emphasis ? " emphasis" : ""}"><div class="mqb-head"><span class="mqb-num">${esc(q.number || "")}</span><span class="mqb-label">${esc(q.label || "")}</span>${summary}</div><div class="mqb-items">${items}</div></div>`;
+  }).join("");
+  const m = slide.matrix || {};
+  const insights = slide.insights ? renderKpiInsights(slide.insights) : "";
+  return shell(
+    slide,
+    n,
+    `<div class="mqb-wrap"><div class="mqb-main"><div class="mqb-row"><div class="mqb-axis-y"><span class="mqb-axis-end">${esc(m.yAxisHigh || "")}</span><span class="mqb-axis-title-y">${esc(m.yAxis || "")}</span><span class="mqb-axis-end">${esc(m.yAxisLow || "")}</span></div><div class="mqb-grid">${cells}</div></div><div class="mqb-axis-x"><span class="mqb-axis-end">${esc(m.xAxisLow || "")}</span><span class="mqb-axis-title">${esc(m.xAxis || "")}</span><span class="mqb-axis-end">${esc(m.xAxisHigh || "")}</span></div></div><div class="mqb-insight">${insights}</div></div>`,
+    { noTitleRule: true, className: "slide--top-align" },
+  );
+}
+
 function renderMatrix(slide, n) {
+  if (Array.isArray(slide.quadrants) && slide.quadrants.some((q) => Array.isArray(q.items))) return renderMatrixBadgeList(slide, n);
   if (Array.isArray(slide.quadrants)) return renderMatrixQuadrants(slide, n);
   const points = (slide.items || [])
     .map(
@@ -890,6 +923,13 @@ const PATTERN_ICONS = {
   // sun/brightness icon when actually rendered (caught by zooming into a real screenshot,
   // not assumed from the SVG source).
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><g stroke-width="2.2"><line x1="12" y1="3.2" x2="12" y2="5.6"/><line x1="12" y1="18.4" x2="12" y2="20.8"/><line x1="3.2" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="20.8" y2="12"/><line x1="5.5" y1="5.5" x2="7.3" y2="7.3"/><line x1="16.7" y1="16.7" x2="18.5" y2="18.5"/><line x1="5.5" y1="18.5" x2="7.3" y2="16.7"/><line x1="16.7" y1="7.3" x2="18.5" y2="5.5"/></g></svg>',
+  // RP-MATRIX-BADGELIST-01's own closed icon vocabulary (person/laptop/tag/cart/truck are new
+  // — bar-chart/people above are reused as-is).
+  person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="3.3"/><path d="M5 20v-1a7 7 0 0 1 14 0v1"/></svg>',
+  laptop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="10" rx="1"/><path d="M2 19.5h20l-1.6-2.2a1 1 0 0 0-.8-.3H4.4a1 1 0 0 0-.8.3z"/></svg>',
+  tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3h7a2 2 0 0 1 2 2v7a1 1 0 0 1-.3.7l-8 8a1 1 0 0 1-1.4 0l-7-7a1 1 0 0 1 0-1.4l8-8A1 1 0 0 1 11 3Z"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20.5 8H6"/><circle cx="9.5" cy="20" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="20" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="7" width="13" height="9"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="6" cy="18.5" r="1.6" fill="currentColor" stroke="none"/><circle cx="17" cy="18.5" r="1.6" fill="currentColor" stroke="none"/></svg>',
 };
 
 function kpiTileHtml(k) {

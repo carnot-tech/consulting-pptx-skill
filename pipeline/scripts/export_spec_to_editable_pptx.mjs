@@ -491,7 +491,91 @@ function addMatrixQuadrants(item, pageNum) {
   });
 }
 
+// Shared "示唆" numbered-list panel — same field/shape as kpi_dashboard's own item.insights
+// (title? + items:[string]), factored out here so RP-MATRIX-BADGELIST-01 doesn't duplicate the
+// rendering kpi_dashboard's addKpiDashboard already implements inline.
+function addInsightsList(slide, insights, x, y, w, h) {
+  const pad = 0.18;
+  slide.addShape(pptx.ShapeType.rect, { x, y, w, h, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+  addBodyText(slide, insights.title || "示唆", x + pad, y + pad, w - pad * 2, 0.26, { fontSize: 12, bold: true });
+  let ty = y + pad + 0.36;
+  insights.items.forEach((text, i) => {
+    slide.addShape(pptx.ShapeType.ellipse, { x: x + pad, y: ty + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
+    addBodyText(slide, String(i + 1), x + pad, ty + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+    addBodyText(slide, text, x + pad + 0.32, ty, w - pad * 2 - 0.32, 0.45, { fontSize: 11.5 });
+    ty += 0.46;
+  });
+}
+
+// badge-list mode (RP-MATRIX-BADGELIST-01) mirror of render_spec_to_html.mjs#renderMatrixBadgeList
+// — a 3rd quadrant shape, detected via `quadrants[].items`. Priority-numbered header + optional
+// summary + individually-iconed badge-pill items per quadrant, plus explicit low/high axis
+// endpoint labels and a mandatory right-side insights panel (addInsightsList above).
+function addMatrixBadgeList(item, pageNum) {
+  const slide = addShell(item, pageNum);
+  const panelW = 2.6;
+  const gap = 0.3;
+  const axisYW = 0.3;
+  const top = 2.0;
+  const xAxisH = 0.3;
+  const bottom = FOOTER_Y - xAxisH - 0.08;
+  const gridX = M + axisYW + 0.08;
+  const gridW = W - M * 2 - axisYW - 0.08 - panelW - gap;
+  const gridH = bottom - top;
+  const cellGap = 0.08;
+  const cw = (gridW - cellGap) / 2;
+  const ch = (gridH - cellGap) / 2;
+
+  const m = item.matrix || {};
+  addBodyText(slide, m.yAxisHigh || "", M, top, axisYW, 0.2, { fontSize: 9, bold: true, color: MUTED, align: "center" });
+  addBodyText(slide, m.yAxisLow || "", M, bottom - 0.2, axisYW, 0.2, { fontSize: 9, bold: true, color: MUTED, align: "center" });
+  slide.addText(m.yAxis || "", {
+    x: M - gridH / 2 + axisYW / 2, y: top + gridH / 2 - axisYW / 2, w: gridH, h: axisYW,
+    fontFace: FONT, fontSize: 9.5, bold: true, color: MUTED, align: "center", valign: "middle", rotate: 270,
+  });
+  addBodyText(slide, m.xAxisLow || "", gridX, bottom + 0.06, 1.2, xAxisH, { fontSize: 9, bold: true, color: MUTED });
+  addBodyText(slide, m.xAxis || "", gridX, bottom + 0.06, gridW, xAxisH, { fontSize: 9.5, bold: true, color: MUTED, align: "center" });
+  addBodyText(slide, m.xAxisHigh || "", gridX + gridW - 1.2, bottom + 0.06, 1.2, xAxisH, { fontSize: 9, bold: true, color: MUTED, align: "right" });
+
+  const byPosition = new Map((item.quadrants || []).map((q) => [q.position, q]));
+  QUADRANT_ORDER.forEach((pos, i) => {
+    const q = byPosition.get(pos);
+    const cx = gridX + (i % 2) * (cw + cellGap);
+    const cy = top + Math.floor(i / 2) * (ch + cellGap);
+    slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: cw, h: ch, fill: { type: "none" }, line: { color: q?.emphasis ? NAVY : HAIR, width: q?.emphasis ? 1.75 : 0.75 } });
+    if (!q) return;
+    const headH = 0.34;
+    slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: cw, h: headH, fill: { color: q.emphasis ? NAVY : SOFTBLUE }, line: { type: "none" } });
+    const textColor = q.emphasis ? WHITE : INK;
+    const numR = 0.13;
+    slide.addShape(pptx.ShapeType.ellipse, { x: cx + 0.1, y: cy + headH / 2 - numR, w: numR * 2, h: numR * 2, fill: { color: q.emphasis ? WHITE : NAVY }, line: { type: "none" } });
+    addBodyText(slide, q.number || "", cx + 0.1, cy + headH / 2 - numR, numR * 2, numR * 2, { fontSize: 9, bold: true, color: q.emphasis ? NAVY : WHITE, align: "center", valign: "middle" });
+    const labelX = cx + 0.1 + numR * 2 + 0.08;
+    addBodyText(slide, q.label || "", labelX, cy, cw - (labelX - cx) - 0.1, headH, { fontSize: 11, bold: true, color: textColor, valign: "middle" });
+
+    let iy = cy + headH + 0.08;
+    if (q.summary) {
+      addBodyText(slide, q.summary, cx + 0.12, iy, cw - 0.24, 0.34, { fontSize: 8, color: q.emphasis ? "D9D9D9" : MUTED });
+      iy += 0.36;
+    }
+    (q.items || []).forEach((it) => {
+      const pillH = 0.26;
+      const iconSize = pillH - 0.06;
+      slide.addShape(pptx.ShapeType.roundRect, { x: cx + 0.12, y: iy, w: cw - 0.24, h: pillH, fill: { type: "none" }, line: { color: q.emphasis ? WHITE : HAIR, width: 0.75 }, rectRadius: 0.13 });
+      if (it.icon) addPatternIcon(slide, it.icon, cx + 0.16, iy + 0.03, iconSize, q.emphasis ? BLUE : NAVY, { filled: true });
+      const textX = cx + 0.16 + iconSize + 0.08;
+      addBodyText(slide, it.title, textX, iy, cx + cw - 0.12 - textX, pillH, { fontSize: 9, bold: true, color: q.emphasis ? WHITE : INK, valign: "middle" });
+      iy += pillH + 0.06;
+    });
+  });
+
+  if (item.insights) {
+    addInsightsList(slide, item.insights, gridX + gridW + gap, top, panelW, gridH);
+  }
+}
+
 function addMatrix(item, pageNum) {
+  if (Array.isArray(item.quadrants) && item.quadrants.some((q) => Array.isArray(q.items))) return addMatrixBadgeList(item, pageNum);
   if (Array.isArray(item.quadrants)) return addMatrixQuadrants(item, pageNum);
   const slide = addShell(item, pageNum);
   const x = M;
@@ -1644,6 +1728,38 @@ function addPatternIcon(slide, name, x, y, size, color, opts = {}) {
       const r = i === 0 ? headR * 1.1 : headR;
       slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - r, y: iy, w: r * 2, h: r * 2, fill: { color: gc }, line: { type: "none" } });
       slide.addShape(pptx.ShapeType.roundRect, { x: ix + iw * frac - r * 1.4, y: iy + r * 2 + iw * 0.04, w: r * 2.8, h: iw * 0.34, fill: { color: gc }, line: { type: "none" }, rectRadius: 0.15 });
+    });
+  } else if (name === "person") {
+    // single head + shoulders — RP-MATRIX-BADGELIST-01's individual-stakeholder concept
+    // (distinct from "people"'s 2-figure group concept).
+    const headR = iw * 0.19;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - headR, y: iy, w: headR * 2, h: headR * 2, fill: { color: gc }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.roundRect, { x: ix + iw * 0.12, y: iy + headR * 2 + iw * 0.06, w: iw * 0.76, h: iw * 0.42, fill: { color: gc }, line: { type: "none" }, rectRadius: 0.2 });
+  } else if (name === "laptop") {
+    const screenH = iw * 0.6;
+    slide.addShape(pptx.ShapeType.rect, { x: ix, y: iy, w: iw, h: screenH, fill: { type: "none" }, line: { color: gc, width: iw * 0.1 } });
+    slide.addShape(pptx.ShapeType.roundRect, { x: ix - iw * 0.08, y: iy + screenH + iw * 0.1, w: iw * 1.16, h: iw * 0.14, fill: { color: gc }, line: { type: "none" }, rectRadius: 0.4 });
+  } else if (name === "tag") {
+    // homePlate's point is on the right by default; rotating 180° puts it on the left, plus a
+    // small punch-hole circle (drawn in badgeColor to read as a cutout against the badge).
+    slide.addShape(pptx.ShapeType.homePlate, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" }, rotate: 180 });
+    const holeR = iw * 0.08;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * 0.24 - holeR, y: iy + iw * 0.3 - holeR, w: holeR * 2, h: holeR * 2, fill: { color: badgeColor }, line: { type: "none" } });
+  } else if (name === "cart") {
+    const basketH = iw * 0.48;
+    slide.addShape(pptx.ShapeType.trapezoid, { x: ix + iw * 0.08, y: iy + iw * 0.06, w: iw * 0.84, h: basketH, fill: { color: gc }, line: { type: "none" } });
+    const wheelR = iw * 0.09;
+    [0.32, 0.68].forEach((frac) => {
+      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - wheelR, y: iy + iw * 0.06 + basketH + iw * 0.08 - wheelR, w: wheelR * 2, h: wheelR * 2, fill: { color: gc }, line: { type: "none" } });
+    });
+  } else if (name === "truck") {
+    const bodyW = iw * 0.6, bodyH = iw * 0.4, cabW = iw * 0.3, cabH = iw * 0.3;
+    const bodyY = iy + iw * 0.14;
+    slide.addShape(pptx.ShapeType.rect, { x: ix, y: bodyY, w: bodyW, h: bodyH, fill: { color: gc }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.rect, { x: ix + bodyW, y: bodyY + (bodyH - cabH), w: cabW, h: cabH, fill: { color: gc }, line: { type: "none" } });
+    const wheelR = iw * 0.085;
+    [ix + bodyW * 0.25, ix + bodyW + cabW * 0.55].forEach((wx) => {
+      slide.addShape(pptx.ShapeType.ellipse, { x: wx - wheelR, y: bodyY + bodyH - wheelR, w: wheelR * 2, h: wheelR * 2, fill: { color: gc }, line: { type: "none" } });
     });
   } else {
     // bar-chart (default): 3 small bars, increasing height, bottom-aligned within the badge.

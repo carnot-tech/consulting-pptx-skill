@@ -44,6 +44,12 @@ async function loadRegistry() {
 const FAMILY_VARIANT_MAP = {
   "matrix|hero": ["RP-MATRIX-HERO-01", "RP-MATRIX-PLAIN-01"],
   "matrix|plain": ["RP-MATRIX-PLAIN-01", "RP-MATRIX-HERO-01"],
+  // Badge List is a 3rd, independently-defined quadrant shape (summary + iconed item list +
+  // a mandatory insights panel), not cross-routed with hero/plain — its authoring convention
+  // (item sub-groups nested under each quadrant's reserved groupId) has no equivalent in
+  // Hero/Plain's axis_membership-relationship vocabulary, so there is nothing for those 2
+  // patterns' structural checks to even evaluate against Badge List-authored content.
+  "matrix|badge-list": ["RP-MATRIX-BADGELIST-01"],
   "hierarchy|standard": ["RP-HIERARCHY-WORKSTREAM-01"],
   "roadmap-phaseband|standard": ["RP-PMI-ROADMAP-01"],
   "kpi-dashboard|standard": ["RP-KPI-EXEC-DASHBOARD-01"],
@@ -277,6 +283,43 @@ function checkTakeawayShapeValid(elements, min, max) {
   return { pass: true, count: entries.length, insightCount: itemEntries.length };
 }
 
+// Matrix Badge List: a 3rd quadrant shape (alongside Hero's title/body/evidence and Plain's
+// single-label text) — each quadrant instead holds a short summary plus a list of
+// individually-iconed badge items, and the whole slide carries a mandatory right-side
+// insights panel plus explicit low/high axis endpoint labels. Deliberately does NOT reuse
+// Hero/Plain's axis_membership relationship machinery — Badge List's quadrant groupIds are
+// the same 4 canonical position strings, but items nest one level deeper under each
+// quadrant's own reserved item-groupId prefix (`${position}-item-*`), which
+// axis_membership has no vocabulary for. Reuses kpi_dashboard's "insights" reserved
+// group/`bullets`-elements convention verbatim for the insight panel (same field, same shape,
+// same semantic purpose — no reason to duplicate it under a new name).
+const MATRIX_QUADRANT_POSITIONS = ["top-left", "top-right", "bottom-left", "bottom-right"];
+function checkMatrixBadgeListShape(elements) {
+  const byGroup = elementsByGroupId(elements);
+  for (const pos of MATRIX_QUADRANT_POSITIONS) {
+    const els = byGroup.get(pos);
+    if (!els) return { pass: false, reason: `missing quadrant group "${pos}"` };
+    if (!els.some((e) => e.semanticRole === "number")) return { pass: false, reason: `quadrant "${pos}" has no number element` };
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `quadrant "${pos}" has no title (label) element` };
+    const itemEntries = [...byGroup.entries()].filter(([gid]) => gid.startsWith(`${pos}-item-`));
+    if (!itemEntries.length) return { pass: false, reason: `quadrant "${pos}" has no items (need >=1)` };
+    for (const [gid, itemEls] of itemEntries) {
+      if (!itemEls.some((e) => e.semanticRole === "title")) return { pass: false, reason: `item "${gid}" has no title element` };
+    }
+  }
+  const axisX = byGroup.get("axisX");
+  if (!axisX || !axisX.some((e) => e.semanticRole === "title") || axisX.filter((e) => e.semanticRole === "label").length !== 2) {
+    return { pass: false, reason: "axisX group missing its title or its 2 low/high label elements" };
+  }
+  const axisY = byGroup.get("axisY");
+  if (!axisY || !axisY.some((e) => e.semanticRole === "title") || axisY.filter((e) => e.semanticRole === "label").length !== 2) {
+    return { pass: false, reason: "axisY group missing its title or its 2 low/high label elements" };
+  }
+  const insightItems = (byGroup.get("insights") || []).filter((e) => e.semanticRole === "bullets");
+  if (!insightItems.length) return { pass: false, reason: "no insights bullets (insights panel is mandatory for this pattern, not optional)" };
+  return { pass: true, insightCount: insightItems.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -359,6 +402,10 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
       const r = checkTakeawayShapeValid(elements, def.min ?? 2, def.max ?? 4);
       if (r.pass) evidence.push(`TAKEAWAY_SHAPE_VALID passed: ${r.count} takeaways, ${r.insightCount} insight items, soWhat present`);
       else failedChecks.push(`TAKEAWAY_SHAPE_VALID failed: ${r.reason}`);
+    } else if (checkName === "MATRIX_BADGELIST_SHAPE") {
+      const r = checkMatrixBadgeListShape(elements);
+      if (r.pass) evidence.push(`MATRIX_BADGELIST_SHAPE passed: 4 quadrants, ${r.insightCount} insight items`);
+      else failedChecks.push(`MATRIX_BADGELIST_SHAPE failed: ${r.reason}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }

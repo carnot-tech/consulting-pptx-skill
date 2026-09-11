@@ -918,6 +918,199 @@ body {
   line-height: 1.3;
 }
 
+/* Matrix Badge List (RP-MATRIX-BADGELIST-01) — a 3rd quadrant shape (see renderMatrixBadgeList
+   / renderMatrixQuadrants in render_spec_to_html.mjs): priority-numbered quadrant panels with
+   individually-iconed badge-pill items, plus a mandatory right-side insights panel and
+   explicit low/high axis endpoint labels. Independent of .mq-* (Hero/Plain) — no shared rules. */
+.mqb-wrap {
+  display: flex;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.mqb-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mqb-row {
+  display: flex;
+  gap: 12px;
+  height: 430px;
+}
+
+.mqb-axis-y {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 20px;
+  padding: 6px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mqb-axis-title-y {
+  writing-mode: vertical-rl;
+  letter-spacing: 1px;
+}
+
+.mqb-axis-x {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 32px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mqb-axis-end {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mqb-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mqb-cell {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+
+.mqb-cell.emphasis {
+  border: 2px solid var(--navy);
+}
+
+.mqb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--slide-bg-alt, #F4F1EA);
+}
+
+.mqb-cell.emphasis .mqb-head {
+  background: var(--navy);
+  color: #fff;
+}
+
+.mqb-num {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mqb-cell.emphasis .mqb-num {
+  background: #fff;
+  color: var(--navy);
+}
+
+.mqb-label {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mqb-divider {
+  width: 1px;
+  align-self: stretch;
+  background: currentColor;
+  opacity: 0.25;
+}
+
+.mqb-summary {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.mqb-cell.emphasis .mqb-summary {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.mqb-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  overflow: hidden;
+}
+
+/* Reference image: only the quadrant HEADER turns solid navy — the body stays light with a
+   soft accent-color wash, badge pills stay light with an accent border, and pill TEXT stays
+   dark throughout (never a white-on-light or white-on-white combination). */
+.mqb-cell.emphasis .mqb-items {
+  background: rgba(197, 166, 129, 0.16);
+}
+
+.mqb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--slide-bg);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.mqb-cell.emphasis .mqb-item {
+  border-color: var(--cyan);
+}
+
+.mqb-item-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+}
+
+.mqb-cell.emphasis .mqb-item-icon,
+.mqb-item.emphasis .mqb-item-icon {
+  background: var(--blue);
+}
+
+.mqb-item-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.mqb-insight {
+  flex: 0 0 230px;
+}
+
 .issue-tree {
   display: grid;
   grid-template-columns: 260px 1fr 1.15fr;

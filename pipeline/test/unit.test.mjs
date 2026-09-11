@@ -24,6 +24,7 @@ import {
   preFamilyIrToComparisonTable,
   preFamilyIrToDecisionGroups,
   preFamilyIrToKeyTakeaways,
+  preFamilyIrToMatrixBadgeList,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -820,6 +821,179 @@ test("key_takeaways end to end: 3 fixtures (reference-faithful 3-takeaway canoni
     assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
 
     const pptxPath = path.join(tmpDir, `kt-e2e-${i}.pptx`);
+    await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+    const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+    assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
+  }
+});
+
+// --- RP-MATRIX-BADGELIST-01 (Library v0.2, fifth pattern) ---
+
+function mqQuadrantElements(position, number, label, summary, items, opts = {}) {
+  const els = [
+    { semanticRole: "number", groupId: position, value: number },
+    { semanticRole: "title", groupId: position, value: label, ...(opts.emphasis ? { emphasis: true } : {}) },
+  ];
+  if (summary) els.push({ semanticRole: "body", groupId: position, value: summary });
+  items.forEach((it, i) => {
+    const gid = `${position}-item-${i + 1}`;
+    els.push({ semanticRole: "title", groupId: gid, value: it.title, ...(it.emphasis ? { emphasis: true } : {}) });
+    if (it.icon) els.push({ semanticRole: "icon", groupId: gid, value: it.icon });
+  });
+  return els;
+}
+function mqAxisElements(groupId, title, low, high) {
+  return [
+    { semanticRole: "title", groupId, value: title },
+    { semanticRole: "label", groupId, value: low },
+    { semanticRole: "label", groupId, value: high },
+  ];
+}
+function mqInsightElements(title, items) {
+  const els = [];
+  if (title) els.push({ semanticRole: "title", groupId: "insights", value: title });
+  items.forEach((t) => els.push({ semanticRole: "bullets", groupId: "insights", value: t }));
+  return els;
+}
+function mqFullIr(overrides = {}) {
+  return {
+    elements: [
+      ...mqQuadrantElements("top-left", "II", "早期対応", "影響度は限定的だが早期の対応が必要", [{ title: "営業KPI不統一", icon: "bar-chart" }, { title: "人事制度差異", icon: "people" }]),
+      ...mqQuadrantElements("top-right", "I", "最優先", "緊急度・影響度ともに高く早急な意思決定が必要", [{ title: "経営陣退任", icon: "person" }, { title: "主要顧客離反", icon: "people" }, { title: "IT移行遅延", icon: "laptop" }], { emphasis: true }),
+      ...mqQuadrantElements("bottom-left", "IV", "継続監視", "緊急度・影響度ともに低く中長期でのモニタリング", [{ title: "ブランド統合", icon: "tag" }]),
+      ...mqQuadrantElements("bottom-right", "III", "計画対応", "影響度は高いが計画的な対応が可能", [{ title: "共同購買", icon: "cart" }, { title: "物流統合", icon: "truck" }]),
+      ...mqAxisElements("axisX", "事業影響度", "低", "高"),
+      ...mqAxisElements("axisY", "対応緊急度", "低", "高"),
+      ...mqInsightElements("示唆", ["最優先論点はDay60までに意思決定", "低優先論点は担当PJで継続管理"]),
+    ],
+    relationships: [],
+    ...overrides,
+  };
+}
+
+test("reference_pattern_selector: a fully-authored 4-quadrant badge-list IR (all 4 positions, both axes, insights) selects RP-MATRIX-BADGELIST-01", async () => {
+  const result = await selectPattern({ family: "matrix", variant: "badge-list" }, mqFullIr());
+  assert.equal(result.eligibility, "PASS");
+  assert.equal(result.selectedPattern, "RP-MATRIX-BADGELIST-01");
+});
+
+test("reference_pattern_selector: a badge-list IR missing one of the 4 canonical quadrant positions is rejected", async () => {
+  const ir = mqFullIr();
+  ir.elements = ir.elements.filter((e) => e.groupId !== "bottom-right" && !String(e.groupId).startsWith("bottom-right-item-"));
+  const result = await selectPattern({ family: "matrix", variant: "badge-list" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("reference_pattern_selector: a badge-list IR with all 4 quadrants and both axes but no insights bullets is rejected (insights panel is mandatory, not optional)", async () => {
+  const ir = mqFullIr();
+  ir.elements = ir.elements.filter((e) => e.groupId !== "insights");
+  const result = await selectPattern({ family: "matrix", variant: "badge-list" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: matrix_2x2 badge-list adapter builds all 4 quadrants in canonical position order, axis low/high labels, and the insights panel", () => {
+  const result = preFamilyIrToMatrixBadgeList(mqFullIr());
+  assert.deepEqual(result.quadrants.map((q) => q.position), ["top-left", "top-right", "bottom-left", "bottom-right"]);
+  const topRight = result.quadrants.find((q) => q.position === "top-right");
+  assert.deepEqual(topRight, {
+    position: "top-right", number: "I", label: "最優先", summary: "緊急度・影響度ともに高く早急な意思決定が必要", emphasis: true,
+    items: [
+      { title: "経営陣退任", icon: "person" },
+      { title: "主要顧客離反", icon: "people" },
+      { title: "IT移行遅延", icon: "laptop" },
+    ],
+  });
+  const topLeft = result.quadrants.find((q) => q.position === "top-left");
+  assert.equal(topLeft.emphasis, undefined, "a quadrant with no emphasized element must not carry emphasis:true");
+  assert.deepEqual(result.matrix, { xAxis: "事業影響度", yAxis: "対応緊急度", xAxisLow: "低", xAxisHigh: "高", yAxisLow: "低", yAxisHigh: "高" });
+  assert.deepEqual(result.insights, { items: ["最優先論点はDay60までに意思決定", "低優先論点は担当PJで継続管理"], title: "示唆" });
+});
+
+test("pre_family_ir_to_slide_spec: matrix_2x2 badge-list adapter rejects an icon outside the person/people/bar-chart/laptop/tag/cart/truck vocabulary", () => {
+  const ir = mqFullIr();
+  const iconEl = ir.elements.find((e) => e.groupId === "bottom-left-item-1" && e.semanticRole === "icon");
+  iconEl.value = "gear";
+  assert.throws(() => preFamilyIrToMatrixBadgeList(ir), /person\/people\/bar-chart\/laptop\/tag\/cart\/truck/);
+});
+
+test("matrix_badgelist end to end: 3 fixtures (reference-faithful canonical, sparse 1-item-per-quadrant adaptive, 3-items-per-quadrant long-Japanese-text stress test) render with 0 QA findings and export to a clean PPTX", async () => {
+  const fixtures = [
+    {
+      // A: the reference image's own composition (4 quadrants, 1 emphasized, 2 insights).
+      ir: mqFullIr(),
+      title: "統合課題を緊急度と事業影響度で整理する",
+      subtitle: "Priority Matrix",
+    },
+    {
+      // B: sparse — 1 item per quadrant, no summaries, no emphasis, 1 insight.
+      ir: {
+        elements: [
+          ...mqQuadrantElements("top-left", "II", "拡大機会", null, [{ title: "海外チャネル開拓" }]),
+          ...mqQuadrantElements("top-right", "I", "最優先", null, [{ title: "基幹システム統合" }]),
+          ...mqQuadrantElements("bottom-left", "IV", "モニタリング", null, [{ title: "サプライヤー評価" }]),
+          ...mqQuadrantElements("bottom-right", "III", "計画実行", null, [{ title: "在庫最適化" }]),
+          ...mqAxisElements("axisX", "実現容易性", "低", "高"),
+          ...mqAxisElements("axisY", "期待効果", "低", "高"),
+          ...mqInsightElements(null, ["優先順位は四半期ごとに見直す"]),
+        ],
+        relationships: [],
+      },
+      title: "施策候補を効果と実現容易性で整理する",
+    },
+    {
+      // C: stress test — 2-3 long-Japanese-text items per quadrant, long summaries/axis names,
+      // 3 insights.
+      ir: {
+        elements: [
+          ...mqQuadrantElements("top-left", "II", "早期対応が必要な課題", "事業への影響度は限定的だが対応の緊急性が高く早めの着手が望ましい領域", [
+            { title: "営業部門のKPI定義が拠点ごとに不統一で連結管理が困難", icon: "bar-chart" },
+            { title: "人事評価制度の差異により統合後のモチベーション低下リスクがある", icon: "people" },
+            { title: "経費精算プロセスの二重運用によるバックオフィス負荷増大", icon: "person" },
+          ]),
+          ...mqQuadrantElements("top-right", "I", "最優先で意思決定すべき論点", "緊急度・事業影響度ともに高く経営レベルでの早急な意思決定が必要な領域", [
+            { title: "経営陣の退任スケジュールと後任選定プロセスの遅延", icon: "person" },
+            { title: "主要顧客の契約更新時期における離反リスクの顕在化", icon: "people" },
+            { title: "基幹ITシステムの移行スケジュール遅延による業務停止リスク", icon: "laptop" },
+          ], { emphasis: true }),
+          ...mqQuadrantElements("bottom-left", "IV", "継続的にモニタリングする事項", "緊急度・事業影響度ともに低く中長期的な定点観測で足りる領域", [
+            { title: "統合後のブランド名称・ロゴ統一に関する社内外調整", icon: "tag" },
+            { title: "オフィスレイアウト統合に関する従業員意見の集約", icon: "person" },
+          ]),
+          ...mqQuadrantElements("bottom-right", "III", "計画的に対応する事項", "事業への影響度は高いが緊急性は低く計画的なロードマップ策定で対応可能な領域", [
+            { title: "共同購買プラットフォーム導入によるコスト削減の実行", icon: "cart" },
+            { title: "物流拠点統合による配送リードタイム短縮の実現", icon: "truck" },
+            { title: "在庫管理システムの統合による欠品率低減の実現", icon: "bar-chart" },
+          ]),
+          ...mqAxisElements("axisX", "事業影響度（統合後の年間損益インパクト）", "低", "高"),
+          ...mqAxisElements("axisY", "対応緊急度（意思決定までに許容される期間）", "低", "高"),
+          ...mqInsightElements("示唆", [
+            "最優先論点は経営会議にてDay60までに意思決定を完了させる必要がある",
+            "低優先論点は各担当PJ側で四半期ごとに進捗をモニタリングし継続管理する",
+            "早期対応課題は人事・IT部門合同のワーキンググループで並行して検討を進める",
+          ]),
+        ],
+        relationships: [],
+      },
+      title: "統合課題を緊急度と事業影響度で整理する（詳細版）",
+      subtitle: "Priority Matrix — Detailed",
+    },
+  ];
+
+  for (const [i, fixture] of fixtures.entries()) {
+    const selection = await selectPattern({ family: "matrix", variant: "badge-list" }, fixture.ir);
+    assert.equal(selection.eligibility, "PASS", `fixture ${i}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, fixture.ir, { title: fixture.title, subtitle: fixture.subtitle, source: "Source: test" });
+
+    const specPath = path.join(tmpDir, `mqb-e2e-${i}-spec.json`);
+    const htmlPath = path.join(tmpDir, `mqb-e2e-${i}.html`);
+    await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+    await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+    const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+    const gateReport = JSON.parse(gateResult.stdout);
+    assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+    const pptxPath = path.join(tmpDir, `mqb-e2e-${i}.pptx`);
     await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
     const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
     assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);

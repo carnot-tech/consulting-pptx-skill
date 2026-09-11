@@ -271,6 +271,73 @@ RP-COMPARISON-TABLE-01), the point is a multi-week/multi-day execution timeline 
 roadmap/100-Day patterns), or there is no synthesis/insight layer at all — just parallel
 explanatory points (→ the flat `sections[]` shape of this same template).
 
+## Matrix Badge List (RP-MATRIX-BADGELIST-01, Library v0.2) → `matrix_2x2` (`matrixBadgeList` shape)
+
+Independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-MATRIX-BADGELIST-01.jpg`. A 3rd
+`matrix_2x2` quadrant shape alongside RP-MATRIX-HERO-01's title/body/evidence and
+RP-MATRIX-PLAIN-01's single-sentence label — **neither of those two is reused here**. Where
+Hero/Plain describe ONE narrative per quadrant, Badge List triages a SET of individually-named
+issues: each quadrant carries a priority number + label + optional 1-2 line summary, then a
+stack of individually-iconed named badge items. Unlike every other Library v0.2 pattern so far,
+Matrix is always exactly a 2x2 grid — there is no variable item-count axis the way KPI/
+Decision/Takeaways have; all 4 quadrants (`top-left`/`top-right`/`bottom-left`/`bottom-right`,
+the same 4 canonical position strings Hero/Plain already use) are always present, and density
+varies per-quadrant (1-3+ items) instead.
+
+- **All 4 quadrant groups**, groupId literally one of `top-left`/`top-right`/`bottom-left`/
+  `bottom-right` (same convention as RP-MATRIX-HERO-01/PLAIN-01 — this is what lets a
+  Badge-List-authored slide simply fail those 2 patterns' own structural checks harmlessly
+  rather than needing a disqualifier), each with:
+  - `"number"` — the quadrant's own roman-numeral priority label (e.g. "I"). Authored
+    directly, like every other pattern's `number` field — not derived from grid position (the
+    reference image's own numbering isn't reading-order: I is top-right, not top-left).
+  - `"title"` — the quadrant's own headline (e.g. "最優先"). Becomes `quadrant.label` in the
+    output SlideSpec.
+  - Optional `"body"` — a 1-2 line summary shown beside the header (e.g. "緊急度・影響度とも
+    に高く早急な意思決定が必要"). Becomes `quadrant.summary`.
+  - **>=1 item sub-group**, groupId prefix `${position}-item-` (e.g. `"top-right-item-1"`,
+    `"top-right-item-2"`) — same nesting idiom as RP-KEY-TAKEAWAYS-01's `insightPanel-*`
+    prefix, just parameterized per-quadrant instead of a single global reserved name. Each
+    item group has:
+    - `"title"` — the badge's own text (e.g. "経営陣退任").
+    - Optional `"icon"` — one of `person`/`people`/`bar-chart`/`laptop`/`tag`/`cart`/`truck` (a
+      closed vocabulary — note this is a DIFFERENT subset from RP-DECISION-ASK-01's and
+      RP-KEY-TAKEAWAYS-01's own icon sets; pick whichever concept fits the issue named).
+  - Optional `element.emphasis=true` on the quadrant's own `"title"` element — highlights the
+    WHOLE quadrant (navy header, tinted body, bordered card), same convention as
+    RP-MATRIX-HERO-01/PLAIN-01's own "0 or 1 quadrant may carry emphasis" discipline. This is
+    independent of an item's own `emphasis` flag (below) — quadrant-level emphasis is what
+    drives the reference image's visual, item-level emphasis is a minor per-badge accent the
+    reference image doesn't itself exercise.
+  - Optional `element.emphasis=true` on an item's own `"title"` element — a per-item accent,
+    independent of quadrant-level emphasis.
+- **Required `axisX` and `axisY` groups**, each with a `"title"` element (the axis name, e.g.
+  "事業影響度") and **exactly 2 `"label"` elements, order preserved — first authored is the
+  LOW endpoint, second is the HIGH endpoint** (e.g. "低" then "高"). This is a richer axis
+  representation than RP-MATRIX-HERO-01/PLAIN-01's own ungrouped `chartTicks` pair (which only
+  carries one string per axis, no low/high split) — Badge List's reference image always shows
+  explicit low/high endpoint labels, so it needed somewhere to put them; never pack "label|low|
+  high" into one free-text string.
+- **Required insights panel**: a group literally named `"insights"` with >=1 `"bullets"`
+  elements (order preserved — numbered 1/2/3... by array position, no separate authored
+  number) and an optional `"title"` element (panel heading, defaults to "示唆"). This reuses
+  `kpi_dashboard`'s own `insights` field/shape VERBATIM (same `slide.insights = {title?,
+  items:[string]}`, same renderer) — not a new structure, since it's the same semantic panel.
+  Mandatory, not optional, same discipline as RP-KEY-TAKEAWAYS-01's insightPanel/soWhat: a
+  Badge List slide with no insights panel isn't a smaller variant, it's missing the "so what do
+  we do about this" layer the pattern exists to provide.
+- No relationship type is required — like every other Library v0.2 pattern's repeatable
+  children, quadrant items and insight items are plain siblings; order comes from authoring
+  order (the quadrant POSITIONS themselves, unlike items, are not order-dependent — they're
+  identified by their reserved groupId, not by array position).
+
+**Do not use when**: a quadrant's content is a single narrative sentence or a title+body+
+evidence block, not a list of individually-nameable items (→ RP-MATRIX-HERO-01 or
+RP-MATRIX-PLAIN-01 instead), only 1 axis is authored or both axis words describe the same
+dimension (→ cards), or the items don't actually need 2-axis triage at all, just a flat
+categorized list (→ plain cards or a table).
+
 ## What NOT to do
 
 - Don't author a pattern's `elements`/`relationships` first and decide the family afterward —
