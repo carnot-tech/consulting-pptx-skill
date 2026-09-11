@@ -296,6 +296,12 @@
             "$ref": "#/$defs/kpi"
           }
         },
+        "insights": {
+          "$ref": "#/$defs/insights"
+        },
+        "trendChart": {
+          "$ref": "#/$defs/chart"
+        },
         "multiples": {
           "type": "array",
           "minItems": 2,
@@ -1448,11 +1454,32 @@
         "value": {
           "type": "string"
         },
+        "unit": {
+          "type": "string"
+        },
         "delta": {
           "type": "string"
         },
         "note": {
           "type": "string"
+        }
+      }
+    },
+    "insights": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

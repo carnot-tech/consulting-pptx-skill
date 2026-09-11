@@ -108,6 +108,24 @@ function checkEmptyDataObjects(slide, at, errors, warnings) {
   }
 }
 
+// Two KPI tiles with the exact same label on one slide is never intentional — it either
+// means a metric was authored twice or a copy-paste left a stale label. Kept as a dedicated
+// check (rather than folded into checkEmptyDataObjects) since it's a cross-item comparison,
+// not a presence check.
+function checkDuplicateKpiLabels(slide, at, errors, warnings) {
+  if (!Array.isArray(slide.kpis)) return;
+  const seen = new Map();
+  slide.kpis.forEach((k, i) => {
+    const norm = String(k.label || "").trim();
+    if (!norm) return;
+    if (seen.has(norm)) {
+      errors.push({ slide: at, type: "duplicate_kpi_label", element: `kpis[${i}]`, detail: `"${norm}" also appears at kpis[${seen.get(norm)}]` });
+    } else {
+      seen.set(norm, i);
+    }
+  });
+}
+
 export function checkContentStructure(spec) {
   const errors = [];
   const warnings = [];
@@ -116,6 +134,7 @@ export function checkContentStructure(spec) {
     scanTextIssues(slide, at, errors, warnings);
     checkRequiredContent(slide, at, errors, warnings);
     checkEmptyDataObjects(slide, at, errors, warnings);
+    checkDuplicateKpiLabels(slide, at, errors, warnings);
   });
   return { passed: errors.length === 0, errors, warnings };
 }

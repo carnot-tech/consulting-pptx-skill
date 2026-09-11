@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "0ec7a506091a87c950c943a53f0c308ca8796f567ef774b7dbd8703d8854cab0"
+    "sha256": "4d07a8a7aa2973b258ac7d58d8267e026ce73432a994c1d6fdc77684dc6e08c6"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
@@ -66,6 +66,20 @@
       "disqualifierDefinitions": {
         "NO_PHASE_GROUPING": "sequence relationships exist but no contains relationships pair with them — use the plain 'roadmap' template instead"
       }
+    },
+    "RP-KPI-EXEC-DASHBOARD-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [],
+      "structuralChecks": ["KPI_COUNT_IN_RANGE"],
+      "structuralCheckDefinitions": {
+        "KPI_COUNT_IN_RANGE": {
+          "min": 3,
+          "max": 5,
+          "description": "count of groupIds that are not a reserved container id (\"insights\"/\"trendChart\"/\"trendChart-*\") and have both a title and a value element — must be 3-5."
+        }
+      },
+      "disqualifiers": []
     }
   }
 }

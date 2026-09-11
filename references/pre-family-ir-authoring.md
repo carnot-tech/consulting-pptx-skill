@@ -1,4 +1,4 @@
-# Pre-family Semantic IR authoring guide (Production Integration v1: matrix / hierarchy / roadmap-phaseband)
+# Pre-family Semantic IR authoring guide (matrix / hierarchy / roadmap-phaseband / kpi-dashboard)
 
 This is the prompt/reference for the new pipeline stage that sits between Ghost Deck and
 Slide IR: **Pattern Selection**. For one Ghost Deck slide whose `role`/`key_message`/
@@ -72,6 +72,39 @@ eligibility; the adapters below don't read its contents.
   requires at least one — `PMI_HAS_EMPHASIS_IN_SOME_GROUP`).
 - Optional: a slide-level closing band — a group literally named `"outcomes"` containing
   `"bullets"`-role elements. Reserved id; don't use `"outcomes"` for a real phase.
+
+## KPI dashboard (RP-KPI-EXEC-DASHBOARD-01, Library v0.2) → `kpi_dashboard` (`kpiDashboard` shape)
+
+Unlike matrix/hierarchy/roadmap (ported from an external, holdout-validated project), this
+pattern is independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-KPI-EXEC-DASHBOARD-01.jpg`.
+
+- 3 to 5 KPI groups, each its own group (any groupId except the 2 reserved ones below).
+  KPI tile order = the order groups first appear in `elements[]` — no relationship needed
+  between them, they're plain siblings.
+- Per-KPI element roles: `"title"` (the label) + `"value"` (the number, e.g. "128") — both
+  required. Optional: `"chartCaption"` (unit, e.g. "億円" — kept separate from `value` so it
+  renders as a smaller suffix, never concatenated into the number itself), `"secondary"`
+  (the delta/YoY line), `"body"` (a short context note).
+- Optional closing insights band: a group literally named `"insights"` containing
+  `"bullets"`-role elements (one per insight line) and an optional `"title"` element for the
+  panel heading (defaults to "示唆" if absent).
+- Optional trend chart: a group literally named `"trendChart"` containing one `"chartCaption"`
+  element (the chart's unit). Each data point is its OWN sub-group named `"trendChart-p1"`,
+  `"trendChart-p2"`, etc. (not elements directly in the `trendChart` group), each with a
+  `"title"` (period label) + `"value"` (number) element, `contains`-linked from `trendChart`,
+  ordered via `sequence` relationships between the point groups — same idiom as roadmap's
+  phase/milestone structure, reused deliberately.
+- No emphasis mechanism for this family — don't author `emphasis: true` on KPI elements.
+- Eligibility is purely a count check (`KPI_COUNT_IN_RANGE`, 3-5 groups with both title+value
+  present) — no relationship type is required at all, unlike every other family so far.
+
+**Do not use when**: only 1-2 KPIs are authored (defer to a hero-KPI-shaped template instead —
+this pattern will FAIL, not force itself), 6+ KPIs (a dense dashboard/table is more honest),
+explanatory prose is the real content and numbers are incidental (→ cards), the point is a
+multi-period time-series comparison in its own right rather than a snapshot (→ a chart
+template), or the point is comparing named options against each other (→
+RP-COMPARISON-TABLE-01).
 
 ## What NOT to do
 

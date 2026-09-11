@@ -20,6 +20,7 @@ import {
   preFamilyIrToMatrixQuadrants,
   preFamilyIrToIssueTree,
   preFamilyIrToRoadmapPhases,
+  preFamilyIrToKpiDashboard,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -146,6 +147,160 @@ test("pre_family_ir_to_slide_spec: roadmap adapter orders phases/milestones via 
   assert.deepEqual(result.phases.map((p) => p.title), ["フェーズ1", "フェーズ2"]);
   assert.equal(result.phases[1].milestones[0].emphasis, true);
   assert.deepEqual(result.outcomes, { bullets: ["outcome 1"] });
+});
+
+// --- RP-KPI-EXEC-DASHBOARD-01 (Library v0.2, first pattern) ---
+
+function kpiGroupElements(n, label, value, extra = {}) {
+  const els = [
+    { id: `k${n}-title`, semanticRole: "title", groupId: `kpi-${n}`, value: label },
+    { id: `k${n}-value`, semanticRole: "value", groupId: `kpi-${n}`, value },
+  ];
+  if (extra.unit) els.push({ id: `k${n}-unit`, semanticRole: "chartCaption", groupId: `kpi-${n}`, value: extra.unit });
+  if (extra.delta) els.push({ id: `k${n}-delta`, semanticRole: "secondary", groupId: `kpi-${n}`, value: extra.delta });
+  return els;
+}
+
+test("reference_pattern_selector: 3-5 KPI groups select RP-KPI-EXEC-DASHBOARD-01; 2 and 6 are both rejected", async () => {
+  const irOf = (count) => ({
+    elements: Array.from({ length: count }, (_, i) => kpiGroupElements(i + 1, `KPI${i + 1}`, "10", { unit: "%" })).flat(),
+    relationships: [],
+  });
+  const three = await selectPattern({ family: "kpi-dashboard", variant: "standard" }, irOf(3));
+  assert.equal(three.eligibility, "PASS");
+  assert.equal(three.selectedPattern, "RP-KPI-EXEC-DASHBOARD-01");
+
+  const five = await selectPattern({ family: "kpi-dashboard", variant: "standard" }, irOf(5));
+  assert.equal(five.eligibility, "PASS");
+
+  const two = await selectPattern({ family: "kpi-dashboard", variant: "standard" }, irOf(2));
+  assert.equal(two.eligibility, "FAIL", "1-2 KPIs should defer to a hero-KPI-shaped template, not force this pattern");
+
+  const six = await selectPattern({ family: "kpi-dashboard", variant: "standard" }, irOf(6));
+  assert.equal(six.eligibility, "FAIL", "6+ KPIs should defer to a dense-dashboard shape, not force this pattern");
+});
+
+test("reference_pattern_selector: a KPI group missing its value element doesn't count toward KPI_COUNT_IN_RANGE", async () => {
+  const ir = {
+    elements: [
+      ...kpiGroupElements(1, "KPI1", "10"),
+      ...kpiGroupElements(2, "KPI2", "20"),
+      { id: "k3-title", semanticRole: "title", groupId: "kpi-3", value: "KPI3" }, // no value element
+    ],
+    relationships: [],
+  };
+  const result = await selectPattern({ family: "kpi-dashboard", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: kpi_dashboard adapter builds kpis[] in authoring order and wires a sequence-ordered trend chart", () => {
+  const ir = {
+    elements: [
+      ...kpiGroupElements(1, "売上高", "128", { unit: "億円", delta: "+12%" }),
+      ...kpiGroupElements(2, "EBITDA", "18.4", { unit: "億円", delta: "+2.1億円" }),
+      ...kpiGroupElements(3, "粗利率", "32.5", { unit: "%", delta: "+1.8pt" }),
+      { id: "trend-unit", semanticRole: "chartCaption", groupId: "trendChart", value: "億円" },
+      { id: "p2-t", semanticRole: "title", groupId: "trendChart-p2", value: "Q2" },
+      { id: "p2-v", semanticRole: "value", groupId: "trendChart-p2", value: "92" },
+      { id: "p1-t", semanticRole: "title", groupId: "trendChart-p1", value: "Q1" },
+      { id: "p1-v", semanticRole: "value", groupId: "trendChart-p1", value: "85" },
+    ],
+    relationships: [
+      // contains authored out of order, sequence must still win (same discipline as roadmap).
+      { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
+      { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p1" }, attributes: {}, origin: "authored" },
+      { type: "sequence", from: { kind: "group", id: "trendChart-p1" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
+    ],
+  };
+  const result = preFamilyIrToKpiDashboard(ir);
+  assert.deepEqual(result.kpis.map((k) => k.label), ["売上高", "EBITDA", "粗利率"]);
+  assert.equal(result.kpis[0].value, "128");
+  assert.equal(result.kpis[0].unit, "億円");
+  assert.deepEqual(result.trendChart, { series: [{ label: "Q1", value: 85 }, { label: "Q2", value: 92 }], unit: "億円" });
+});
+
+test("pre_family_ir_to_slide_spec: kpi_dashboard adapter rejects a KPI count outside 3-5 (not the Selector's job to have caught it if called directly)", () => {
+  const ir = { elements: kpiGroupElements(1, "KPI1", "10"), relationships: [] };
+  assert.throws(() => preFamilyIrToKpiDashboard(ir), /3-5/);
+});
+
+test("check_content_structure: flags 2 KPI tiles sharing the same label", () => {
+  const spec = { deckTitle: "t", slides: [{ template: "kpi_dashboard", title: "t", kpis: [{ label: "売上高", value: "1" }, { label: "EBITDA", value: "2" }, { label: "売上高", value: "3" }] }] };
+  const result = checkContentStructure(spec);
+  assert.equal(result.passed, false);
+  assert.ok(result.errors.some((e) => e.type === "duplicate_kpi_label"));
+});
+
+test("kpi_dashboard end to end: 3/4/5-KPI fixtures (with trend chart + insights) render with 0 QA findings and export to a clean PPTX", async () => {
+  const fixtures = [
+    {
+      // A: 3 KPI + insights, no trend chart
+      elements: [
+        ...kpiGroupElements(1, "売上高", "128", { unit: "億円", delta: "+12%" }),
+        ...kpiGroupElements(2, "EBITDA", "18.4", { unit: "億円", delta: "+2.1億円" }),
+        ...kpiGroupElements(3, "粗利率", "32.5", { unit: "%", delta: "+1.8pt" }),
+        { id: "ins-1", semanticRole: "bullets", groupId: "insights", value: "売上成長は継続している" },
+        { id: "ins-2", semanticRole: "bullets", groupId: "insights", value: "収益性改善は調達統合が寄与" },
+      ],
+      relationships: [],
+    },
+    {
+      // B: 4 KPI + trend chart, no insights
+      elements: [
+        ...kpiGroupElements(1, "新規顧客数", "312", { unit: "社", delta: "+8%" }),
+        ...kpiGroupElements(2, "解約率", "1.8", { unit: "%", delta: "-0.4pt" }),
+        ...kpiGroupElements(3, "NPS", "42", { unit: "pt", delta: "+5pt" }),
+        ...kpiGroupElements(4, "営業利益率", "14.2", { unit: "%", delta: "+1.1pt" }),
+        { id: "trend-unit", semanticRole: "chartCaption", groupId: "trendChart", value: "億円" },
+        { id: "p1-t", semanticRole: "title", groupId: "trendChart-p1", value: "Q1" },
+        { id: "p1-v", semanticRole: "value", groupId: "trendChart-p1", value: "85" },
+        { id: "p2-t", semanticRole: "title", groupId: "trendChart-p2", value: "Q2" },
+        { id: "p2-v", semanticRole: "value", groupId: "trendChart-p2", value: "115" },
+      ],
+      relationships: [
+        { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p1" }, attributes: {}, origin: "authored" },
+        { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
+        { type: "sequence", from: { kind: "group", id: "trendChart-p1" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
+      ],
+    },
+    {
+      // C: 5 KPI (3+2 layout) with long labels/notes and mixed units, both insights + no chart
+      elements: [
+        ...kpiGroupElements(1, "海外売上比率（アジア・北米・欧州合算）", "38.6", { unit: "%", delta: "+4.2pt" }),
+        ...kpiGroupElements(2, "重点顧客あたり平均取引額", "4,820", { unit: "万円", delta: "+320万円" }),
+        ...kpiGroupElements(3, "従業員エンゲージメントスコア", "71", { unit: "pt", delta: "+3pt" }),
+        ...kpiGroupElements(4, "フリーキャッシュフロー", "9.6", { unit: "億円", delta: "-1.2億円" }),
+        ...kpiGroupElements(5, "主要プロジェクト進捗率", "82", { unit: "%", delta: "+15pt" }),
+        { id: "ins-1", semanticRole: "bullets", groupId: "insights", value: "海外比率の拡大が全体成長を牽引" },
+      ],
+      relationships: [],
+    },
+  ];
+
+  const titles = [
+    "収益性は改善基調、次の論点は運転資本の圧縮",
+    "顧客基盤は拡大し、収益性も改善している",
+    "海外展開とエンゲージメント向上が成長を牽引する",
+  ];
+  for (const [i, ir] of fixtures.entries()) {
+    const selection = await selectPattern({ family: "kpi-dashboard", variant: "standard" }, ir);
+    assert.equal(selection.eligibility, "PASS", `fixture ${i}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, ir, { title: titles[i], source: "Source: test" });
+
+    const specPath = path.join(tmpDir, `kpi-e2e-${i}-spec.json`);
+    const htmlPath = path.join(tmpDir, `kpi-e2e-${i}.html`);
+    await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+    await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+    const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+    const gateReport = JSON.parse(gateResult.stdout);
+    assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+    const pptxPath = path.join(tmpDir, `kpi-e2e-${i}.pptx`);
+    await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+    const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+    assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
+  }
 });
 
 test("render_html_screenshots: an issue_tree root box does not false-positive as overflow (matches qa_html_deck.mjs's own .ltree exclusion)", async () => {

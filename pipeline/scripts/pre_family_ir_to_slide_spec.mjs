@@ -25,6 +25,15 @@
 //               groups are additionally linked to each other via `sequence` relationships in
 //               chronological order. An optional groupId="outcomes" group (semanticRole=
 //               "bullets" elements) becomes the slide-level closing band.
+//   kpi-dashboard: each KPI is its own group with title(label)/value elements (required) and
+//               optional chartCaption(unit)/secondary(delta)/body(note) elements — 3-5 such
+//               groups, siblings with no relationship between them (order = authoring order).
+//               An optional groupId="insights" group (semanticRole="bullets" elements, +
+//               optional "title" for the panel heading) becomes the closing insights list. An
+//               optional groupId="trendChart" group (a "chartCaption" unit element) `contains`-
+//               links to its own point sub-groups ("trendChart-p1" etc, each with title+value),
+//               ordered via `sequence` relationships between the point groups — same idiom as
+//               roadmap's phase/milestone structure, reused deliberately for consistency.
 function elementsByGroupId(elements) {
   const m = new Map();
   for (const el of elements) {
@@ -141,6 +150,73 @@ export function preFamilyIrToRoadmapPhases({ elements, relationships }) {
   return result;
 }
 
+const KPI_RESERVED_GROUP_IDS = new Set(["insights", "trendChart"]);
+function isKpiCandidateGroup(groupId) {
+  return groupId != null && !KPI_RESERVED_GROUP_IDS.has(groupId) && !groupId.startsWith("trendChart-");
+}
+
+export function preFamilyIrToKpiDashboard({ elements, relationships }) {
+  const byGroup = elementsByGroupId(elements);
+
+  const kpis = [...byGroup.entries()]
+    .filter(([gid]) => isKpiCandidateGroup(gid))
+    .map(([gid, els]) => {
+      const label = findRole(els, "title");
+      const value = findRole(els, "value");
+      if (!label || !value) throw new Error(`kpi_dashboard adapter: group "${gid}" is missing a title or value element`);
+      const kpi = { label, value };
+      const unit = findRole(els, "chartCaption");
+      if (unit) kpi.unit = unit;
+      const delta = findRole(els, "secondary");
+      if (delta) kpi.delta = delta;
+      const note = findRole(els, "body");
+      if (note) kpi.note = note;
+      return kpi;
+    });
+  if (kpis.length < 3 || kpis.length > 5) {
+    throw new Error(`kpi_dashboard adapter: expected 3-5 KPI groups, found ${kpis.length}`);
+  }
+
+  const result = { kpis };
+
+  const insightsEls = byGroup.get("insights");
+  if (insightsEls) {
+    const items = insightsEls.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+    if (items.length) {
+      const insights = { items };
+      const title = findRole(insightsEls, "title");
+      if (title) insights.title = title;
+      result.insights = insights;
+    }
+  }
+
+  const trendEls = byGroup.get("trendChart");
+  if (trendEls) {
+    const contains = relationships.filter((r) => r.type === "contains" && r.from?.kind === "group" && r.from.id === "trendChart");
+    const sequence = relationships.filter((r) => r.type === "sequence");
+    const pointGroupIds = contains.map((r) => r.to.id);
+    const pointSeq = sequence.filter((r) => pointGroupIds.includes(r.from?.id) && pointGroupIds.includes(r.to?.id));
+    const orderedPointIds = pointSeq.length ? topoSort(pointGroupIds, pointSeq) : pointGroupIds;
+    const series = orderedPointIds.map((pid) => {
+      const pEls = byGroup.get(pid) || [];
+      const label = findRole(pEls, "title");
+      const valueStr = findRole(pEls, "value");
+      if (!label || valueStr == null) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" is missing a title or value element`);
+      const value = Number(valueStr);
+      if (!Number.isFinite(value)) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" value "${valueStr}" is not numeric`);
+      return { label, value };
+    });
+    if (series.length) {
+      const trendChart = { series };
+      const unit = findRole(trendEls, "chartCaption");
+      if (unit) trendChart.unit = unit;
+      result.trendChart = trendChart;
+    }
+  }
+
+  return result;
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -174,6 +250,7 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   if (selection.slideSpecShape === "quadrants") body = preFamilyIrToMatrixQuadrants(preFamilyIR);
   else if (selection.slideSpecShape === "tree") body = preFamilyIrToIssueTree(preFamilyIR);
   else if (selection.slideSpecShape === "phases") body = preFamilyIrToRoadmapPhases(preFamilyIR);
+  else if (selection.slideSpecShape === "kpiDashboard") body = preFamilyIrToKpiDashboard(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {

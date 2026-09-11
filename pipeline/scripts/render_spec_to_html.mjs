@@ -785,14 +785,48 @@ function renderIssueTree(slide, n) {
   return shell(slide, n, `<div class="ltree">${renderTreeNode(rootNode, 1)}</div>`);
 }
 
-function renderKpiDashboard(slide, n) {
-  const tiles = (slide.kpis || [])
+// 3/4 KPI sit in one row; 5 wraps to a 3+2 pair of rows rather than 5 cramped equal columns
+// (RP-KPI-EXEC-DASHBOARD-01's own adaptive rule — this is Renderer geometry, the Pattern
+// Selector never decides it).
+function kpiRows(kpis) {
+  if (kpis.length <= 4) return [kpis];
+  return [kpis.slice(0, 3), kpis.slice(3)];
+}
+
+function kpiTileHtml(k) {
+  const unit = k.unit ? `<span class="kpi-unit">${esc(k.unit)}</span>` : "";
+  return `<div class="kpi-tile"><div class="kpi-label">${esc(k.label)}</div><div class="kpi-value">${esc(k.value)}${unit}</div>${k.delta ? `<div class="kpi-delta">${esc(k.delta)}</div>` : ""}${k.note ? `<div class="kpi-note">${esc(k.note)}</div>` : ""}</div>`;
+}
+
+// Simple positive-value bar row for the optional trend chart — unlike chart_insight, KPI
+// history (revenue, EBITDA, etc.) is not expected to go negative, so this deliberately
+// skips chart_insight's zero-baseline logic rather than importing complexity this shape
+// doesn't need.
+function renderKpiTrendChart(chart) {
+  const max = Math.max(...chart.series.map((d) => d.value), 1);
+  const bars = chart.series
     .map(
-      (k) =>
-        `<div class="kpi-tile"><div class="kpi-label">${esc(k.label)}</div><div class="kpi-value">${esc(k.value)}</div>${k.delta ? `<div class="kpi-delta">${esc(k.delta)}</div>` : ""}${k.note ? `<div class="kpi-note">${esc(k.note)}</div>` : ""}</div>`,
+      (d) =>
+        `<div class="kt-bar-wrap"><div class="kt-value">${esc(d.value)}</div><div class="kt-bar" style="height: ${Math.round((d.value / max) * 100)}%;"></div><div class="kt-label">${esc(d.label)}</div></div>`,
     )
     .join("");
-  return shell(slide, n, `<div class="kpi-grid">${tiles}</div>`, { noTitleRule: true });
+  return `<div class="kpi-trend"><div class="section-label">${esc(chart.unit || "")}</div><div class="kt-bars">${bars}</div></div>`;
+}
+
+function renderKpiInsights(insights) {
+  const items = insights.items.map((item, i) => `<li><span class="ki-num">${i + 1}</span><span>${esc(item)}</span></li>`).join("");
+  return `<div class="kpi-insights"><div class="section-label">${esc(insights.title || "示唆")}</div><ol class="ki-list">${items}</ol></div>`;
+}
+
+function renderKpiDashboard(slide, n) {
+  const rows = kpiRows(slide.kpis || [])
+    .map((row) => `<div class="kpi-grid" style="grid-template-columns: repeat(${row.length}, 1fr);">${row.map(kpiTileHtml).join("")}</div>`)
+    .join("");
+  const hasSupport = slide.trendChart || slide.insights;
+  const support = hasSupport
+    ? `<div class="kpi-support${slide.trendChart && slide.insights ? "" : " single"}">${slide.trendChart ? renderKpiTrendChart(slide.trendChart) : ""}${slide.insights ? renderKpiInsights(slide.insights) : ""}</div>`
+    : "";
+  return shell(slide, n, `<div class="kpi-dashboard">${rows}${support}</div>`, { noTitleRule: true });
 }
 
 function renderRecommendationPillars(slide, n) {

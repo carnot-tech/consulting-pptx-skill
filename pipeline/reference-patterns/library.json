@@ -65,6 +65,29 @@
       "doNotUseWhen": "milestones exist but are NOT grouped under authored phase objects (no contains edges) — use the plain 'roadmap' template's flat `sections` shape instead.",
       "slideSpecTemplate": "roadmap",
       "slideSpecShape": "phases"
+    },
+    {
+      "patternId": "RP-KPI-EXEC-DASHBOARD-01",
+      "name": "Executive KPI Dashboard",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-KPI-EXEC-DASHBOARD-01.jpg — Library v0.2, first pattern implemented (not part of the external Visual Planner project's own library; independently defined for this project).",
+      "useWhen": "3-5 KPIs, each with an authored label+value, numbers-as-the-main-content (not explanatory prose), and the slide's purpose is a summary/performance-snapshot/executive overview — not a single hero metric, not a dense 6+ metric table, and not primarily a time-series or item-comparison story.",
+      "requiredSemanticRoles": ["title (KPI label) + value (KPI number) per KPI, 3-5 KPIs"],
+      "optionalSemanticRoles": ["chartCaption (unit) and secondary (delta) per KPI", "body (context note) per KPI", "an insights group (bullets) and/or a trendChart group (a small history series) below the KPI row"],
+      "relationshipsRequired": [],
+      "visualIntent": "summarize",
+      "densityRange": "medium",
+      "emphasisModel": "no structural emphasis mechanism for this family — KPI values speak for themselves; don't author emphasis here.",
+      "supportingBand": "optional — an insights list and/or a trend chart below the KPI row, distinct from any single KPI tile.",
+      "doNotUseWhen": [
+        "only 1 KPI is authored — use a hero-KPI-shaped template instead",
+        "6+ KPIs are authored — this becomes a dense dashboard/table, not this pattern",
+        "explanatory prose is the main content and numbers are incidental — use cards instead",
+        "the point is a time-series comparison across many periods — use a chart template instead",
+        "the point is comparing named items/options against each other — use RP-COMPARISON-TABLE-01 instead"
+      ],
+      "slideSpecTemplate": "kpi_dashboard",
+      "slideSpecShape": "kpiDashboard"
     }
   ]
 }

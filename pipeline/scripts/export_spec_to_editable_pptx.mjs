@@ -1449,21 +1449,71 @@ function addEvidenceBasis(item, pageNum) {
   });
 }
 
-function addKpiDashboard(item, pageNum) {
-  const slide = addShell(item, pageNum, { titleRule: false });
-  const kpis = item.kpis || [];
-  const n = kpis.length || 1;
+// mirrors render_spec_to_html.mjs#kpiRows — 3/4 KPI in one row, 5 wraps to 3+2.
+function kpiRows(kpis) {
+  if (kpis.length <= 4) return [kpis];
+  return [kpis.slice(0, 3), kpis.slice(3)];
+}
+
+function addKpiRow(slide, row, y, rowH) {
   const gap = 0.4;
+  const n = row.length || 1;
   const tileW = (W - M * 2 - gap * (n - 1)) / n;
-  const y = 2.3;
-  kpis.forEach((k, i) => {
+  row.forEach((k, i) => {
     const x = M + i * (tileW + gap);
     slide.addShape(pptx.ShapeType.line, { x, y, w: tileW, h: 0, line: { color: INK, width: 2 } });
     addBodyText(slide, k.label, x, y + 0.16, tileW, 0.3, { fontSize: 12, bold: true, color: MUTED });
-    addBodyText(slide, k.value, x, y + 0.5, tileW, 0.7, { fontSize: 34, bold: true, color: BLUE });
+    const valueText = k.unit ? [{ text: k.value, options: { fontSize: 34, bold: true, color: BLUE } }, { text: `  ${k.unit}`, options: { fontSize: 18, bold: true, color: MUTED } }] : k.value;
+    slide.addText(valueText, { x, y: y + 0.5, w: tileW, h: 0.7, fontFace: FONT, breakLine: false, fit: "shrink", margin: 0.03, valign: "top", align: "left", ...(k.unit ? {} : { fontSize: 34, bold: true, color: BLUE }) });
     if (k.delta) addBodyText(slide, k.delta, x, y + 1.3, tileW, 0.3, { fontSize: 13, bold: true, color: GREEN });
-    if (k.note) addBodyText(slide, k.note, x, y + 1.65, tileW, 0.5, { fontSize: 11, color: MUTED });
+    if (k.note) addBodyText(slide, k.note, x, y + 1.65, tileW, rowH - 1.95, { fontSize: 11, color: MUTED });
   });
+}
+
+function addKpiDashboard(item, pageNum) {
+  const slide = addShell(item, pageNum, { titleRule: false });
+  const rows = kpiRows(item.kpis || []);
+  const rowH = 2.05;
+  const gridTop = 2.3;
+  rows.forEach((row, i) => addKpiRow(slide, row, gridTop + i * rowH, rowH));
+
+  const hasSupport = item.trendChart || item.insights;
+  if (!hasSupport) return;
+  const supportY = gridTop + rows.length * rowH + 0.15;
+  slide.addShape(pptx.ShapeType.line, { x: M, y: supportY, w: W - M * 2, h: 0, line: { color: HAIR, width: 0.75 } });
+  const bothPresent = item.trendChart && item.insights;
+  const chartW = bothPresent ? 6.6 : W - M * 2;
+  if (item.trendChart) {
+    const chart = item.trendChart;
+    addBodyText(slide, chart.unit || "", M, supportY + 0.18, chartW, 0.26, { fontSize: 11.5, bold: true, color: MUTED });
+    const max = Math.max(...chart.series.map((d) => d.value), 1);
+    const baseY = FOOTER_Y - 0.4;
+    const plotTop = supportY + 0.55;
+    const plotH = baseY - plotTop;
+    const gap = 0.18;
+    const n = chart.series.length || 1;
+    const barW = (chartW - gap * (n - 1)) / n;
+    chart.series.forEach((d, i) => {
+      const x = M + i * (barW + gap);
+      const h = Math.max((d.value / max) * plotH, 0.03);
+      slide.addShape(pptx.ShapeType.rect, { x, y: baseY - h, w: barW, h, fill: { color: BLUE } });
+      addBodyText(slide, String(d.value), x, baseY - h - 0.22, barW, 0.2, { fontSize: 9.5, bold: true, align: "center" });
+      addBodyText(slide, d.label, x, baseY + 0.06, barW, 0.3, { fontSize: 8.5, color: MUTED, align: "center" });
+    });
+    slide.addShape(pptx.ShapeType.line, { x: M, y: baseY, w: chartW, h: 0, line: { color: HAIR, width: 0.75 } });
+  }
+  if (item.insights) {
+    const x = bothPresent ? M + chartW + 0.4 : M;
+    const w = bothPresent ? W - M - x : W - M * 2;
+    addBodyText(slide, item.insights.title || "示唆", x, supportY + 0.18, w, 0.26, { fontSize: 11.5, bold: true, color: MUTED });
+    let y = supportY + 0.55;
+    item.insights.items.forEach((text, i) => {
+      slide.addShape(pptx.ShapeType.ellipse, { x, y: y + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
+      addBodyText(slide, String(i + 1), x, y + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+      addBodyText(slide, text, x + 0.32, y, w - 0.32, 0.45, { fontSize: 11.5 });
+      y += 0.46;
+    });
+  }
 }
 
 function addRecommendationPillars(item, pageNum) {

@@ -1,9 +1,11 @@
 // reference_pattern_selector.mjs — Reference Pattern Selector, ported from an external
 // project's reference-pattern-selector.js (REFERENCE-PATTERN-SELECTOR-V0-SPEC.json, Revision
-// 5), limited to the 3 families that project's own Selector Holdout rounds 2-3 scored 10/10
-// with zero wrong selections (matrix, hierarchy, roadmap-phaseband) — see
+// 5), initially limited to the 3 families that project's own Selector Holdout rounds 2-3
+// scored 10/10 with zero wrong selections (matrix, hierarchy, roadmap-phaseband) — see
 // pipeline/reference-patterns/library.json's sourceNote for why those 3 and not the rest of
-// that project's library.
+// that project's library. Library v0.2 (starting with RP-KPI-EXEC-DASHBOARD-01) extends this
+// same eligibility-checking core with new, independently-defined patterns/structural checks
+// that have no counterpart in the external project — same framework, new registrations.
 //
 // Deliberate simplification vs the original: the source project's selectPattern() takes a
 // separately-computed `visualPlan` (family/variant guessed from ALREADY-AUTHORED, free-text
@@ -44,6 +46,7 @@ const FAMILY_VARIANT_MAP = {
   "matrix|plain": ["RP-MATRIX-PLAIN-01", "RP-MATRIX-HERO-01"],
   "hierarchy|standard": ["RP-HIERARCHY-WORKSTREAM-01"],
   "roadmap-phaseband|standard": ["RP-PMI-ROADMAP-01"],
+  "kpi-dashboard|standard": ["RP-KPI-EXEC-DASHBOARD-01"],
 };
 
 export async function runRegistryConsistencyGate(registry, library) {
@@ -167,6 +170,26 @@ function checkHierarchySingleRootWith2Children(relationships) {
   const children = new Set(contains.filter((r) => endpointKey(r.from) === rootKey).map((r) => endpointKey(r.to)));
   return { pass: children.size >= 2, reason: children.size >= 2 ? null : "NO_HIERARCHY_ROOT", rootKey, childCount: children.size };
 }
+// KPI groups are identified by convention, not by a relationship type (unlike matrix's
+// axis_membership or hierarchy/roadmap's contains): any groupId that isn't one of the 2
+// reserved container ids ("insights", "trendChart") or a trendChart sub-point ("trendChart-*")
+// is a candidate KPI tile. This intentionally keeps KPI tiles as plain siblings with no
+// relationship between them — order comes from authoring order (element array position),
+// same discipline the hierarchy adapter already relies on for its children when no `sequence`
+// is authored.
+const KPI_RESERVED_GROUP_IDS = new Set(["insights", "trendChart"]);
+function isKpiCandidateGroup(groupId) {
+  return groupId != null && !KPI_RESERVED_GROUP_IDS.has(groupId) && !groupId.startsWith("trendChart-");
+}
+function checkKpiCountInRange(elements, min, max) {
+  const byGroup = elementsByGroupId(elements);
+  const qualifying = [...byGroup.entries()].filter(([gid, els]) => {
+    if (!isKpiCandidateGroup(gid)) return false;
+    return els.some((e) => e.semanticRole === "title") && els.some((e) => e.semanticRole === "value");
+  });
+  return { pass: qualifying.length >= min && qualifying.length <= max, count: qualifying.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -227,6 +250,13 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
     } else if (checkName === "PMI_HAS_EMPHASIS_IN_SOME_GROUP") {
       if (checkPmiHasEmphasisInSomeGroup(elements, relationships)) evidence.push("PMI_HAS_EMPHASIS_IN_SOME_GROUP passed");
       else failedChecks.push("PMI_HAS_EMPHASIS_IN_SOME_GROUP failed");
+    } else if (checkName === "KPI_COUNT_IN_RANGE") {
+      const def = registryEntry.structuralCheckDefinitions?.KPI_COUNT_IN_RANGE || {};
+      const min = def.min ?? 3;
+      const max = def.max ?? 5;
+      const r = checkKpiCountInRange(elements, min, max);
+      if (r.pass) evidence.push(`KPI_COUNT_IN_RANGE passed: ${r.count} qualifying KPI groups (${min}-${max})`);
+      else failedChecks.push(`KPI_COUNT_IN_RANGE failed: ${r.count} qualifying KPI groups, need ${min}-${max}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }
