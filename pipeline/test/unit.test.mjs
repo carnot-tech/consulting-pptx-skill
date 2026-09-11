@@ -281,6 +281,15 @@ test("check_content_structure: flags 2 KPI tiles sharing the same label", () => 
   assert.ok(result.errors.some((e) => e.type === "duplicate_kpi_label"));
 });
 
+test("check_content_structure: flags a ▲/▼/↑/↓ prefix on a KPI delta (self-contradictory or wrongly implies which direction is good)", () => {
+  const spec = { deckTitle: "t", slides: [{ template: "kpi_dashboard", title: "t", kpis: [{ label: "売上高", value: "128", delta: "▲ +12%（前年同期比）" }, { label: "NWC回転日数", value: "41", delta: "-6日（前年同期比）" }] }] };
+  const result = checkContentStructure(spec);
+  assert.equal(result.passed, false);
+  const finding = result.errors.find((e) => e.type === "kpi_delta_direction_glyph");
+  assert.ok(finding);
+  assert.equal(finding.element, "kpis[0].delta");
+});
+
 test("kpi_dashboard end to end: 3/4/5-KPI fixtures (incl. the full standard variant: keyMessage + icon/context/spark + 2-bar+line trend chart + insights) render with 0 QA findings and export to a clean PPTX", async () => {
   const period = (n, label, v1, v2, lv) => ({
     id: `p${n}`, group: `trendChart-p${n}`, els: [

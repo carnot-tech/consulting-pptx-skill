@@ -1560,7 +1560,7 @@ function addKpiDashboard(item, pageNum) {
     const legendY = supportY + pad + 0.26;
     const legendEntries = [
       ...chart.bars.map((b, i) => ({ label: b.label, color: i === 0 ? NAVY : CYAN, shape: "rect" })),
-      ...(chart.line ? [{ label: chart.line.label, color: ROSE, shape: "ellipse" }] : []),
+      ...(chart.line ? [{ label: chart.line.label, color: BLUE, shape: "ellipse" }] : []),
     ];
     legendEntries.forEach((e) => {
       if (e.shape === "rect") slide.addShape(pptx.ShapeType.rect, { x: legendX, y: legendY + 0.02, w: 0.14, h: 0.1, fill: { color: e.color }, line: { type: "none" } });
@@ -1612,10 +1612,10 @@ function addKpiDashboard(item, pageNum) {
           // across its bounding box; flipV mirrors it to bottom-left -> top-right instead.
           slide.addShape(pptx.ShapeType.line, {
             x: Math.min(px, cx), y: Math.min(py, cy), w: Math.abs(cx - px) || 0.001, h: Math.abs(cy - py) || 0.001,
-            line: { color: ROSE, width: 1.75 }, flipV: cy < py,
+            line: { color: BLUE, width: 1.75 }, flipV: cy < py,
           });
         }
-        slide.addShape(pptx.ShapeType.ellipse, { x: cx - 0.045, y: cy - 0.045, w: 0.09, h: 0.09, fill: { color: ROSE }, line: { type: "none" } });
+        slide.addShape(pptx.ShapeType.ellipse, { x: cx - 0.045, y: cy - 0.045, w: 0.09, h: 0.09, fill: { color: BLUE }, line: { type: "none" } });
       });
     }
   }

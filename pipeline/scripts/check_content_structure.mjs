@@ -126,6 +126,22 @@ function checkDuplicateKpiLabels(slide, at, errors, warnings) {
   });
 }
 
+// A ▲/▼ prefix on a KPI delta reads as self-contradictory in Japanese financial/management
+// materials (▲ conventionally means NEGATIVE regardless of the sign that follows it — a
+// slide authored "▲ +12%" mistake caught during RP-KPI-EXEC-DASHBOARD-01's own visual
+// review), and an auto-picked ↑/↓ is worse: it silently asserts a direction is "good," which
+// is backwards for a KPI like NWC回転日数 where a DECREASE is the improvement. The sign
+// alone should carry the meaning.
+const DIRECTION_GLYPH_PATTERN = /[▲▼△▽↑↓]/;
+function checkKpiDeltaDirectionGlyphs(slide, at, errors, warnings) {
+  if (!Array.isArray(slide.kpis)) return;
+  slide.kpis.forEach((k, i) => {
+    if (k.delta && DIRECTION_GLYPH_PATTERN.test(k.delta)) {
+      errors.push({ slide: at, type: "kpi_delta_direction_glyph", element: `kpis[${i}].delta`, detail: `"${k.delta}" — use the +/- sign alone, not a ▲/▼/↑/↓ prefix (direction glyphs either contradict the sign or wrongly imply which direction is "good")` });
+    }
+  });
+}
+
 export function checkContentStructure(spec) {
   const errors = [];
   const warnings = [];
@@ -135,6 +151,7 @@ export function checkContentStructure(spec) {
     checkRequiredContent(slide, at, errors, warnings);
     checkEmptyDataObjects(slide, at, errors, warnings);
     checkDuplicateKpiLabels(slide, at, errors, warnings);
+    checkKpiDeltaDirectionGlyphs(slide, at, errors, warnings);
   });
   return { passed: errors.length === 0, errors, warnings };
 }

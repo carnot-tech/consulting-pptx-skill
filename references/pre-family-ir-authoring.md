@@ -90,8 +90,13 @@ trend chart + insights panel), not just its semantic content.
   - `"title"` (the label) + `"value"` (the number, e.g. "128") — both required.
   - `"chartCaption"` (unit, e.g. "億円" — kept separate from `value` so it renders as a
     smaller suffix, never concatenated into the number itself).
-  - `"secondary"` (the delta/YoY line), `"body"` (a short driver/context note shown at the
-    card's bottom, below a divider).
+  - `"secondary"` (the delta/YoY line — plain `"+12%（前年同期比）"` / `"-6日（前年同期比）"`,
+    never a `▲`/`▼` prefix: in Japanese financial/management materials `▲` conventionally
+    means a NEGATIVE number regardless of context, so `▲ +12%` is self-contradictory, and an
+    auto-picked ↑/↓ is worse — it silently asserts a direction is "good," which is backwards
+    for a KPI like NWC回転日数 where a DECREASE is the improvement. Let the sign alone carry
+    the meaning.), `"body"` (a short driver/context note shown at the card's bottom, below a
+    divider).
   - `"context"` (a one-line subtitle under the label, e.g. "トップラインの持続的な成長").
   - `"icon"` — one of `bar-chart` / `coins` / `pie` / `cycle` (a closed vocabulary; pick
     whichever concept fits the KPI — revenue-shaped -> bar-chart, profit/cash -> coins,

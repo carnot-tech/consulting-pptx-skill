@@ -863,8 +863,8 @@ function renderKpiTrendChart(chart) {
       return { x, y };
     });
     const polyline = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-    const dots = points.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--rose)" />`).join("");
-    lineOverlay = `<svg class="kt-line-overlay" viewBox="0 0 1000 300" preserveAspectRatio="none"><polyline points="${polyline}" fill="none" stroke="var(--rose)" stroke-width="2.5" />${dots}</svg>`;
+    const dots = points.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--blue)" />`).join("");
+    lineOverlay = `<svg class="kt-line-overlay" viewBox="0 0 1000 300" preserveAspectRatio="none"><polyline points="${polyline}" fill="none" stroke="var(--blue)" stroke-width="2.5" />${dots}</svg>`;
   }
   const legendItems = [
     ...chart.bars.map((b, i) => `<div class="kt-legend-item"><span class="kt-swatch ${i === 0 ? "bar1" : "bar2"}"></span>${esc(b.label)}</div>`),
