@@ -155,6 +155,8 @@ function isKpiCandidateGroup(groupId) {
   return groupId != null && !KPI_RESERVED_GROUP_IDS.has(groupId) && !groupId.startsWith("trendChart-");
 }
 
+const KPI_ICON_NAMES = new Set(["bar-chart", "coins", "pie", "cycle"]);
+
 export function preFamilyIrToKpiDashboard({ elements, relationships }) {
   const byGroup = elementsByGroupId(elements);
 
@@ -171,6 +173,19 @@ export function preFamilyIrToKpiDashboard({ elements, relationships }) {
       if (delta) kpi.delta = delta;
       const note = findRole(els, "body");
       if (note) kpi.note = note;
+      const context = findRole(els, "context");
+      if (context) kpi.context = context;
+      const icon = findRole(els, "icon");
+      if (icon) {
+        if (!KPI_ICON_NAMES.has(icon)) throw new Error(`kpi_dashboard adapter: group "${gid}" icon "${icon}" is not one of ${[...KPI_ICON_NAMES].join("/")}`);
+        kpi.icon = icon;
+      }
+      const sparkStr = findRole(els, "spark");
+      if (sparkStr) {
+        const spark = sparkStr.split(",").map((s) => Number(s.trim()));
+        if (spark.some((v) => !Number.isFinite(v))) throw new Error(`kpi_dashboard adapter: group "${gid}" spark "${sparkStr}" contains a non-numeric value`);
+        if (spark.length >= 2) kpi.spark = spark;
+      }
       return kpi;
     });
   if (kpis.length < 3 || kpis.length > 5) {
@@ -178,6 +193,9 @@ export function preFamilyIrToKpiDashboard({ elements, relationships }) {
   }
 
   const result = { kpis };
+
+  const keyMessage = elements.find((e) => e.semanticRole === "headline" && e.groupId == null)?.value;
+  if (keyMessage) result.keyMessage = keyMessage;
 
   const insightsEls = byGroup.get("insights");
   if (insightsEls) {
@@ -197,19 +215,53 @@ export function preFamilyIrToKpiDashboard({ elements, relationships }) {
     const pointGroupIds = contains.map((r) => r.to.id);
     const pointSeq = sequence.filter((r) => pointGroupIds.includes(r.from?.id) && pointGroupIds.includes(r.to?.id));
     const orderedPointIds = pointSeq.length ? topoSort(pointGroupIds, pointSeq) : pointGroupIds;
-    const series = orderedPointIds.map((pid) => {
+
+    const bar1Label = findRole(trendEls, "title");
+    const bar2Label = findRole(trendEls, "secondary");
+    const lineLabel = findRole(trendEls, "lineLabel");
+    if (!bar1Label) throw new Error('kpi_dashboard adapter: trendChart group has no bar1 label ("title" element)');
+
+    const periods = [];
+    const bar1Values = [];
+    const bar2Values = bar2Label ? [] : null;
+    const lineValues = lineLabel ? [] : null;
+    orderedPointIds.forEach((pid) => {
       const pEls = byGroup.get(pid) || [];
       const label = findRole(pEls, "title");
-      const valueStr = findRole(pEls, "value");
-      if (!label || valueStr == null) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" is missing a title or value element`);
-      const value = Number(valueStr);
-      if (!Number.isFinite(value)) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" value "${valueStr}" is not numeric`);
-      return { label, value };
+      const v1Str = findRole(pEls, "value");
+      if (!label || v1Str == null) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" is missing a title or value element`);
+      const v1 = Number(v1Str);
+      if (!Number.isFinite(v1)) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" value "${v1Str}" is not numeric`);
+      periods.push(label);
+      bar1Values.push(v1);
+      if (bar2Values) {
+        const v2Str = findRole(pEls, "value2");
+        if (v2Str == null) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" is missing "value2" (trendChart group declared a bar2 label)`);
+        const v2 = Number(v2Str);
+        if (!Number.isFinite(v2)) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" value2 "${v2Str}" is not numeric`);
+        bar2Values.push(v2);
+      }
+      if (lineValues) {
+        const lvStr = findRole(pEls, "lineValue");
+        if (lvStr == null) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" is missing "lineValue" (trendChart group declared a line label)`);
+        const lv = Number(lvStr);
+        if (!Number.isFinite(lv)) throw new Error(`kpi_dashboard adapter: trendChart point "${pid}" lineValue "${lvStr}" is not numeric`);
+        lineValues.push(lv);
+      }
     });
-    if (series.length) {
-      const trendChart = { series };
+
+    if (periods.length) {
+      const bars = [{ label: bar1Label, values: bar1Values }];
+      if (bar2Values) bars.push({ label: bar2Label, values: bar2Values });
+      const trendChart = { periods, bars };
       const unit = findRole(trendEls, "chartCaption");
       if (unit) trendChart.unit = unit;
+      if (lineValues) {
+        const line = { label: lineLabel, values: lineValues };
+        const lineUnit = findRole(trendEls, "lineUnit");
+        if (lineUnit) line.unit = lineUnit;
+        trendChart.line = line;
+      }
       result.trendChart = trendChart;
     }
   }

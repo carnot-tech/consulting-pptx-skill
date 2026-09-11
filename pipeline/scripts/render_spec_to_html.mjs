@@ -793,24 +793,85 @@ function kpiRows(kpis) {
   return [kpis.slice(0, 3), kpis.slice(3)];
 }
 
+// 4 fixed, monochrome (stroke=currentColor) line icons — deliberately not a general icon
+// library: RP-KPI-EXEC-DASHBOARD-01's reference image uses exactly these 4 concepts (revenue/
+// bar-chart, EBITDA/coins, margin/pie, turnover/cycle), and staying to a small closed set
+// keeps every icon this renderer can produce house-style-reviewed rather than open-ended.
+const KPI_ICONS = {
+  "bar-chart": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="16" y="3" width="4" height="17"/></svg>',
+  coins: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>',
+  pie: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 12 L12 3 A9 9 0 0 1 19.36 16.5 Z"/></svg>',
+  cycle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M17 3v4h-4M7 21v-4h4"/></svg>',
+};
+
 function kpiTileHtml(k) {
   const unit = k.unit ? `<span class="kpi-unit">${esc(k.unit)}</span>` : "";
-  return `<div class="kpi-tile"><div class="kpi-label">${esc(k.label)}</div><div class="kpi-value">${esc(k.value)}${unit}</div>${k.delta ? `<div class="kpi-delta">${esc(k.delta)}</div>` : ""}${k.note ? `<div class="kpi-note">${esc(k.note)}</div>` : ""}</div>`;
+  const icon = k.icon && KPI_ICONS[k.icon] ? `<div class="kpi-icon">${KPI_ICONS[k.icon]}</div>` : "";
+  const head = `<div class="kpi-head">${icon}<div class="kpi-headtext"><div class="kpi-label">${esc(k.label)}</div>${k.context ? `<div class="kpi-context">${esc(k.context)}</div>` : ""}</div></div>`;
+  const spark = Array.isArray(k.spark) && k.spark.length >= 2 ? renderKpiSpark(k.spark) : "";
+  return `<div class="kpi-tile">${head}<div class="kpi-value">${esc(k.value)}${unit}</div>${k.delta ? `<div class="kpi-delta">${esc(k.delta)}</div>` : ""}${spark}${k.note ? `<div class="kpi-note">${esc(k.note)}</div>` : ""}</div>`;
 }
 
-// Simple positive-value bar row for the optional trend chart — unlike chart_insight, KPI
-// history (revenue, EBITDA, etc.) is not expected to go negative, so this deliberately
-// skips chart_insight's zero-baseline logic rather than importing complexity this shape
-// doesn't need.
-function renderKpiTrendChart(chart) {
-  const max = Math.max(...chart.series.map((d) => d.value), 1);
-  const bars = chart.series
-    .map(
-      (d) =>
-        `<div class="kt-bar-wrap"><div class="kt-value">${esc(d.value)}</div><div class="kt-bar" style="height: ${Math.round((d.value / max) * 100)}%;"></div><div class="kt-label">${esc(d.label)}</div></div>`,
-    )
+function renderKpiSpark(values) {
+  const max = Math.max(...values, 1);
+  const bars = values
+    .map((v, i) => `<div class="kpi-spark-bar${i === values.length - 1 ? " last" : ""}" style="height: ${Math.max(Math.round((v / max) * 100), 4)}%;"></div>`)
     .join("");
-  return `<div class="kpi-trend"><div class="section-label">${esc(chart.unit || "")}</div><div class="kt-bars">${bars}</div></div>`;
+  return `<div class="kpi-spark">${bars}</div>`;
+}
+
+function renderKpiKeyMessage(text) {
+  return `<div class="kpi-keymessage">${esc(text)}</div>`;
+}
+
+// 1-2 bar series (grouped per period, left scale) + an optional line series (its OWN scale,
+// drawn as an SVG overlay so it can read on a visually distinct right axis without needing to
+// share the bars' scale — unlike chart_insight, this is deliberately 2 independent scales,
+// since a margin % and a revenue ¥ series are never comparable on one axis).
+function renderKpiTrendChart(chart) {
+  const n = chart.periods.length;
+  const barMax = Math.max(...chart.bars.flatMap((b) => b.values), 1);
+  const cols = chart.periods
+    .map((_, i) => {
+      const bars = chart.bars
+        .map((b, bi) => {
+          const v = b.values[i] ?? 0;
+          const cls = bi === 0 ? "bar1" : "bar2";
+          return `<div class="kt-bar-wrap"><div class="kt-value">${esc(v)}</div><div class="kt-bar ${cls}" style="height: ${Math.round((v / barMax) * 100)}%;"></div></div>`;
+        })
+        .join("");
+      return `<div class="kt-col">${bars}</div>`;
+    })
+    .join("");
+  let lineOverlay = "";
+  if (chart.line && chart.line.values.length === n) {
+    // Padded (not zero-anchored) range: a margin-% line moving 27->32 is meant to read as a
+    // distinct trend of its own, not get flattened against a 0 baseline the way the bars
+    // (a real quantity) deliberately are — this is a rate series with its own right axis, so
+    // it earns the same "use the full plot height" treatment a real chart-of-just-that-line
+    // would get.
+    const lineMax = Math.max(...chart.line.values);
+    const lineMin = Math.min(...chart.line.values);
+    const pad = (lineMax - lineMin) * 0.25 || 1;
+    const paddedMax = lineMax + pad;
+    const paddedMin = lineMin - pad;
+    const range = paddedMax - paddedMin;
+    const colWPx = 1000 / n;
+    const points = chart.line.values.map((v, i) => {
+      const x = colWPx * i + colWPx / 2;
+      const y = 300 - ((v - paddedMin) / range) * 300;
+      return { x, y };
+    });
+    const polyline = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+    const dots = points.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--rose)" />`).join("");
+    lineOverlay = `<svg class="kt-line-overlay" viewBox="0 0 1000 300" preserveAspectRatio="none"><polyline points="${polyline}" fill="none" stroke="var(--rose)" stroke-width="2.5" />${dots}</svg>`;
+  }
+  const legendItems = [
+    ...chart.bars.map((b, i) => `<div class="kt-legend-item"><span class="kt-swatch ${i === 0 ? "bar1" : "bar2"}"></span>${esc(b.label)}</div>`),
+    ...(chart.line ? [`<div class="kt-legend-item"><span class="kt-swatch line"></span>${esc(chart.line.label)}</div>`] : []),
+  ].join("");
+  const periods = chart.periods.map((p) => `<div class="kt-label">${esc(p)}</div>`).join("");
+  return `<div class="kpi-trend"><div class="section-label">${esc(chart.unit || "")}</div><div class="kt-legend">${legendItems}</div><div class="kt-chart"><div class="kt-plot">${cols}${lineOverlay}</div><div class="kt-periods">${periods}</div></div></div>`;
 }
 
 function renderKpiInsights(insights) {
@@ -819,6 +880,7 @@ function renderKpiInsights(insights) {
 }
 
 function renderKpiDashboard(slide, n) {
+  const keyMessage = slide.keyMessage ? renderKpiKeyMessage(slide.keyMessage) : "";
   const rows = kpiRows(slide.kpis || [])
     .map((row) => `<div class="kpi-grid" style="grid-template-columns: repeat(${row.length}, 1fr);">${row.map(kpiTileHtml).join("")}</div>`)
     .join("");
@@ -826,7 +888,7 @@ function renderKpiDashboard(slide, n) {
   const support = hasSupport
     ? `<div class="kpi-support${slide.trendChart && slide.insights ? "" : " single"}">${slide.trendChart ? renderKpiTrendChart(slide.trendChart) : ""}${slide.insights ? renderKpiInsights(slide.insights) : ""}</div>`
     : "";
-  return shell(slide, n, `<div class="kpi-dashboard">${rows}${support}</div>`, { noTitleRule: true });
+  return shell(slide, n, `<div class="kpi-dashboard">${keyMessage}${rows}${support}</div>`, { noTitleRule: true });
 }
 
 function renderRecommendationPillars(slide, n) {

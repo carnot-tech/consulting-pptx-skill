@@ -1455,62 +1455,181 @@ function kpiRows(kpis) {
   return [kpis.slice(0, 3), kpis.slice(3)];
 }
 
+// mirrors render_spec_to_html.mjs's KPI_ICONS set — native OOXML preset shapes where a good
+// match exists (donut=coins, pie=pie, circularArrow=cycle), else 3 small bars drawn directly.
+function addKpiIcon(slide, name, x, y, size, color) {
+  slide.addShape(pptx.ShapeType.ellipse, { x, y, w: size, h: size, fill: { color: WHITE }, line: { color, width: 1.2 } });
+  const pad = size * 0.28;
+  const ix = x + pad;
+  const iy = y + pad;
+  const iw = size - pad * 2;
+  if (name === "coins") {
+    slide.addShape(pptx.ShapeType.donut, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { type: "none" }, angleRange: [0, 360] });
+  } else if (name === "pie") {
+    slide.addShape(pptx.ShapeType.pie, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { color, width: 0.75 }, angleRange: [270, 90] });
+  } else if (name === "cycle") {
+    slide.addShape(pptx.ShapeType.circularArrow, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { type: "none" } });
+  } else {
+    // bar-chart (default): 3 small bars, increasing height, bottom-aligned within the badge.
+    const bw = iw / 3 - 0.02;
+    [0.45, 0.7, 1].forEach((frac, i) => {
+      const bh = iw * frac;
+      slide.addShape(pptx.ShapeType.rect, { x: ix + i * (bw + 0.03), y: iy + iw - bh, w: bw, h: bh, fill: { color }, line: { type: "none" } });
+    });
+  }
+}
+
+function addKpiSpark(slide, values, x, y, w, h) {
+  const max = Math.max(...values, 1);
+  const n = values.length;
+  const gap = 0.02;
+  const barW = (w - gap * (n - 1)) / n;
+  values.forEach((v, i) => {
+    const bh = Math.max((v / max) * h, 0.02);
+    slide.addShape(pptx.ShapeType.rect, {
+      x: x + i * (barW + gap), y: y + h - bh, w: barW, h: bh,
+      fill: { color: i === n - 1 ? BLUE : HAIR }, line: { type: "none" },
+    });
+  });
+}
+
 function addKpiRow(slide, row, y, rowH) {
-  const gap = 0.4;
+  const gap = 0.35;
   const n = row.length || 1;
   const tileW = (W - M * 2 - gap * (n - 1)) / n;
+  const pad = 0.18;
   row.forEach((k, i) => {
     const x = M + i * (tileW + gap);
-    slide.addShape(pptx.ShapeType.line, { x, y, w: tileW, h: 0, line: { color: INK, width: 2 } });
-    addBodyText(slide, k.label, x, y + 0.16, tileW, 0.3, { fontSize: 12, bold: true, color: MUTED });
-    const valueText = k.unit ? [{ text: k.value, options: { fontSize: 34, bold: true, color: BLUE } }, { text: `  ${k.unit}`, options: { fontSize: 18, bold: true, color: MUTED } }] : k.value;
-    slide.addText(valueText, { x, y: y + 0.5, w: tileW, h: 0.7, fontFace: FONT, breakLine: false, fit: "shrink", margin: 0.03, valign: "top", align: "left", ...(k.unit ? {} : { fontSize: 34, bold: true, color: BLUE }) });
-    if (k.delta) addBodyText(slide, k.delta, x, y + 1.3, tileW, 0.3, { fontSize: 13, bold: true, color: GREEN });
-    if (k.note) addBodyText(slide, k.note, x, y + 1.65, tileW, rowH - 1.95, { fontSize: 11, color: MUTED });
+    const innerW = tileW - pad * 2;
+    slide.addShape(pptx.ShapeType.rect, { x, y, w: tileW, h: rowH - 0.15, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+    slide.addShape(pptx.ShapeType.line, { x, y, w: tileW, h: 0, line: { color: INK, width: 2.2 } });
+    let ty = y + pad;
+    const iconSize = 0.34;
+    if (k.icon) {
+      addKpiIcon(slide, k.icon, x + pad, ty, iconSize, BLUE);
+    }
+    const textX = x + pad + (k.icon ? iconSize + 0.12 : 0);
+    const textW = innerW - (k.icon ? iconSize + 0.12 : 0);
+    addBodyText(slide, k.label, textX, ty - 0.02, textW, 0.24, { fontSize: 12, bold: true });
+    if (k.context) addBodyText(slide, k.context, textX, ty + 0.2, textW, 0.32, { fontSize: 8.5, color: MUTED });
+    ty += iconSize + 0.12;
+    const valueText = k.unit ? [{ text: k.value, options: { fontSize: 28, bold: true, color: BLUE } }, { text: `  ${k.unit}`, options: { fontSize: 15, bold: true, color: MUTED } }] : k.value;
+    slide.addText(valueText, { x: x + pad, y: ty, w: innerW, h: 0.5, fontFace: FONT, breakLine: false, fit: "shrink", margin: 0.03, valign: "top", align: "left", ...(k.unit ? {} : { fontSize: 28, bold: true, color: BLUE }) });
+    ty += 0.46;
+    if (k.delta) {
+      addBodyText(slide, k.delta, x + pad, ty, innerW, 0.26, { fontSize: 12, bold: true, color: GREEN });
+      ty += 0.28;
+    }
+    if (Array.isArray(k.spark) && k.spark.length >= 2) {
+      addKpiSpark(slide, k.spark, x + pad, ty + 0.04, innerW, 0.2);
+      ty += 0.3;
+    }
+    if (k.note) {
+      slide.addShape(pptx.ShapeType.line, { x: x + pad, y: ty + 0.04, w: innerW, h: 0, line: { color: HAIR, width: 0.5 } });
+      addBodyText(slide, k.note, x + pad, ty + 0.1, innerW, rowH - (ty + 0.1 - y), { fontSize: 9.5, color: MUTED });
+    }
   });
 }
 
 function addKpiDashboard(item, pageNum) {
   const slide = addShell(item, pageNum, { titleRule: false });
+  let top = 2.02;
+  if (item.keyMessage) {
+    slide.addShape(pptx.ShapeType.rect, { x: M, y: top, w: W - M * 2, h: 0.44, fill: { color: NAVY }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.ellipse, { x: M + 0.2, y: top + 0.19, w: 0.07, h: 0.07, fill: { color: WHITE }, line: { type: "none" } });
+    addBodyText(slide, item.keyMessage, M + 0.4, top, W - M * 2 - 0.6, 0.44, { fontSize: 13, bold: true, color: WHITE, valign: "middle" });
+    top += 0.44 + 0.16;
+  }
   const rows = kpiRows(item.kpis || []);
-  const rowH = 2.05;
-  const gridTop = 2.3;
-  rows.forEach((row, i) => addKpiRow(slide, row, gridTop + i * rowH, rowH));
+  const rowH = 1.95;
+  rows.forEach((row, i) => addKpiRow(slide, row, top + i * rowH, rowH));
+  const gridBottom = top + rows.length * rowH;
 
   const hasSupport = item.trendChart || item.insights;
   if (!hasSupport) return;
-  const supportY = gridTop + rows.length * rowH + 0.15;
-  slide.addShape(pptx.ShapeType.line, { x: M, y: supportY, w: W - M * 2, h: 0, line: { color: HAIR, width: 0.75 } });
+  const supportY = gridBottom + 0.14;
   const bothPresent = item.trendChart && item.insights;
-  const chartW = bothPresent ? 6.6 : W - M * 2;
+  const chartW = bothPresent ? 7.1 : W - M * 2;
   if (item.trendChart) {
     const chart = item.trendChart;
-    addBodyText(slide, chart.unit || "", M, supportY + 0.18, chartW, 0.26, { fontSize: 11.5, bold: true, color: MUTED });
-    const max = Math.max(...chart.series.map((d) => d.value), 1);
-    const baseY = FOOTER_Y - 0.4;
-    const plotTop = supportY + 0.55;
-    const plotH = baseY - plotTop;
-    const gap = 0.18;
-    const n = chart.series.length || 1;
-    const barW = (chartW - gap * (n - 1)) / n;
-    chart.series.forEach((d, i) => {
-      const x = M + i * (barW + gap);
-      const h = Math.max((d.value / max) * plotH, 0.03);
-      slide.addShape(pptx.ShapeType.rect, { x, y: baseY - h, w: barW, h, fill: { color: BLUE } });
-      addBodyText(slide, String(d.value), x, baseY - h - 0.22, barW, 0.2, { fontSize: 9.5, bold: true, align: "center" });
-      addBodyText(slide, d.label, x, baseY + 0.06, barW, 0.3, { fontSize: 8.5, color: MUTED, align: "center" });
+    slide.addShape(pptx.ShapeType.rect, { x: M, y: supportY, w: chartW, h: FOOTER_Y - supportY, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+    const pad = 0.16;
+    addBodyText(slide, chart.unit || "", M + pad, supportY + pad, chartW - pad * 2, 0.22, { fontSize: 10.5, bold: true, color: MUTED });
+    // legend
+    let legendX = M + pad;
+    const legendY = supportY + pad + 0.26;
+    const legendEntries = [
+      ...chart.bars.map((b, i) => ({ label: b.label, color: i === 0 ? NAVY : CYAN, shape: "rect" })),
+      ...(chart.line ? [{ label: chart.line.label, color: ROSE, shape: "ellipse" }] : []),
+    ];
+    legendEntries.forEach((e) => {
+      if (e.shape === "rect") slide.addShape(pptx.ShapeType.rect, { x: legendX, y: legendY + 0.02, w: 0.14, h: 0.1, fill: { color: e.color }, line: { type: "none" } });
+      else slide.addShape(pptx.ShapeType.ellipse, { x: legendX, y: legendY, w: 0.1, h: 0.1, fill: { color: e.color }, line: { type: "none" } });
+      addBodyText(slide, e.label, legendX + 0.2, legendY - 0.03, 2.2, 0.2, { fontSize: 9, color: MUTED });
+      legendX += 2.35;
     });
-    slide.addShape(pptx.ShapeType.line, { x: M, y: baseY, w: chartW, h: 0, line: { color: HAIR, width: 0.75 } });
+
+    const baseY = FOOTER_Y - pad;
+    const plotTop = legendY + 0.32;
+    const plotH = baseY - plotTop;
+    const n = chart.periods.length || 1;
+    const gap = 0.14;
+    const colW = (chartW - pad * 2 - gap * (n - 1)) / n;
+    const barMax = Math.max(...chart.bars.flatMap((b) => b.values), 1);
+    const barSubW = chart.bars.length === 2 ? (colW - 0.04) / 2 : colW * 0.5;
+    const points = [];
+    chart.periods.forEach((label, i) => {
+      const colX = M + pad + i * (colW + gap);
+      chart.bars.forEach((b, bi) => {
+        const v = b.values[i] ?? 0;
+        const h = Math.max((v / barMax) * plotH, 0.02);
+        const bx = chart.bars.length === 2 ? colX + bi * (barSubW + 0.04) : colX + (colW - barSubW) / 2;
+        slide.addShape(pptx.ShapeType.rect, { x: bx, y: baseY - h, w: barSubW, h, fill: { color: bi === 0 ? NAVY : CYAN } });
+        addBodyText(slide, String(v), bx - 0.05, baseY - h - 0.2, barSubW + 0.1, 0.18, { fontSize: 8, bold: true, align: "center" });
+      });
+      addBodyText(slide, label, colX, baseY + 0.06, colW, 0.26, { fontSize: 8.5, color: MUTED, align: "center" });
+      points.push({ cx: colX + colW / 2 });
+    });
+    slide.addShape(pptx.ShapeType.line, { x: M + pad, y: baseY, w: chartW - pad * 2, h: 0, line: { color: INK, width: 1 } });
+
+    if (chart.line && chart.line.values.length === n) {
+      const lMax = Math.max(...chart.line.values);
+      const lMin = Math.min(...chart.line.values);
+      const lPad = (lMax - lMin) * 0.25 || 1;
+      const pMax = lMax + lPad;
+      const pMin = lMin - lPad;
+      const lRange = pMax - pMin;
+      const yFor = (v) => baseY - ((v - pMin) / lRange) * plotH;
+      chart.line.values.forEach((v, i) => {
+        const cx = points[i].cx;
+        const cy = yFor(v);
+        if (i > 0) {
+          const px = points[i - 1].cx;
+          const py = yFor(chart.line.values[i - 1]);
+          // periods always run left-to-right (cx > px), so the box's diagonal direction is
+          // decided purely by whether the value rose (cy < py, screen-y shrinks upward) or
+          // fell — pptxgenjs draws a `line` shape's natural diagonal top-left -> bottom-right
+          // across its bounding box; flipV mirrors it to bottom-left -> top-right instead.
+          slide.addShape(pptx.ShapeType.line, {
+            x: Math.min(px, cx), y: Math.min(py, cy), w: Math.abs(cx - px) || 0.001, h: Math.abs(cy - py) || 0.001,
+            line: { color: ROSE, width: 1.75 }, flipV: cy < py,
+          });
+        }
+        slide.addShape(pptx.ShapeType.ellipse, { x: cx - 0.045, y: cy - 0.045, w: 0.09, h: 0.09, fill: { color: ROSE }, line: { type: "none" } });
+      });
+    }
   }
   if (item.insights) {
-    const x = bothPresent ? M + chartW + 0.4 : M;
+    const x = bothPresent ? M + chartW + 0.35 : M;
     const w = bothPresent ? W - M - x : W - M * 2;
-    addBodyText(slide, item.insights.title || "示唆", x, supportY + 0.18, w, 0.26, { fontSize: 11.5, bold: true, color: MUTED });
-    let y = supportY + 0.55;
+    const pad = 0.18;
+    slide.addShape(pptx.ShapeType.rect, { x, y: supportY, w, h: FOOTER_Y - supportY, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+    addBodyText(slide, item.insights.title || "示唆", x + pad, supportY + pad, w - pad * 2, 0.26, { fontSize: 12, bold: true });
+    let y = supportY + pad + 0.36;
     item.insights.items.forEach((text, i) => {
-      slide.addShape(pptx.ShapeType.ellipse, { x, y: y + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
-      addBodyText(slide, String(i + 1), x, y + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
-      addBodyText(slide, text, x + 0.32, y, w - 0.32, 0.45, { fontSize: 11.5 });
+      slide.addShape(pptx.ShapeType.ellipse, { x: x + pad, y: y + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
+      addBodyText(slide, String(i + 1), x + pad, y + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+      addBodyText(slide, text, x + pad + 0.32, y, w - pad * 2 - 0.32, 0.45, { fontSize: 11.5 });
       y += 0.46;
     });
   }

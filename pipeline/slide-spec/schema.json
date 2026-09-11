@@ -300,7 +300,10 @@
           "$ref": "#/$defs/insights"
         },
         "trendChart": {
-          "$ref": "#/$defs/chart"
+          "$ref": "#/$defs/kpiTrendChart"
+        },
+        "keyMessage": {
+          "type": "string"
         },
         "multiples": {
           "type": "array",
@@ -1462,6 +1465,19 @@
         },
         "note": {
           "type": "string"
+        },
+        "icon": {
+          "enum": ["bar-chart", "coins", "pie", "cycle"]
+        },
+        "context": {
+          "type": "string"
+        },
+        "spark": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "number"
+          }
         }
       }
     },
@@ -1479,6 +1495,47 @@
           "minItems": 1,
           "items": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "kpiTrendChart": {
+      "type": "object",
+      "required": [
+        "periods",
+        "bars"
+      ],
+      "properties": {
+        "unit": {
+          "type": "string"
+        },
+        "periods": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        },
+        "bars": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["label", "values"],
+            "properties": {
+              "label": { "type": "string" },
+              "values": { "type": "array", "items": { "type": "number" } }
+            }
+          }
+        },
+        "line": {
+          "type": "object",
+          "required": ["label", "values"],
+          "properties": {
+            "label": { "type": "string" },
+            "unit": { "type": "string" },
+            "values": { "type": "array", "items": { "type": "number" } }
           }
         }
       }

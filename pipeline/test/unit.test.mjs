@@ -158,6 +158,10 @@ function kpiGroupElements(n, label, value, extra = {}) {
   ];
   if (extra.unit) els.push({ id: `k${n}-unit`, semanticRole: "chartCaption", groupId: `kpi-${n}`, value: extra.unit });
   if (extra.delta) els.push({ id: `k${n}-delta`, semanticRole: "secondary", groupId: `kpi-${n}`, value: extra.delta });
+  if (extra.icon) els.push({ id: `k${n}-icon`, semanticRole: "icon", groupId: `kpi-${n}`, value: extra.icon });
+  if (extra.context) els.push({ id: `k${n}-context`, semanticRole: "context", groupId: `kpi-${n}`, value: extra.context });
+  if (extra.spark) els.push({ id: `k${n}-spark`, semanticRole: "spark", groupId: `kpi-${n}`, value: extra.spark.join(",") });
+  if (extra.note) els.push({ id: `k${n}-note`, semanticRole: "body", groupId: `kpi-${n}`, value: extra.note });
   return els;
 }
 
@@ -193,30 +197,76 @@ test("reference_pattern_selector: a KPI group missing its value element doesn't 
   assert.equal(result.eligibility, "FAIL");
 });
 
-test("pre_family_ir_to_slide_spec: kpi_dashboard adapter builds kpis[] in authoring order and wires a sequence-ordered trend chart", () => {
+test("pre_family_ir_to_slide_spec: kpi_dashboard adapter builds kpis[] (incl. icon/context/spark) in authoring order, plus a keyMessage", () => {
   const ir = {
     elements: [
-      ...kpiGroupElements(1, "売上高", "128", { unit: "億円", delta: "+12%" }),
+      { id: "km", semanticRole: "headline", groupId: null, value: "収益性は改善基調である" },
+      ...kpiGroupElements(1, "売上高", "128", { unit: "億円", delta: "+12%", icon: "bar-chart", context: "トップライン", spark: [85, 92, 100] }),
       ...kpiGroupElements(2, "EBITDA", "18.4", { unit: "億円", delta: "+2.1億円" }),
       ...kpiGroupElements(3, "粗利率", "32.5", { unit: "%", delta: "+1.8pt" }),
-      { id: "trend-unit", semanticRole: "chartCaption", groupId: "trendChart", value: "億円" },
-      { id: "p2-t", semanticRole: "title", groupId: "trendChart-p2", value: "Q2" },
-      { id: "p2-v", semanticRole: "value", groupId: "trendChart-p2", value: "92" },
-      { id: "p1-t", semanticRole: "title", groupId: "trendChart-p1", value: "Q1" },
-      { id: "p1-v", semanticRole: "value", groupId: "trendChart-p1", value: "85" },
+    ],
+    relationships: [],
+  };
+  const result = preFamilyIrToKpiDashboard(ir);
+  assert.equal(result.keyMessage, "収益性は改善基調である");
+  assert.deepEqual(result.kpis.map((k) => k.label), ["売上高", "EBITDA", "粗利率"]);
+  assert.equal(result.kpis[0].icon, "bar-chart");
+  assert.equal(result.kpis[0].context, "トップライン");
+  assert.deepEqual(result.kpis[0].spark, [85, 92, 100]);
+  assert.equal(result.kpis[1].icon, undefined, "a KPI that authored no icon should not get a fabricated one");
+});
+
+test("pre_family_ir_to_slide_spec: kpi_dashboard adapter wires a sequence-ordered 2-bar + line trend chart", () => {
+  const ir = {
+    elements: [
+      ...kpiGroupElements(1, "売上高", "128"),
+      ...kpiGroupElements(2, "EBITDA", "18.4"),
+      ...kpiGroupElements(3, "粗利率", "32.5"),
+      { semanticRole: "chartCaption", groupId: "trendChart", value: "億円 ／ ％" },
+      { semanticRole: "title", groupId: "trendChart", value: "売上高（億円）" },
+      { semanticRole: "secondary", groupId: "trendChart", value: "EBITDA（億円）" },
+      { semanticRole: "lineLabel", groupId: "trendChart", value: "粗利率（%）" },
+      // authored out of order — `sequence` must be what determines order, same as roadmap.
+      { semanticRole: "title", groupId: "trendChart-p2", value: "Q2" },
+      { semanticRole: "value", groupId: "trendChart-p2", value: "92" },
+      { semanticRole: "value2", groupId: "trendChart-p2", value: "12" },
+      { semanticRole: "lineValue", groupId: "trendChart-p2", value: "28" },
+      { semanticRole: "title", groupId: "trendChart-p1", value: "Q1" },
+      { semanticRole: "value", groupId: "trendChart-p1", value: "85" },
+      { semanticRole: "value2", groupId: "trendChart-p1", value: "11" },
+      { semanticRole: "lineValue", groupId: "trendChart-p1", value: "27" },
     ],
     relationships: [
-      // contains authored out of order, sequence must still win (same discipline as roadmap).
       { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
       { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p1" }, attributes: {}, origin: "authored" },
       { type: "sequence", from: { kind: "group", id: "trendChart-p1" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
     ],
   };
   const result = preFamilyIrToKpiDashboard(ir);
-  assert.deepEqual(result.kpis.map((k) => k.label), ["売上高", "EBITDA", "粗利率"]);
-  assert.equal(result.kpis[0].value, "128");
-  assert.equal(result.kpis[0].unit, "億円");
-  assert.deepEqual(result.trendChart, { series: [{ label: "Q1", value: 85 }, { label: "Q2", value: 92 }], unit: "億円" });
+  assert.deepEqual(result.trendChart, {
+    unit: "億円 ／ ％",
+    periods: ["Q1", "Q2"],
+    bars: [{ label: "売上高（億円）", values: [85, 92] }, { label: "EBITDA（億円）", values: [11, 12] }],
+    line: { label: "粗利率（%）", values: [27, 28] },
+  });
+});
+
+test("pre_family_ir_to_slide_spec: kpi_dashboard adapter requires value2 on every point once trendChart declares a bar2 label", () => {
+  const ir = {
+    elements: [
+      ...kpiGroupElements(1, "売上高", "128"),
+      ...kpiGroupElements(2, "EBITDA", "18.4"),
+      ...kpiGroupElements(3, "粗利率", "32.5"),
+      { semanticRole: "title", groupId: "trendChart", value: "売上高" },
+      { semanticRole: "secondary", groupId: "trendChart", value: "EBITDA" }, // declares a bar2 label
+      { semanticRole: "title", groupId: "trendChart-p1", value: "Q1" },
+      { semanticRole: "value", groupId: "trendChart-p1", value: "85" }, // no value2 authored
+    ],
+    relationships: [
+      { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p1" }, attributes: {}, origin: "authored" },
+    ],
+  };
+  assert.throws(() => preFamilyIrToKpiDashboard(ir), /value2/);
 });
 
 test("pre_family_ir_to_slide_spec: kpi_dashboard adapter rejects a KPI count outside 3-5 (not the Selector's job to have caught it if called directly)", () => {
@@ -231,10 +281,22 @@ test("check_content_structure: flags 2 KPI tiles sharing the same label", () => 
   assert.ok(result.errors.some((e) => e.type === "duplicate_kpi_label"));
 });
 
-test("kpi_dashboard end to end: 3/4/5-KPI fixtures (with trend chart + insights) render with 0 QA findings and export to a clean PPTX", async () => {
+test("kpi_dashboard end to end: 3/4/5-KPI fixtures (incl. the full standard variant: keyMessage + icon/context/spark + 2-bar+line trend chart + insights) render with 0 QA findings and export to a clean PPTX", async () => {
+  const period = (n, label, v1, v2, lv) => ({
+    id: `p${n}`, group: `trendChart-p${n}`, els: [
+      { semanticRole: "title", groupId: `trendChart-p${n}`, value: label },
+      { semanticRole: "value", groupId: `trendChart-p${n}`, value: String(v1) },
+      { semanticRole: "value2", groupId: `trendChart-p${n}`, value: String(v2) },
+      { semanticRole: "lineValue", groupId: `trendChart-p${n}`, value: String(lv) },
+    ],
+  });
+  const periods = [
+    period(1, "FY2023 Q1", 85, 11, 27), period(2, "FY2023 Q2", 83, 12, 28),
+    period(3, "FY2023 Q3", 88, 13, 29), period(4, "FY2023 Q4", 95, 14, 30),
+  ];
   const fixtures = [
     {
-      // A: 3 KPI + insights, no trend chart
+      // A: 3 KPI + insights, no trend chart, no keyMessage/icons — the minimal end of the range.
       elements: [
         ...kpiGroupElements(1, "売上高", "128", { unit: "億円", delta: "+12%" }),
         ...kpiGroupElements(2, "EBITDA", "18.4", { unit: "億円", delta: "+2.1億円" }),
@@ -245,22 +307,26 @@ test("kpi_dashboard end to end: 3/4/5-KPI fixtures (with trend chart + insights)
       relationships: [],
     },
     {
-      // B: 4 KPI + trend chart, no insights
+      // B: the full "standard" variant matching RP-KPI-EXEC-DASHBOARD-01's reference image —
+      // keyMessage band, 4 KPI with icon/context/spark, 2-bar+line trend chart, insights.
       elements: [
-        ...kpiGroupElements(1, "新規顧客数", "312", { unit: "社", delta: "+8%" }),
-        ...kpiGroupElements(2, "解約率", "1.8", { unit: "%", delta: "-0.4pt" }),
-        ...kpiGroupElements(3, "NPS", "42", { unit: "pt", delta: "+5pt" }),
-        ...kpiGroupElements(4, "営業利益率", "14.2", { unit: "%", delta: "+1.1pt" }),
-        { id: "trend-unit", semanticRole: "chartCaption", groupId: "trendChart", value: "億円" },
-        { id: "p1-t", semanticRole: "title", groupId: "trendChart-p1", value: "Q1" },
-        { id: "p1-v", semanticRole: "value", groupId: "trendChart-p1", value: "85" },
-        { id: "p2-t", semanticRole: "title", groupId: "trendChart-p2", value: "Q2" },
-        { id: "p2-v", semanticRole: "value", groupId: "trendChart-p2", value: "115" },
+        { semanticRole: "headline", groupId: null, value: "収益性は改善基調、次の論点は運転資本の圧縮" },
+        ...kpiGroupElements(1, "売上高", "128", { icon: "bar-chart", context: "トップラインの持続的な成長", unit: "億円", delta: "+12%", spark: [85, 88, 95, 99], note: "新規顧客獲得と既存単価上昇" }),
+        ...kpiGroupElements(2, "EBITDA", "18.4", { icon: "coins", context: "収益力の強化とキャッシュ創出", unit: "億円", delta: "+2.1億円", spark: [11, 12, 13, 14] }),
+        ...kpiGroupElements(3, "粗利率", "32.5", { icon: "pie", context: "高付加価値化による収益性向上", unit: "%", delta: "+1.8pt", spark: [27, 28, 29, 30] }),
+        ...kpiGroupElements(4, "NWC回転日数", "41", { icon: "cycle", context: "運転資本の効率化", unit: "日", delta: "-6日" }),
+        { semanticRole: "chartCaption", groupId: "trendChart", value: "億円 ／ ％" },
+        { semanticRole: "title", groupId: "trendChart", value: "売上高（億円）" },
+        { semanticRole: "secondary", groupId: "trendChart", value: "EBITDA（億円）" },
+        { semanticRole: "lineLabel", groupId: "trendChart", value: "粗利率（%・右軸）" },
+        ...periods.flatMap((p) => p.els),
+        { semanticRole: "title", groupId: "insights", value: "示唆" },
+        { semanticRole: "bullets", groupId: "insights", value: "売上成長は継続している" },
+        { semanticRole: "bullets", groupId: "insights", value: "収益性改善は調達統合が寄与" },
       ],
       relationships: [
-        { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p1" }, attributes: {}, origin: "authored" },
-        { type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
-        { type: "sequence", from: { kind: "group", id: "trendChart-p1" }, to: { kind: "group", id: "trendChart-p2" }, attributes: {}, origin: "authored" },
+        ...periods.map((p) => ({ type: "contains", from: { kind: "group", id: "trendChart" }, to: { kind: "group", id: p.group }, attributes: {}, origin: "authored" })),
+        ...periods.slice(1).map((p, i) => ({ type: "sequence", from: { kind: "group", id: periods[i].group }, to: { kind: "group", id: p.group }, attributes: {}, origin: "authored" })),
       ],
     },
     {

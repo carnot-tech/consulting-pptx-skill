@@ -77,27 +77,58 @@ eligibility; the adapters below don't read its contents.
 
 Unlike matrix/hierarchy/roadmap (ported from an external, holdout-validated project), this
 pattern is independently defined for this project — see
-`pipeline/reference-patterns/golden-fixtures-v0.2/RP-KPI-EXEC-DASHBOARD-01.jpg`.
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-KPI-EXEC-DASHBOARD-01.jpg`, and matches
+its 2-row dashboard composition (key message band / icon+value+delta+sparkline KPI cards /
+trend chart + insights panel), not just its semantic content.
 
-- 3 to 5 KPI groups, each its own group (any groupId except the 2 reserved ones below).
+- **Key message band** (optional): a top-level element with `semanticRole="headline"`,
+  `groupId=null` — a single-sentence executive summary shown as a highlighted bar above the
+  KPI row, distinct from the slide's own `title`.
+- **3 to 5 KPI groups**, each its own group (any groupId except the 2 reserved ones below).
   KPI tile order = the order groups first appear in `elements[]` — no relationship needed
-  between them, they're plain siblings.
-- Per-KPI element roles: `"title"` (the label) + `"value"` (the number, e.g. "128") — both
-  required. Optional: `"chartCaption"` (unit, e.g. "億円" — kept separate from `value` so it
-  renders as a smaller suffix, never concatenated into the number itself), `"secondary"`
-  (the delta/YoY line), `"body"` (a short context note).
-- Optional closing insights band: a group literally named `"insights"` containing
+  between them, they're plain siblings. Per-KPI element roles:
+  - `"title"` (the label) + `"value"` (the number, e.g. "128") — both required.
+  - `"chartCaption"` (unit, e.g. "億円" — kept separate from `value` so it renders as a
+    smaller suffix, never concatenated into the number itself).
+  - `"secondary"` (the delta/YoY line), `"body"` (a short driver/context note shown at the
+    card's bottom, below a divider).
+  - `"context"` (a one-line subtitle under the label, e.g. "トップラインの持続的な成長").
+  - `"icon"` — one of `bar-chart` / `coins` / `pie` / `cycle` (a closed vocabulary; pick
+    whichever concept fits the KPI — revenue-shaped -> bar-chart, profit/cash -> coins,
+    ratio/margin -> pie, turnover/cycle-time -> cycle).
+  - `"spark"` — a short per-KPI history as ONE element whose `value` is a comma-separated
+    number list (e.g. `"85,83,88,95,99,104,110,116"`), rendered as a small sparkline under
+    the delta. Needs >=2 numbers to render; omit entirely rather than authoring a 1-point
+    "history".
+- **Optional closing insights band**: a group literally named `"insights"` containing
   `"bullets"`-role elements (one per insight line) and an optional `"title"` element for the
-  panel heading (defaults to "示唆" if absent).
-- Optional trend chart: a group literally named `"trendChart"` containing one `"chartCaption"`
-  element (the chart's unit). Each data point is its OWN sub-group named `"trendChart-p1"`,
-  `"trendChart-p2"`, etc. (not elements directly in the `trendChart` group), each with a
-  `"title"` (period label) + `"value"` (number) element, `contains`-linked from `trendChart`,
-  ordered via `sequence` relationships between the point groups — same idiom as roadmap's
-  phase/milestone structure, reused deliberately.
+  panel heading (defaults to "示唆" if absent). Rendered as its own bordered panel, not a bare
+  list.
+- **Optional trend chart**: a group literally named `"trendChart"`, combining up to 2 bar
+  series (left/shared scale) and 1 optional line series (its OWN scale — never share an axis
+  between a real quantity and a rate/percentage). On the `trendChart` group itself:
+  - `"chartCaption"` — the chart's overall unit label (e.g. "億円 ／ ％").
+  - `"title"` — bar-series-1's label (required if trendChart is authored at all, e.g.
+    "売上高（億円）").
+  - `"secondary"` — bar-series-2's label (optional; omit entirely for a single-bar-series
+    chart).
+  - `"lineLabel"` / `"lineUnit"` — the line series' own label/unit (optional; omit both to
+    skip the line).
+  Each data point is its OWN sub-group named `"trendChart-p1"`, `"trendChart-p2"`, etc.
+  (never elements directly in the `trendChart` group), `contains`-linked from `trendChart`,
+  ordered via `sequence` relationships between the point groups (same idiom as roadmap's
+  phase/milestone structure, reused deliberately). Each point group carries:
+  - `"title"` — the period label (e.g. "FY2023 Q1"), required.
+  - `"value"` — bar-series-1's value at this point, required.
+  - `"value2"` — bar-series-2's value at this point, required IFF `trendChart.secondary` was
+    authored (must appear on every point once the group commits to 2 bars).
+  - `"lineValue"` — the line series' value at this point, required IFF `trendChart.lineLabel`
+    was authored.
 - No emphasis mechanism for this family — don't author `emphasis: true` on KPI elements.
 - Eligibility is purely a count check (`KPI_COUNT_IN_RANGE`, 3-5 groups with both title+value
-  present) — no relationship type is required at all, unlike every other family so far.
+  present) — no relationship type is required at all, unlike every other family so far. None
+  of keyMessage/icon/context/spark/insights/trendChart affect eligibility; they're pure
+  richness on top of an already-eligible KPI set.
 
 **Do not use when**: only 1-2 KPIs are authored (defer to a hero-KPI-shaped template instead —
 this pattern will FAIL, not force itself), 6+ KPIs (a dense dashboard/table is more honest),

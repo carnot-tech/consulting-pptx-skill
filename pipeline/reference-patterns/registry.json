@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "4d07a8a7aa2973b258ac7d58d8267e026ce73432a994c1d6fdc77684dc6e08c6"
+    "sha256": "1d27568612770d13f64041f9af2b78a7a4eaf0a6bf9cd0ee8e1eb1235704ebea"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
