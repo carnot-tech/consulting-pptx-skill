@@ -82,15 +82,23 @@ export function hb(q) {
   return `<span class="hb q${level}"><i></i></span>`;
 }
 
-// 表セルの太字判定／描画。`**text**`（先頭末尾のアスタリスク2つ）を太字マーカーとして扱う規約。
-function isBoldMarked(v) {
-  const s = String(v ?? "");
+// 表セルの太字判定／描画。セルは平文字列、`**text**`（太字マーカー）、または
+// `_helpers.mjs#table()`（PPTX側）と同じ {text?, bullets?:[], bold?} 形のオブジェクトを取る
+// （archetypes/axis_table.mjs の doc コメント「セルは文字列か {text|bullets:[], bold}」が正）。
+// object cellをプレーン文字列としてString()に渡すと "[object Object]" が出力される事故があった
+// （axis_table の自前example自体がbullets付きセルを使っていて、27型visual検証で発見）。
+function isBoldMarked(s) {
   return s.length > 4 && s.startsWith("**") && s.endsWith("**");
 }
 export function isBold(v) {
-  return isBoldMarked(v);
+  if (v && typeof v === "object") return !!v.bold;
+  return isBoldMarked(String(v ?? ""));
 }
 export function cell(e, v) {
+  if (v && typeof v === "object") {
+    if (Array.isArray(v.bullets) && v.bullets.length) return ul(e, v.bullets);
+    return e(String(v.text ?? ""));
+  }
   const s = String(v ?? "");
   return isBoldMarked(s) ? e(s.slice(2, -2)) : e(s);
 }
