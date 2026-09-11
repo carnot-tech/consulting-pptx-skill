@@ -2,8 +2,14 @@
   "deckTitle": "株式会社ターゲット社 買収提案",
   "skin": "warm",
   "sources": [
-    { "id": "src_dd_2026", "label": "デューデリジェンス報告書（2026年7月）" },
-    { "id": "src_synergy_model_2026", "label": "シナジー試算モデル（財務アドバイザー、2026年8月）" }
+    {
+      "id": "src_dd_2026",
+      "label": "デューデリジェンス報告書（2026年7月）"
+    },
+    {
+      "id": "src_synergy_model_2026",
+      "label": "シナジー試算モデル（財務アドバイザー、2026年8月）"
+    }
   ],
   "slides": [
     {
@@ -11,78 +17,166 @@
       "title": "株式会社ターゲット社 買収提案",
       "kicker": "投資委員会",
       "subtitle": "買収実行の承認依頼",
-      "ghostSlideNumber": 1
+      "ghostSlideNumber": 1,
+      "note": "投資委員会 提出資料"
     },
     {
       "template": "executive_summary",
       "title": "ターゲット社の買収は3年以内の投資回収が見込め、承認を提案する",
       "ghostSlideNumber": 2,
       "sections": [
-        { "title": "財務", "copy": "買収費用は2.8年で回収可能な試算" },
-        { "title": "シナジー", "copy": "技術・販路の両面で統合効果が見込める" },
-        { "title": "リスク", "copy": "人材流出・統合コストは対応策を用意済み" }
+        {
+          "title": "財務",
+          "copy": "買収費用は2.4年で回収可能な試算"
+        },
+        {
+          "title": "シナジー",
+          "copy": "技術・販路の両面で統合効果が見込める"
+        },
+        {
+          "title": "リスク",
+          "copy": "人材流出・統合コストは対応策を用意済み"
+        }
       ],
       "source": "出典：シナジー試算モデル（財務アドバイザー、2026年8月）",
-      "claims": [{ "text": "2.8年で回収可能", "sourceId": "src_synergy_model_2026" }]
+      "claims": [
+        {
+          "text": "2.4年で回収可能",
+          "sourceId": "src_synergy_model_2026"
+        }
+      ]
     },
     {
       "template": "comparison_table",
-      "title": "ターゲット社は候補3社の中で技術力・収益性ともに最も優れる",
+      "title": "ターゲット社は候補2社の中で技術力・収益性ともに最も優れる",
       "ghostSlideNumber": 3,
-      "headers": { "criterion": "評価軸", "company": "ターゲット社", "competitor": "候補B社", "implication": "読み取り" },
+      "headers": {
+        "criterion": "評価軸",
+        "company": "ターゲット社",
+        "competitor": "候補B社",
+        "implication": "読み取り"
+      },
       "table": [
-        { "criterion": "技術力", "company": "◎ 独自特許12件", "competitor": "○ 特許3件", "implication": "技術優位性はターゲット社が明確に上回る" },
-        { "criterion": "収益性（営業利益率）", "company": "◎ 14%", "competitor": "△ 6%", "implication": "収益性でも候補Bを上回る" },
-        { "criterion": "買収価格（EV/EBITDA）", "company": "△ 9.2倍", "competitor": "◎ 6.5倍", "implication": "価格は候補Bの方が割安" }
+        {
+          "criterion": "技術力",
+          "company": "◎ 独自特許12件",
+          "competitor": "○ 特許3件",
+          "implication": "技術優位性はターゲット社が明確に上回る"
+        },
+        {
+          "criterion": "収益性（営業利益率）",
+          "company": "◎ 14%",
+          "competitor": "△ 6%",
+          "implication": "収益性でも候補Bを上回る"
+        },
+        {
+          "criterion": "買収価格（EV/EBITDA）",
+          "company": "△ 9.2倍",
+          "competitor": "◎ 6.5倍",
+          "implication": "価格は候補Bの方が割安"
+        }
       ],
       "source": "出典：デューデリジェンス報告書（2026年7月）",
       "claims": [
-        { "text": "独自特許12件", "sourceId": "src_dd_2026" },
-        { "text": "営業利益率14%", "sourceId": "src_dd_2026" }
-      ]
+        {
+          "text": "独自特許12件",
+          "sourceId": "src_dd_2026"
+        },
+        {
+          "text": "営業利益率14%",
+          "sourceId": "src_dd_2026"
+        }
+      ],
+      "note": "EV/EBITDA＝企業価値をEBITDAで除した倍率"
     },
     {
       "template": "risk_table",
       "title": "主要リスクは人材流出と統合コストであり、対応策を用意している",
       "ghostSlideNumber": 4,
-      "headers": { "risk": "リスク", "signal": "見るべき兆候", "mitigation": "打ち手", "owner": "担当" },
+      "headers": {
+        "risk": "リスク",
+        "signal": "見るべき兆候",
+        "mitigation": "打ち手",
+        "owner": "担当"
+      },
       "table": [
-        { "risk": "主要人材の流出", "signal": "経営陣・技術責任者の離職意向", "mitigation": "リテンションボーナス・早期の処遇提示", "owner": "人事統合PMO" },
-        { "risk": "統合コストの超過", "signal": "システム統合の遅延", "mitigation": "統合範囲を段階分割し、初年度はコア業務のみ統合", "owner": "統合準備チーム" }
+        {
+          "risk": "主要人材の流出",
+          "signal": "経営陣・技術責任者の離職意向",
+          "mitigation": "リテンションボーナス・早期の処遇提示",
+          "owner": "人事統合PMO"
+        },
+        {
+          "risk": "統合コストの超過",
+          "signal": "システム統合の遅延",
+          "mitigation": "統合範囲を段階分割し、初年度はコア業務のみ統合",
+          "owner": "統合準備チーム"
+        }
       ],
-      "source": "出典：デューデリジェンス報告書（2026年7月）"
+      "source": "出典：デューデリジェンス報告書（2026年7月）",
+      "note": "PMO＝Project Management Office"
     },
     {
       "template": "chart_insight",
-      "title": "買収費用は統合後シナジーにより2.8年で回収できる",
+      "title": "買収費用は統合後シナジーにより2.4年で回収できる",
       "ghostSlideNumber": 5,
       "chart": {
         "unit": "累積キャッシュフロー、億円（買収費用対比）",
         "series": [
-          { "label": "1年目", "value": -18 },
-          { "label": "2年目", "value": -6 },
-          { "label": "3年目", "value": 9 },
-          { "label": "4年目", "value": 24 }
+          {
+            "label": "1年目",
+            "value": -18
+          },
+          {
+            "label": "2年目",
+            "value": -6
+          },
+          {
+            "label": "3年目",
+            "value": 9
+          },
+          {
+            "label": "4年目",
+            "value": 24
+          }
         ]
       },
-      "sections": [{ "title": "So What", "copy": "3年目にプラス転換し、投資回収期間は2.8年" }],
+      "sections": [
+        {
+          "title": "So What",
+          "copy": "3年目にプラス転換し、投資回収期間は2.4年"
+        }
+      ],
       "source": "出典：シナジー試算モデル（財務アドバイザー、2026年8月）",
-      "claims": [{ "text": "3年目に累積CFがプラス転換", "sourceId": "src_synergy_model_2026" }]
+      "claims": [
+        {
+          "text": "3年目に累積CFがプラス転換",
+          "sourceId": "src_synergy_model_2026"
+        }
+      ]
     },
     {
       "template": "decision_page",
       "title": "本買収の実行、および統合準備チームの組成を承認いただきたい",
       "ghostSlideNumber": 6,
-      "headers": { "recommended": "RECOMMENDED DECISION" },
+      "headers": {
+        "recommended": "RECOMMENDED DECISION"
+      },
       "ask": "ターゲット社の買収実行（企業価値XX億円）の承認",
-      "decisions": ["買収契約の締結を承認する", "統合準備チームを来月中に組成する"],
+      "decisions": [
+        "買収契約の締結を承認する",
+        "統合準備チームを来月中に組成する"
+      ],
       "source": "出典：デューデリジェンス報告書（2026年7月）／シナジー試算モデル（財務アドバイザー、2026年8月）"
     },
     {
       "template": "back_cover",
       "title": "本資料に関するお問い合わせ先（裏表紙）",
       "ghostSlideNumber": 7,
-      "parts": { "company": "株式会社サンプル", "contact": "経営企画部 M&A担当 ma@example.com" }
+      "parts": {
+        "company": "株式会社サンプル",
+        "contact": "経営企画部 M&A担当 ma@example.com"
+      }
     }
   ]
 }

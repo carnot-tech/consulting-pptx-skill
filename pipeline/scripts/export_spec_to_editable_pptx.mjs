@@ -402,19 +402,42 @@ function addChartInsight(item, pageNum) {
   const slide = addShell(item, pageNum);
   const chart = item.chart || { series: [] };
   addBodyText(slide, chart.unit || "", M, 2.1, 6.7, 0.3, { fontSize: 15, bold: true });
-  const max = Math.max(...chart.series.map((d) => d.value), 1);
   const baseY = 6.1;
   const x0 = M + 0.9;
   const gap = 1.15;
+  const plotH = 2.25;
+  // Zero-baseline domain (mirrors render_spec_to_html.mjs's renderChartInsight — both
+  // renderers must agree, per the "single source of truth" discipline): a plain
+  // h=(value/max)*plotH goes NEGATIVE for any value below zero, and pptxgenjs silently
+  // drops (or mis-renders) a shape with a negative height — the chart just loses those
+  // data points. Anchoring every bar to a shared zero line, growing up for positive values
+  // and down for negative ones, fixes it.
+  const values = chart.series.map((d) => d.value);
+  const domainMin = Math.min(0, ...values);
+  const domainMax = Math.max(0, ...values);
+  const rawRange = domainMax - domainMin || 1;
+  const PADDING = 0.18; // fraction of the RANGE, not of each extreme — see HTML renderer's note
+  const paddedMin = domainMin < 0 ? domainMin - rawRange * PADDING : domainMin;
+  const paddedMax = domainMax > 0 ? domainMax + rawRange * PADDING : domainMax;
+  const range = paddedMax - paddedMin || 1;
+  const yFor = (v) => baseY - ((v - paddedMin) / range) * plotH;
   chart.series.forEach((d, i) => {
-    const h = (d.value / max) * 2.25;
     const x = x0 + i * gap;
     const color = i === chart.series.length - 1 ? BLUE : i === chart.series.length - 2 ? CYAN : NAVY;
-    slide.addShape(pptx.ShapeType.rect, { x, y: baseY - h, w: 0.62, h, fill: { color } });
-    addBodyText(slide, String(d.value), x - 0.05, baseY - h - 0.25, 0.72, 0.2, { fontSize: 12, bold: true });
+    const top = Math.max(d.value, 0);
+    const bottom = Math.min(d.value, 0);
+    const yTop = yFor(top);
+    const yBottom = yFor(bottom);
+    const h = yBottom - yTop;
+    slide.addShape(pptx.ShapeType.rect, { x, y: yTop, w: 0.62, h, fill: { color } });
+    const labelY = d.value >= 0 ? yTop - 0.25 : yBottom + 0.05;
+    addBodyText(slide, String(d.value), x - 0.05, labelY, 0.72, 0.2, { fontSize: 12, bold: true });
     addBodyText(slide, d.label, x - 0.25, baseY + 0.1, 1.12, 0.28, { fontSize: 9.5 });
   });
   slide.addShape(pptx.ShapeType.line, { x: M, y: baseY, w: 6.3, h: 0, line: { color: INK, width: 1 } });
+  if (domainMin < 0) {
+    slide.addShape(pptx.ShapeType.line, { x: M, y: yFor(0), w: 6.3, h: 0, line: { color: INK, width: 1.5 } });
+  }
   addInsightPanel(slide, item.sections?.[0], 7.5, 2.25, 4.8, 1.55);
 }
 

@@ -23,6 +23,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+import { parseStorylineReview, parseFreshEyeReview, parseVisualQa } from "./review_output_parser.mjs";
+
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("..", import.meta.url));
 
@@ -36,6 +38,51 @@ const MODE_STAGES = {
 };
 
 const LLM_STAGES = new Set(["storyline_review_llm", "visual_qa_llm", "fresh_eye_review_llm", "targeted_revision_llm"]);
+
+async function readJsonIfExists(p) {
+  try {
+    return JSON.parse(await fs.readFile(p, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+// Was this LLM stage's output already written (from a previous invocation)? Checked BEFORE
+// treating a stage as "needs LLM" — without this, re-invoking the orchestrator after Claude
+// has already done the review would just stop at the exact same stage again forever, since
+// nothing else observes that the hand-off was fulfilled. Each check both confirms the
+// expected file exists AND validates it against the same contract review_output_parser.mjs
+// enforces, so a malformed review result is treated as "not done yet", not silently accepted.
+async function checkLlmStageComplete(stage, ctx) {
+  if (stage === "storyline_review_llm") {
+    const json = await readJsonIfExists(path.join(ctx.outDir, "storyline-review.json"));
+    if (!json) return null;
+    const result = parseStorylineReview(json);
+    return result.valid ? { passed: true, output: json } : null;
+  }
+  if (stage === "visual_qa_llm") {
+    const json = await readJsonIfExists(path.join(ctx.outDir, "visual-qa.json"));
+    if (!json) return null;
+    const result = parseVisualQa(json);
+    return result.valid ? { passed: true, output: json } : null;
+  }
+  if (stage === "fresh_eye_review_llm") {
+    const json = await readJsonIfExists(path.join(ctx.outDir, "fresh-eye-review.json"));
+    if (!json) return null;
+    const result = parseFreshEyeReview(json);
+    return result.valid ? { passed: true, output: json } : null;
+  }
+  if (stage === "targeted_revision_llm") {
+    // No single review-output contract here (this stage APPLIES prior findings, it doesn't
+    // produce new ones) — completion is signaled by the marker file the instructions ask
+    // Claude to write after running apply_targeted_revision.mjs (that script's own stdout
+    // shape: {patchedSlides, affectedSlides, regressionScope}).
+    const json = await readJsonIfExists(path.join(ctx.outDir, "targeted-revision-applied.json"));
+    if (!json || !Array.isArray(json.patchedSlides)) return null;
+    return { passed: true, output: json };
+  }
+  return null;
+}
 
 async function appendLog(logPath, entry) {
   let log = [];
@@ -90,6 +137,16 @@ export async function runPipeline({ mode = "standard", ghostDeckPath, specPath, 
     const t0 = Date.now();
 
     if (LLM_STAGES.has(stage)) {
+      const already = await checkLlmStageComplete(stage, ctx);
+      if (already) {
+        // The hand-off was already fulfilled by a prior invocation (Claude wrote a valid
+        // result to the expected path) — record it as completed and fall through to the
+        // next stage instead of stopping here again.
+        const endedAt = new Date().toISOString();
+        await appendLog(logPath, { stage, startedAt, endedAt, durationMs: 0, passed: true, note: "LLM output found from a prior invocation" });
+        manifest.completed.push({ stage, passed: true, output: already.output });
+        continue;
+      }
       // This IS the deliberate hand-off point: the orchestrator stops here rather than
       // fabricating a semantic review. It names the exact prompt file and inputs Claude
       // needs, and the exact path Claude's structured-JSON output should be written to
@@ -124,10 +181,18 @@ function describeNextLlmAction(stage, ctx) {
     return { ...base, promptFile: "references/visual-qa-prompt.md", input: path.join(ctx.outDir, "screenshots"), writeResultTo: path.join(ctx.outDir, "visual-qa.json"), instructions: "Review each screenshot per the prompt file. Write structured JSON findings to writeResultTo, then re-invoke run_pipeline.mjs." };
   }
   if (stage === "fresh_eye_review_llm") {
-    return { ...base, promptFile: "references/content-review-prompt.md", input: path.join(ctx.outDir, "deck.pptx"), writeResultTo: path.join(ctx.outDir, "fresh-eye-review.json"), instructions: "Hand the deck to an ISOLATED reviewer (no internal reasoning, template names, or self-assessed weaknesses). Write structured JSON findings to writeResultTo, then re-invoke run_pipeline.mjs." };
+    // deck.pptx does not exist yet at this point in the stage order (pptx_export is the
+    // LAST stage, after this one) — deck.html (written by render_screenshots, which always
+    // runs before this stage in every mode) is what actually exists to hand the reviewer.
+    // content-review-prompt.md explicitly accepts HTML/PDF/PPTX, so this is within contract.
+    return { ...base, promptFile: "references/content-review-prompt.md", input: path.join(ctx.outDir, "deck.html"), writeResultTo: path.join(ctx.outDir, "fresh-eye-review.json"), instructions: "Hand the deck to an ISOLATED reviewer (no internal reasoning, template names, or self-assessed weaknesses). Write structured JSON findings to writeResultTo, then re-invoke run_pipeline.mjs." };
   }
   if (stage === "targeted_revision_llm") {
-    return { ...base, instructions: "For every accepted/modified finding (log dispositions via scripts/log_review_disposition.mjs first), build a patches.json and run scripts/apply_targeted_revision.mjs, then re-invoke run_pipeline.mjs to run Regression QA." };
+    return {
+      ...base,
+      writeResultTo: path.join(ctx.outDir, "targeted-revision-applied.json"),
+      instructions: `For every accepted/modified finding (log dispositions via scripts/log_review_disposition.mjs first), build a patches.json and run scripts/apply_targeted_revision.mjs -o ${ctx.specPath}, then write that command's own JSON stdout to writeResultTo (this file's presence is what tells the orchestrator this stage is done) before re-invoking run_pipeline.mjs to run Regression QA. If there were zero accepted/modified findings, still write writeResultTo as {"patchedSlides":[],"affectedSlides":[],"regressionScope":[]} so the pipeline can proceed.`,
+    };
   }
   return base;
 }

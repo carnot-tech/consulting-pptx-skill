@@ -185,19 +185,48 @@ function renderExecutiveSummary(slide, n) {
 }
 
 function renderChartInsight(slide, n) {
-  const max = Math.max(...slide.chart.series.map((d) => d.value));
+  const values = slide.chart.series.map((d) => d.value);
+  // Zero-baseline domain (matches renderWaterfall/addTrueWaterfall's own approach) — a plain
+  // height:NN% of the max goes NEGATIVE (and so renders as an invisible, zero-height bar) for
+  // any value below zero, which silently drops negative data points from the chart. Anchoring
+  // every bar to a shared zero line, growing up for positive values and down for negative
+  // ones, is the fix; PADDING keeps a lone all-positive or all-negative series from having its
+  // one edge flush against the plot's own top/bottom edge (still reads fine either way).
+  const domainMin = Math.min(0, ...values);
+  const domainMax = Math.max(0, ...values);
+  const rawRange = domainMax - domainMin || 1;
+  // Padding is a fraction of the RANGE (not of each extreme value) — scaling off the value
+  // itself under-pads whichever extreme is small relative to the other (e.g. -18 next to
+  // +24 got only ~11px of headroom out of the ~30px its value label needs, overlapping the
+  // category label below it). A range-relative fraction gives every extreme the same
+  // guaranteed headroom regardless of how the two ends compare to each other.
+  const PADDING = 0.18;
+  const paddedMin = domainMin < 0 ? domainMin - rawRange * PADDING : domainMin;
+  const paddedMax = domainMax > 0 ? domainMax + rawRange * PADDING : domainMax;
+  const range = paddedMax - paddedMin || 1;
+  const pct = (v) => ((v - paddedMin) / range) * 100;
   const bars = slide.chart.series
     .map((d, i) => {
       const cls = i === slide.chart.series.length - 1 ? "bar blue" : i === slide.chart.series.length - 2 ? "bar cyan" : "bar";
-      return `<div class="bar-wrap"><div class="bar-value">${esc(d.value)}</div><div class="${cls}" style="height: ${Math.round((d.value / max) * 82)}%;"></div><div class="bar-label">${esc(d.label)}</div></div>`;
+      const top = Math.max(d.value, 0);
+      const bottom = Math.min(d.value, 0);
+      const barTopPct = pct(top);
+      const barBottomPct = pct(bottom);
+      const barHeightPct = barTopPct - barBottomPct;
+      // Positive bars grow up from zero — the value label sits above the bar's top edge.
+      // Negative bars grow DOWN from zero — the label belongs below the bar's (lower)
+      // bottom edge, not above the zero line, or it would float in the positive region.
+      const valueStyle = d.value >= 0 ? `bottom: calc(${barTopPct}% + 8px);` : `top: calc(${100 - barBottomPct}% + 8px);`;
+      return `<div class="bar-wrap"><div class="bar-plot"><div class="bar-value" style="${valueStyle}">${esc(d.value)}</div><div class="${cls}" style="bottom: ${barBottomPct}%; height: ${barHeightPct}%;"></div></div><div class="bar-label">${esc(d.label)}</div></div>`;
     })
     .join("");
+  const zeroLine = domainMin < 0 ? `<div class="bar-zero-line" style="bottom: ${pct(0)}%;"></div>` : "";
   const insight = slide.sections?.[0] || {};
   const colCount = slide.chart.series.length || 1;
   return shell(
     slide,
     n,
-    `<div class="two-col"><div><div class="section-label">${esc(slide.chart.unit)}</div><div class="bar-chart" style="grid-template-columns: repeat(${colCount}, minmax(0, 1fr));">${bars}</div></div><div class="insight-panel"><div class="section-label">${esc(insight.title)}</div><div class="body-copy">${esc(insight.copy)}</div></div></div>`,
+    `<div class="two-col"><div><div class="section-label">${esc(slide.chart.unit)}</div><div class="bar-chart" style="grid-template-columns: repeat(${colCount}, minmax(0, 1fr));">${zeroLine}${bars}</div></div><div class="insight-panel"><div class="section-label">${esc(insight.title)}</div><div class="body-copy">${esc(insight.copy)}</div></div></div>`,
   );
 }
 

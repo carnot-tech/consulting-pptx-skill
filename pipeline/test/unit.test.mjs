@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { checkNumericalIntegrity } from "../scripts/check_numerical_integrity.mjs";
 import { checkContentStructure } from "../scripts/check_content_structure.mjs";
 import { applyTargetedRevision } from "../scripts/apply_targeted_revision.mjs";
+import { runPipeline } from "../scripts/run_pipeline.mjs";
 import { logExperience } from "../scripts/log_experience.mjs";
 import { parseStorylineReview, parseFreshEyeReview, parseVisualQa } from "../scripts/review_output_parser.mjs";
 
@@ -152,6 +153,29 @@ test("check_content_structure: catches an empty chart", () => {
   assert.ok(result.errors.some((e) => e.type === "empty_chart"));
 });
 
+// ---- chart_insight negative-value rendering -----------------------------------
+test("render_spec_to_html: chart_insight renders a negative value as a real (non-negative-height) bar below a zero line", async () => {
+  // Regression test for a real bug found during the rigorous-mode E2E run: bar height was
+  // computed as (value/max)*82%, which goes negative — and so is invisible — for any value
+  // below zero. A mixed positive/negative series (e.g. a multi-year cumulative cash flow)
+  // silently lost its negative years entirely.
+  const spec = {
+    deckTitle: "t",
+    slides: [{
+      template: "chart_insight", title: "累積キャッシュフローは3年目にプラスへ転換する",
+      chart: { unit: "億円", series: [{ label: "1年目", value: -18 }, { label: "2年目", value: -6 }, { label: "3年目", value: 9 }, { label: "4年目", value: 24 }] },
+      sections: [{ title: "So What", copy: "3年目にプラス転換する" }],
+    }],
+  };
+  const specPath = path.join(tmpDir, "chart-insight-negative-spec.json");
+  const htmlPath = path.join(tmpDir, "chart-insight-negative.html");
+  await fs.writeFile(specPath, JSON.stringify(spec));
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+  const html = await fs.readFile(htmlPath, "utf8");
+  assert.doesNotMatch(html, /height:\s*-\d/, "no bar should carry a negative CSS height");
+  assert.match(html, /bar-zero-line/, "a zero line should be drawn when the series has a value below zero");
+});
+
 // ---- Overlap / overflow detection (geometry) --- exercised via qa_html_deck.mjs on a
 // synthetic HTML fixture that deliberately overflows its slide box.
 test("qa_html_deck: detects an element that overflows its slide", async () => {
@@ -234,16 +258,23 @@ test("log_experience: a single occurrence is not eligible", async () => {
 });
 
 // ---- Review output parser ------------------------------------------------------
-test("review_output_parser: valid storyline review parses cleanly", () => {
+test("review_output_parser: valid storyline review parses cleanly (slide_number, per storyline-review-prompt.md's own contract)", () => {
   const json = { storylineReview: { overallVerdict: "needs_revision", findings: [
     { slide_number: 2, severity: "major", category: "logic_jump", issue: "x", suggested_fix: "y" },
   ] } };
-  // storylineReview findings key off slide_number in the prompt contract but the shared
-  // parser normalizes on `slide` — this test also documents that mismatch so a future
-  // change to either the prompt or the parser has to update both deliberately.
-  json.storylineReview.findings[0].slide = json.storylineReview.findings[0].slide_number;
   const result = parseStorylineReview(json);
   assert.equal(result.valid, true);
+});
+
+test("review_output_parser: storyline review finding using 'slide' instead of 'slide_number' is rejected", () => {
+  // Regression test for a real bug found during the rigorous-mode E2E run: the parser
+  // originally checked f.slide for every review type, silently rejecting a well-formed
+  // storyline review finding that correctly used slide_number per its own prompt contract.
+  const json = { storylineReview: { overallVerdict: "needs_revision", findings: [
+    { slide: 2, severity: "major", category: "logic_jump", issue: "x" },
+  ] } };
+  const result = parseStorylineReview(json);
+  assert.equal(result.valid, false);
 });
 
 test("review_output_parser: rejects an unknown severity", () => {
@@ -264,4 +295,72 @@ test("review_output_parser: accepts a well-formed visual QA result", () => {
   const result = parseVisualQa(json);
   assert.equal(result.valid, true);
   assert.equal(result.findings.length, 1);
+});
+
+// ---- Pipeline orchestrator resume behavior ------------------------------------
+test("run_pipeline: resumes past an LLM stage once its output file already exists", async () => {
+  // Regression test for a real bug found during the rigorous-mode E2E run: the
+  // orchestrator stopped at the same LLM stage on every invocation, even after Claude had
+  // already written a valid review result — because nothing checked for it first.
+  const outDir = path.join(tmpDir, "resume-test");
+  await fs.rm(outDir, { recursive: true, force: true });
+  const specPath = path.join(root, "slide-spec/example_deck.json");
+  const ghostDeckPath = path.join(root, "ghost-deck/example.json");
+
+  const first = await runPipeline({ mode: "standard", ghostDeckPath, specPath, outDir });
+  assert.equal(first.nextAction.type, "llm_review_required");
+  assert.equal(first.nextAction.stage, "visual_qa_llm");
+
+  // Simulate Claude having performed the review and written its result.
+  await fs.writeFile(
+    path.join(outDir, "visual-qa.json"),
+    JSON.stringify({ visualQa: { findings: [] } }),
+  );
+
+  const second = await runPipeline({ mode: "standard", ghostDeckPath, specPath, outDir });
+  assert.notEqual(second.nextAction.stage, "visual_qa_llm");
+  assert.ok(second.completed.some((c) => c.stage === "visual_qa_llm" && c.passed === true));
+});
+
+test("run_pipeline: fresh_eye_review_llm's input file already exists when the orchestrator hands it off", async () => {
+  // Regression test for a real bug found during the rigorous-mode E2E run: the hand-off
+  // pointed to deck.pptx, but pptx_export is the LAST stage in rigorous mode — deck.pptx
+  // does not exist yet when fresh_eye_review_llm is reached, only deck.html does.
+  const outDir = path.join(tmpDir, "fresh-eye-input-exists-test");
+  await fs.rm(outDir, { recursive: true, force: true });
+  const specPath = path.join(root, "slide-spec/example_deck.json");
+  const ghostDeckPath = path.join(root, "ghost-deck/example.json");
+
+  let manifest = await runPipeline({ mode: "rigorous", ghostDeckPath, specPath, outDir });
+  while (manifest.nextAction.stage && manifest.nextAction.stage !== "fresh_eye_review_llm") {
+    const stage = manifest.nextAction.stage;
+    if (stage === "storyline_review_llm") {
+      await fs.writeFile(path.join(outDir, "storyline-review.json"), JSON.stringify({ storylineReview: { overallVerdict: "coherent", findings: [] } }));
+    } else if (stage === "visual_qa_llm") {
+      await fs.writeFile(path.join(outDir, "visual-qa.json"), JSON.stringify({ visualQa: { findings: [] } }));
+    } else {
+      break;
+    }
+    manifest = await runPipeline({ mode: "rigorous", ghostDeckPath, specPath, outDir });
+  }
+  assert.equal(manifest.nextAction.stage, "fresh_eye_review_llm");
+  const inputExists = await fs.access(manifest.nextAction.input).then(() => true).catch(() => false);
+  assert.ok(inputExists, `nextAction.input (${manifest.nextAction.input}) must already exist when this stage is reached`);
+});
+
+test("run_pipeline: does not resume past an LLM stage whose output file fails validation", async () => {
+  const outDir = path.join(tmpDir, "resume-invalid-test");
+  await fs.rm(outDir, { recursive: true, force: true });
+  const specPath = path.join(root, "slide-spec/example_deck.json");
+  const ghostDeckPath = path.join(root, "ghost-deck/example.json");
+
+  await runPipeline({ mode: "standard", ghostDeckPath, specPath, outDir });
+  // Malformed: severity is not in the allowed vocabulary.
+  await fs.writeFile(
+    path.join(outDir, "visual-qa.json"),
+    JSON.stringify({ visualQa: { findings: [{ slide: 1, severity: "urgent", category: "whitespace", issue: "x" }] } }),
+  );
+
+  const result = await runPipeline({ mode: "standard", ghostDeckPath, specPath, outDir });
+  assert.equal(result.nextAction.stage, "visual_qa_llm");
 });

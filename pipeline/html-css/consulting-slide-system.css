@@ -329,19 +329,31 @@ body {
   height: 360px;
   border-bottom: 2px solid var(--ink);
   padding-bottom: 0;
+  position: relative;
 }
 
 .bar-wrap {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   align-items: center;
   height: 100%;
 }
 
+/* Fixed-height plot region a bar/value-label position themselves within via bottom/height
+   percentages computed from a shared zero baseline (see renderChartInsight) — this is what
+   lets a value below zero draw a bar going DOWN from the baseline instead of the single
+   height:NN% (which goes negative — and invisible — for values below zero) this used to be. */
+.bar-plot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
 .bar {
-  width: 74%;
-  flex: 0 0 auto;
+  position: absolute;
+  left: 13%;
+  right: 13%;
   background: var(--navy);
 }
 
@@ -353,6 +365,14 @@ body {
   background: var(--cyan);
 }
 
+.bar-zero-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--ink);
+}
+
 .bar-label {
   margin-top: 8px;
   text-align: center;
@@ -361,7 +381,9 @@ body {
 }
 
 .bar-value {
-  margin-bottom: 8px;
+  position: absolute;
+  left: 0;
+  right: 0;
   text-align: center;
   font-size: 22px;
   font-weight: 700;
