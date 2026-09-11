@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "526f3ae507990aa52f29902589111f642d57f1b18b7af4e9274b74db78c941c7"
+    "sha256": "1f42ddd0ec8d92e12ec654e176830f04277f6ef45db7cd78aebd3fcbe9cea7f5"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
@@ -106,6 +106,20 @@
           "min": 2,
           "max": 4,
           "description": "count of groupIds that are not a reserved container id (\"recommendation\"/\"nextSteps\") and have a number, a title, and >=1 bullets (action) element — must be 2-4."
+        }
+      },
+      "disqualifiers": []
+    },
+    "RP-KEY-TAKEAWAYS-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [],
+      "structuralChecks": ["TAKEAWAY_SHAPE_VALID"],
+      "structuralCheckDefinitions": {
+        "TAKEAWAY_SHAPE_VALID": {
+          "min": 2,
+          "max": 4,
+          "description": "count of groupIds that are not a reserved id (\"insightPanel\"/\"soWhat\") or an insight-item prefix (\"insightPanel-*\") and have number+category+headline+body — must be 2-4. Additionally (unconditionally, not just for the canonical 3-takeaway count): >=1 \"insightPanel-*\" item group each with number+title+body, and a \"soWhat\" group with a body element."
         }
       },
       "disqualifiers": []

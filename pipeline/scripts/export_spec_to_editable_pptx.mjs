@@ -1608,39 +1608,49 @@ function kpiRows(kpis) {
 
 // mirrors render_spec_to_html.mjs's KPI_ICONS set — native OOXML preset shapes where a good
 // match exists (donut=coins, pie=pie, circularArrow=cycle), else 3 small bars drawn directly.
-function addPatternIcon(slide, name, x, y, size, color) {
-  slide.addShape(pptx.ShapeType.ellipse, { x, y, w: size, h: size, fill: { color: WHITE }, line: { color, width: 1.2 } });
+// opts.filled: RP-KEY-TAKEAWAYS-01's reference image uses solid-filled color badges with a
+// white glyph (vs. kpi_dashboard/decision_ask's white badge with a colored glyph) — same
+// icon shapes, inverted color roles, rather than a second icon-drawing function.
+function addPatternIcon(slide, name, x, y, size, color, opts = {}) {
+  const filled = !!opts.filled;
+  const badgeColor = filled ? color : WHITE;
+  const glyphColor = filled ? WHITE : color;
+  slide.addShape(pptx.ShapeType.ellipse, { x, y, w: size, h: size, fill: { color: badgeColor }, line: filled ? { type: "none" } : { color, width: 1.2 } });
   const pad = size * 0.28;
   const ix = x + pad;
   const iy = y + pad;
   const iw = size - pad * 2;
-  if (name === "coins") {
-    slide.addShape(pptx.ShapeType.donut, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { type: "none" }, angleRange: [0, 360] });
+  const gc = glyphColor;
+  if (name === "gear") {
+    // native OOXML preset — reads as a real gear far more reliably than a hand-drawn glyph.
+    slide.addShape(pptx.ShapeType.gear6, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" } });
+  } else if (name === "coins") {
+    slide.addShape(pptx.ShapeType.donut, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" }, angleRange: [0, 360] });
   } else if (name === "pie") {
-    slide.addShape(pptx.ShapeType.pie, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { color, width: 0.75 }, angleRange: [270, 90] });
+    slide.addShape(pptx.ShapeType.pie, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { color: gc, width: 0.75 }, angleRange: [270, 90] });
   } else if (name === "cycle") {
-    slide.addShape(pptx.ShapeType.circularArrow, { x: ix, y: iy, w: iw, h: iw, fill: { color }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.circularArrow, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" } });
   } else if (name === "org-chart") {
     // 1 node on top, 3 below — RP-DECISION-ASK-01's 組織/体制 concept.
     const nodeR = iw * 0.16;
-    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - nodeR, y: iy, w: nodeR * 2, h: nodeR * 2, fill: { color }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - nodeR, y: iy, w: nodeR * 2, h: nodeR * 2, fill: { color: gc }, line: { type: "none" } });
     [0.18, 0.5, 0.82].forEach((frac) => {
-      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - nodeR, y: iy + iw - nodeR * 2, w: nodeR * 2, h: nodeR * 2, fill: { color }, line: { type: "none" } });
+      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - nodeR, y: iy + iw - nodeR * 2, w: nodeR * 2, h: nodeR * 2, fill: { color: gc }, line: { type: "none" } });
     });
   } else if (name === "people") {
     // 2 heads + shoulders — RP-DECISION-ASK-01's 会議体/ガバナンス concept.
     const headR = iw * 0.17;
     [0.32, 0.68].forEach((frac, i) => {
       const r = i === 0 ? headR * 1.1 : headR;
-      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - r, y: iy, w: r * 2, h: r * 2, fill: { color }, line: { type: "none" } });
-      slide.addShape(pptx.ShapeType.roundRect, { x: ix + iw * frac - r * 1.4, y: iy + r * 2 + iw * 0.04, w: r * 2.8, h: iw * 0.34, fill: { color }, line: { type: "none" }, rectRadius: 0.15 });
+      slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * frac - r, y: iy, w: r * 2, h: r * 2, fill: { color: gc }, line: { type: "none" } });
+      slide.addShape(pptx.ShapeType.roundRect, { x: ix + iw * frac - r * 1.4, y: iy + r * 2 + iw * 0.04, w: r * 2.8, h: iw * 0.34, fill: { color: gc }, line: { type: "none" }, rectRadius: 0.15 });
     });
   } else {
     // bar-chart (default): 3 small bars, increasing height, bottom-aligned within the badge.
     const bw = iw / 3 - 0.02;
     [0.45, 0.7, 1].forEach((frac, i) => {
       const bh = iw * frac;
-      slide.addShape(pptx.ShapeType.rect, { x: ix + i * (bw + 0.03), y: iy + iw - bh, w: bw, h: bh, fill: { color }, line: { type: "none" } });
+      slide.addShape(pptx.ShapeType.rect, { x: ix + i * (bw + 0.03), y: iy + iw - bh, w: bw, h: bh, fill: { color: gc }, line: { type: "none" } });
     });
   }
 }
@@ -1801,7 +1811,64 @@ function addKpiDashboard(item, pageNum) {
   }
 }
 
+// N-column mode mirror of render_spec_to_html.mjs#renderKeyTakeaways.
+function addKeyTakeaways(item, pageNum) {
+  const slide = addShell(item, pageNum, { titleRule: false });
+  let top = 2.0;
+  if (item.subtitle) {
+    addBodyText(slide, item.subtitle, M, top, W - M * 2, 0.3, { fontSize: 13, bold: true, color: MUTED });
+    top += 0.42;
+  }
+  const soWhatH = 0.85;
+  const bottom = FOOTER_Y - soWhatH - 0.1;
+  const panelW = 2.9;
+  const gap = 0.3;
+  const n = item.takeaways.length;
+  const gridW = W - M * 2 - panelW - gap;
+  const colW = (gridW - gap * (n - 1)) / n;
+  const headH = 0.56;
+
+  item.takeaways.forEach((t, i) => {
+    const x = M + i * (colW + gap);
+    slide.addShape(pptx.ShapeType.rect, { x, y: top, w: colW, h: bottom - top, fill: { type: "none" }, line: { color: HAIR, width: 0.75 } });
+    slide.addShape(pptx.ShapeType.rect, { x, y: top, w: colW, h: headH, fill: { color: NAVY }, line: { type: "none" } });
+    addBodyText(slide, t.number, x + 0.12, top, 0.5, headH, { fontSize: 20, bold: true, color: WHITE, valign: "middle" });
+    addBodyText(slide, t.category, x + 0.6, top, colW - 0.72, headH, { fontSize: 13, bold: true, color: WHITE, valign: "middle" });
+
+    let by = top + headH + 0.18;
+    const iconSize = 0.52;
+    if (t.icon) addPatternIcon(slide, t.icon, x + 0.16, by, iconSize, BLUE, { filled: true });
+    by += iconSize + 0.14;
+    addBodyText(slide, t.headline, x + 0.16, by, colW - 0.32, 0.75, { fontSize: 13.5, bold: true });
+    by += 0.85;
+    slide.addShape(pptx.ShapeType.line, { x: x + 0.16, y: by, w: colW - 0.32, h: 0, line: { color: HAIR, width: 0.75 } });
+    by += 0.14;
+    addBodyText(slide, t.supportLabel || "サポートする示唆", x + 0.16, by, colW - 0.32, 0.2, { fontSize: 9.5, bold: true, color: BLUE });
+    addBodyText(slide, t.supportText, x + 0.16, by + 0.24, colW - 0.32, bottom - (by + 0.24) - 0.1, { fontSize: 10.5 });
+  });
+
+  const panelX = M + gridW + gap;
+  slide.addShape(pptx.ShapeType.rect, { x: panelX, y: top, w: panelW, h: bottom - top, fill: { color: SOFTBLUE }, line: { type: "none" } });
+  addBodyText(slide, item.insightPanel.title || "示唆", panelX + 0.16, top + 0.14, panelW - 0.32, 0.26, { fontSize: 12.5, bold: true });
+  let iy = top + 0.5;
+  item.insightPanel.items.forEach((it) => {
+    slide.addShape(pptx.ShapeType.ellipse, { x: panelX + 0.16, y: iy + 0.02, w: 0.22, h: 0.22, fill: { color: NAVY }, line: { type: "none" } });
+    addBodyText(slide, it.number, panelX + 0.16, iy + 0.02, 0.22, 0.22, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+    addBodyText(slide, it.title, panelX + 0.44, iy, panelW - 0.6, 0.3, { fontSize: 10.5, bold: true });
+    const bodyH = Math.ceil(it.body.length / 16) * 0.17 + 0.1;
+    addBodyText(slide, it.body, panelX + 0.44, iy + 0.24, panelW - 0.6, bodyH, { fontSize: 9, color: MUTED });
+    iy += 0.3 + bodyH + 0.14;
+  });
+
+  const swY = FOOTER_Y - soWhatH + 0.1;
+  const swH = soWhatH - 0.2;
+  slide.addShape(pptx.ShapeType.homePlate, { x: M, y: swY, w: W - M * 2, h: swH, fill: { color: NAVY }, line: { type: "none" } });
+  addBodyText(slide, item.soWhat.label || "So What", M + 0.22, swY, 1.1, swH, { fontSize: 13, bold: true, color: WHITE, valign: "middle" });
+  addBodyText(slide, item.soWhat.text, M + 1.4, swY, W - M * 2 - 1.8, swH, { fontSize: 14, bold: true, color: WHITE, valign: "middle" });
+}
+
 function addRecommendationPillars(item, pageNum) {
+  if (Array.isArray(item.takeaways)) return addKeyTakeaways(item, pageNum);
   const slide = addShell(item, pageNum, { titleRule: false });
   const pillars = item.sections || [];
   const n = pillars.length || 1;

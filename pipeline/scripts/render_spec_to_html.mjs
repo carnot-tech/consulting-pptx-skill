@@ -885,6 +885,11 @@ const PATTERN_ICONS = {
   cycle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M17 3v4h-4M7 21v-4h4"/></svg>',
   "org-chart": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4.5" r="2.3"/><path d="M12 6.8v4M5 15v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="19" cy="18" r="2"/></svg>',
   people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><path d="M3 19v-1.5A4.5 4.5 0 0 1 7.5 13h2A4.5 4.5 0 0 1 14 17.5V19"/><circle cx="17" cy="9" r="2.2"/><path d="M14.5 19v-1a3.8 3.8 0 0 1 6.5-2.7"/></svg>',
+  // A ring (the gear body) with short teeth stubs is what reads as a "gear," not a sun —
+  // an earlier version had only a small center dot with long spokes, which looked like a
+  // sun/brightness icon when actually rendered (caught by zooming into a real screenshot,
+  // not assumed from the SVG source).
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><g stroke-width="2.2"><line x1="12" y1="3.2" x2="12" y2="5.6"/><line x1="12" y1="18.4" x2="12" y2="20.8"/><line x1="3.2" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="20.8" y2="12"/><line x1="5.5" y1="5.5" x2="7.3" y2="7.3"/><line x1="16.7" y1="16.7" x2="18.5" y2="18.5"/><line x1="5.5" y1="18.5" x2="7.3" y2="16.7"/><line x1="16.7" y1="7.3" x2="18.5" y2="5.5"/></g></svg>',
 };
 
 function kpiTileHtml(k) {
@@ -974,7 +979,37 @@ function renderKpiDashboard(slide, n) {
   return shell(slide, n, `<div class="kpi-dashboard">${keyMessage}${rows}${support}</div>`, { noTitleRule: true });
 }
 
+// N-column mode (RP-KEY-TAKEAWAYS-01): each takeaway is its own column — navy header band
+// (number + category), icon + bold headline, then a labeled support line — plus a MANDATORY
+// right-side insight panel (numbered title+body items) and a MANDATORY bottom So What chevron
+// bar. Both are mandatory (not optional, unlike decision_page's recommendation/nextSteps)
+// because omitting either is exactly this pattern degenerating into 3 plain cards — which
+// already has its own, simpler template (the existing flat `sections` shape below). Used when
+// the spec authors `takeaways` instead of `sections`.
+function renderKeyTakeaways(slide, n) {
+  const cols = slide.takeaways
+    .map((t) => {
+      const icon = t.icon && PATTERN_ICONS[t.icon] ? `<div class="kt2-icon">${PATTERN_ICONS[t.icon]}</div>` : "";
+      return `<div class="kt2-col"><div class="kt2-head"><span class="kt2-num">${esc(t.number)}</span><span class="kt2-category">${esc(t.category)}</span></div><div class="kt2-body">${icon}<div class="kt2-headline">${esc(t.headline)}</div><div class="kt2-hr"></div><div class="kt2-supportlabel">${esc(t.supportLabel || "サポートする示唆")}</div><div class="kt2-supporttext">${esc(t.supportText)}</div></div></div>`;
+    })
+    .join("");
+  const panel = slide.insightPanel;
+  const items = panel.items
+    .map((it) => `<li><span class="ki-num">${esc(it.number)}</span><div><div class="kt2-insight-title">${esc(it.title)}</div><div class="kt2-insight-body">${esc(it.body)}</div></div></li>`)
+    .join("");
+  const insightPanel = `<div class="kt2-panel"><div class="kt2-panel-title">${esc(panel.title || "示唆")}</div><ol class="kt2-panel-list">${items}</ol></div>`;
+  const sw = slide.soWhat;
+  const soWhat = `<div class="kt2-sowhat"><span class="kt2-sowhat-tag">${esc(sw.label || "So What")}</span><span class="kt2-sowhat-text">${esc(sw.text)}</span></div>`;
+  return shell(
+    slide,
+    n,
+    `<div class="kt2-wrap"><div class="kt2-top"><div class="kt2-grid" style="grid-template-columns: repeat(${slide.takeaways.length}, 1fr);">${cols}</div>${insightPanel}</div>${soWhat}</div>`,
+    { noTitleRule: true, className: "slide--top-align" },
+  );
+}
+
 function renderRecommendationPillars(slide, n) {
+  if (Array.isArray(slide.takeaways)) return renderKeyTakeaways(slide, n);
   const pillars = (slide.sections || [])
     .map((p, i) => {
       const bullets = (p.bullets || []).map((b) => `<li>${esc(b)}</li>`).join("");

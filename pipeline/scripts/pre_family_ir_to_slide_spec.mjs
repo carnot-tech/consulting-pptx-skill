@@ -398,6 +398,62 @@ export function preFamilyIrToDecisionGroups({ elements }) {
   return result;
 }
 
+const TAKEAWAY_RESERVED_GROUP_IDS = new Set(["insightPanel", "soWhat"]);
+function isTakeawayCandidateGroup(groupId) {
+  return groupId != null && !TAKEAWAY_RESERVED_GROUP_IDS.has(groupId) && !groupId.startsWith("insightPanel-");
+}
+const TAKEAWAY_ICON_NAMES = new Set(["bar-chart", "coins", "gear"]);
+
+export function preFamilyIrToKeyTakeaways({ elements }) {
+  const byGroup = elementsByGroupId(elements);
+
+  const takeawayEntries = [...byGroup.entries()].filter(([gid]) => isTakeawayCandidateGroup(gid));
+  if (takeawayEntries.length < 2 || takeawayEntries.length > 4) {
+    throw new Error(`recommendation_pillars adapter: expected 2-4 takeaway groups, found ${takeawayEntries.length}`);
+  }
+  const takeaways = takeawayEntries.map(([gid, els]) => {
+    const number = findRole(els, "number");
+    const category = findRole(els, "category");
+    const headline = findRole(els, "headline");
+    const supportText = findRole(els, "body");
+    if (!number) throw new Error(`recommendation_pillars adapter: group "${gid}" has no number element`);
+    if (!category) throw new Error(`recommendation_pillars adapter: group "${gid}" has no category element`);
+    if (!headline) throw new Error(`recommendation_pillars adapter: group "${gid}" has no headline element`);
+    if (!supportText) throw new Error(`recommendation_pillars adapter: group "${gid}" has no body (supportText) element`);
+    const takeaway = { number, category, headline, supportText };
+    const icon = findRole(els, "icon");
+    if (icon) {
+      if (!TAKEAWAY_ICON_NAMES.has(icon)) throw new Error(`recommendation_pillars adapter: group "${gid}" icon "${icon}" is not one of ${[...TAKEAWAY_ICON_NAMES].join("/")}`);
+      takeaway.icon = icon;
+    }
+    const supportLabel = findRole(els, "supportLabel");
+    if (supportLabel) takeaway.supportLabel = supportLabel;
+    return takeaway;
+  });
+
+  const itemEntries = [...byGroup.entries()].filter(([gid]) => gid.startsWith("insightPanel-"));
+  if (!itemEntries.length) throw new Error('recommendation_pillars adapter: no insightPanel items found (groupId prefix "insightPanel-") — insightPanel is mandatory for this pattern');
+  const items = itemEntries.map(([gid, els]) => {
+    const number = findRole(els, "number");
+    const title = findRole(els, "title");
+    const body = findRole(els, "body");
+    if (!number || !title || !body) throw new Error(`recommendation_pillars adapter: insight item "${gid}" is missing number/title/body`);
+    return { number, title, body };
+  });
+  const insightPanel = { items };
+  const panelTitle = findRole(byGroup.get("insightPanel") || [], "title");
+  if (panelTitle) insightPanel.title = panelTitle;
+
+  const soWhatEls = byGroup.get("soWhat");
+  const soWhatText = findRole(soWhatEls || [], "body");
+  if (!soWhatText) throw new Error('recommendation_pillars adapter: no "soWhat" group body element found — soWhat is mandatory for this pattern');
+  const soWhat = { text: soWhatText };
+  const soWhatLabel = findRole(soWhatEls, "title");
+  if (soWhatLabel) soWhat.label = soWhatLabel;
+
+  return { takeaways, insightPanel, soWhat };
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -434,6 +490,7 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   else if (selection.slideSpecShape === "kpiDashboard") body = preFamilyIrToKpiDashboard(preFamilyIR);
   else if (selection.slideSpecShape === "comparisonTable") body = preFamilyIrToComparisonTable(preFamilyIR);
   else if (selection.slideSpecShape === "decisionGroups") body = preFamilyIrToDecisionGroups(preFamilyIR);
+  else if (selection.slideSpecShape === "keyTakeaways") body = preFamilyIrToKeyTakeaways(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {

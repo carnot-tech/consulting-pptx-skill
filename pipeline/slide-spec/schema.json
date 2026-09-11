@@ -329,6 +329,20 @@
             "type": "string"
           }
         },
+        "takeaways": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/takeaway"
+          }
+        },
+        "insightPanel": {
+          "$ref": "#/$defs/insightPanel"
+        },
+        "soWhat": {
+          "$ref": "#/$defs/soWhat"
+        },
         "multiples": {
           "type": "array",
           "minItems": 2,
@@ -726,8 +740,9 @@
             }
           },
           "then": {
-            "required": [
-              "sections"
+            "anyOf": [
+              { "required": ["sections"] },
+              { "required": ["takeaways", "insightPanel", "soWhat"] }
             ]
           }
         },
@@ -1634,6 +1649,47 @@
       }
     },
     "decisionRecommendation": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "label": { "type": "string" },
+        "text": { "type": "string" }
+      }
+    },
+    "takeaway": {
+      "type": "object",
+      "required": ["number", "category", "headline", "supportText"],
+      "properties": {
+        "number": { "type": "string" },
+        "category": { "type": "string" },
+        "icon": { "enum": ["bar-chart", "coins", "gear"] },
+        "headline": { "type": "string" },
+        "supportLabel": { "type": "string" },
+        "supportText": { "type": "string" }
+      }
+    },
+    "insightPanelItem": {
+      "type": "object",
+      "required": ["number", "title", "body"],
+      "properties": {
+        "number": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" }
+      }
+    },
+    "insightPanel": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "title": { "type": "string" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/insightPanelItem" }
+        }
+      }
+    },
+    "soWhat": {
       "type": "object",
       "required": ["text"],
       "properties": {

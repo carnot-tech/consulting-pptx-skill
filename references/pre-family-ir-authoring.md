@@ -214,6 +214,56 @@ RP-COMPARISON-TABLE-01), the point is a multi-week/multi-day execution timeline 
 roadmap/100-Day patterns), or the columns are explanatory rather than decision items with a
 concrete ask (→ plain cards).
 
+## Key takeaways (RP-KEY-TAKEAWAYS-01, Library v0.2) → `recommendation_pillars` (`keyTakeaways` shape)
+
+Independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-KEY-TAKEAWAYS-01.jpg`. The existing
+`recommendation_pillars` template's flat shape (a plain `sections[]` list of pillar cards) is
+unchanged and stays the right choice for a simple set of parallel points with no synthesis
+layer. This pattern is a second, richer shape: a fixed 3-part composition (takeaway columns +
+an insight panel + a closing "So What" bar) for closing out an analysis with the conclusions a
+reader must walk away with.
+
+Unlike Decision Ask's optional recommendation/nextSteps bands, **the insight panel and the So
+What bar are load-bearing parts of this pattern's own definition, not an optional add-on** —
+both are required at every valid takeaway count (2, 3, or 4), not just the canonical 3-column
+composition. A takeaways[] list with no insight panel or no So What is not a smaller variant of
+this pattern; it degenerates into plain cards and should use the flat `sections[]` shape
+instead. This is why the Selector's `TAKEAWAY_SHAPE_VALID` check and the schema's
+conditional-required both treat `takeaways`/`insightPanel`/`soWhat` as all-or-nothing.
+
+- **2 to 4 takeaway groups** (any groupId except the reserved ones below; **3 is the
+  canonical/reference-faithful count** — 2 and 4 are supported adaptive variants), each:
+  - `"number"` — the column's own label (e.g. "01"). Authored directly, not derived from
+    position.
+  - `"category"` — a short label for the header band (e.g. "市場", "収益", "実行").
+  - `"headline"` — the takeaway's core statement, shown as bold body text below the icon.
+  - `"body"` — the supporting text under the divider (rendered under a `"supportLabel"`
+    heading, defaults to "サポートする示唆"). Structured separately from `headline` — do not
+    merge the headline and its support text into one string.
+  - Optional `"supportLabel"` — overrides the default "サポートする示唆" heading above `body`.
+  - Optional `"icon"` — one of `bar-chart` / `coins` / `gear` (a closed vocabulary; note this
+    is a *different* subset from Decision Ask's org-chart/bar-chart/people — pick whichever
+    concept fits: market/metric takeaway → bar-chart, financial/profitability takeaway →
+    coins, execution/operational takeaway → gear).
+- **Required insight panel**: 1 or more groups with the `"insightPanel-"` groupId prefix (e.g.
+  `"insightPanel-i1"`, `"insightPanel-i2"`), each with a `"number"`, a `"title"`, and a
+  `"body"` element — order preserved from authoring order, not re-sorted by number. An
+  optional `"title"` element on the reserved `"insightPanel"` group itself sets the panel's own
+  heading (defaults to "示唆").
+- **Required So What**: a group literally named `"soWhat"` with a `"body"` element (the closing
+  synthesis sentence) and an optional `"title"` element (the tag label, defaults to "So What")
+  — rendered as a navy chevron bar spanning the bottom of the slide.
+- No relationship type is required — like KPI tiles, comparison candidates, and decision
+  columns, takeaway columns and insight-panel items are plain siblings; order comes from
+  authoring order.
+
+**Do not use when**: the slide is a decision being put to the room, not a conclusion recap
+already reached (→ RP-DECISION-ASK-01), the point is choosing between named options (→
+RP-COMPARISON-TABLE-01), the point is a multi-week/multi-day execution timeline (→ the
+roadmap/100-Day patterns), or there is no synthesis/insight layer at all — just parallel
+explanatory points (→ the flat `sections[]` shape of this same template).
+
 ## What NOT to do
 
 - Don't author a pattern's `elements`/`relationships` first and decide the family afterward —

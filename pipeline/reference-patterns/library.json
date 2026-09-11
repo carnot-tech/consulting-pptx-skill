@@ -147,6 +147,36 @@
       ],
       "slideSpecTemplate": "decision_page",
       "slideSpecShape": "decisionGroups"
+    },
+    {
+      "patternId": "RP-KEY-TAKEAWAYS-01",
+      "name": "Key Takeaways",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-KEY-TAKEAWAYS-01.jpg — Library v0.2, fourth pattern implemented (independently defined for this project). The existing recommendation_pillars template's flat shape (a plain sections[] list: number circle + title + copy + bullets) is unchanged — this pattern is a second, richer shape mandating the reference image's full 3-part composition (takeaway columns + a right insight-synthesis panel + a bottom So What conclusion bar), not just the column cards alone.",
+      "useWhen": "the slide's job is to synthesize a body of analysis into a small number of headline conclusions AND connect them to concrete implications AND state the resulting so-what in one sentence — all three layers together, not a conclusion recap alone.",
+      "canonicalVariant": "3 takeaway columns + an insightPanel (3 items) + soWhat — the reference image's own composition. 2 and 4 takeaway columns are supported ADAPTIVE variants (same precedent as RP-DECISION-ASK-01); unlike decision_page's recommendation/nextSteps, insightPanel and soWhat are NEVER optional here at any column count — omitting either degrades this into 3 plain cards, which already has its own simpler template (the existing flat `sections` shape).",
+      "requiredSemanticRoles": [
+        "number + category + headline + body (supportText) per takeaway, 2-4 takeaways",
+        "an insightPanel group with >=1 item sub-group, each with number + title + body",
+        "a soWhat group with a body (the so-what sentence)"
+      ],
+      "optionalSemanticRoles": [
+        "icon (bar-chart/coins/gear) and supportLabel per takeaway",
+        "a title on the insightPanel group (panel heading, defaults to \"示唆\")",
+        "a title on the soWhat group (tag label, defaults to \"So What\")"
+      ],
+      "relationshipsRequired": [],
+      "visualIntent": "summarize",
+      "densityRange": "medium",
+      "emphasisModel": "no structural emphasis mechanism for this family — every takeaway is equally a headline conclusion; don't author emphasis here.",
+      "supportingBand": "mandatory — the insightPanel + soWhat bar are load-bearing parts of this pattern's own definition, not an optional add-on the way other patterns' supporting bands are.",
+      "doNotUseWhen": [
+        "there is no synthesized so-what, only a list of findings — use plain cards or the flat recommendation_pillars shape instead",
+        "a decision is actually being requested, not just conclusions reported — use RP-DECISION-ASK-01 instead",
+        "the point is comparing named options — use RP-COMPARISON-TABLE-01 instead"
+      ],
+      "slideSpecTemplate": "recommendation_pillars",
+      "slideSpecShape": "keyTakeaways"
     }
   ]
 }

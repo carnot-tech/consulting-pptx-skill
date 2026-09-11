@@ -49,6 +49,7 @@ const FAMILY_VARIANT_MAP = {
   "kpi-dashboard|standard": ["RP-KPI-EXEC-DASHBOARD-01"],
   "comparison-table|standard": ["RP-COMPARISON-TABLE-01"],
   "decision-ask|standard": ["RP-DECISION-ASK-01"],
+  "key-takeaways|standard": ["RP-KEY-TAKEAWAYS-01"],
 };
 
 export async function runRegistryConsistencyGate(registry, library) {
@@ -240,6 +241,42 @@ function checkDecisionCountInRange(elements, min, max) {
   return { pass: true, count: entries.length };
 }
 
+// Takeaway groups: same positional idiom as decision groups, but with a 3rd reserved
+// prefix (insight panel ITEMS, "insightPanel-*") alongside 2 exact reserved ids — unlike
+// decision_page's recommendation/nextSteps, insightPanel and soWhat are NOT optional here:
+// omitting either is exactly this pattern degenerating into 3 plain cards, which already has
+// its own simpler template. No relationship type is needed — insight-panel item order is
+// authoring order, same discipline as every other Library v0.2 pattern's sibling lists.
+const TAKEAWAY_RESERVED_GROUP_IDS = new Set(["insightPanel", "soWhat"]);
+function isTakeawayCandidateGroup(groupId) {
+  return groupId != null && !TAKEAWAY_RESERVED_GROUP_IDS.has(groupId) && !groupId.startsWith("insightPanel-");
+}
+function checkTakeawayShapeValid(elements, min, max) {
+  const byGroup = elementsByGroupId(elements);
+  const entries = [...byGroup.entries()].filter(([gid]) => isTakeawayCandidateGroup(gid));
+  if (entries.length < min || entries.length > max) {
+    return { pass: false, reason: `${entries.length} takeaway groups (need ${min}-${max})` };
+  }
+  for (const [gid, els] of entries) {
+    if (!els.some((e) => e.semanticRole === "number")) return { pass: false, reason: `takeaway group "${gid}" has no number element` };
+    if (!els.some((e) => e.semanticRole === "category")) return { pass: false, reason: `takeaway group "${gid}" has no category element` };
+    if (!els.some((e) => e.semanticRole === "headline")) return { pass: false, reason: `takeaway group "${gid}" has no headline element` };
+    if (!els.some((e) => e.semanticRole === "body")) return { pass: false, reason: `takeaway group "${gid}" has no body (supportText) element` };
+  }
+  const itemEntries = [...byGroup.entries()].filter(([gid]) => gid.startsWith("insightPanel-"));
+  if (!itemEntries.length) return { pass: false, reason: "no insightPanel items (insightPanel is mandatory for this pattern, not optional)" };
+  for (const [gid, els] of itemEntries) {
+    if (!els.some((e) => e.semanticRole === "number")) return { pass: false, reason: `insight item "${gid}" has no number element` };
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `insight item "${gid}" has no title element` };
+    if (!els.some((e) => e.semanticRole === "body")) return { pass: false, reason: `insight item "${gid}" has no body element` };
+  }
+  const soWhatEls = byGroup.get("soWhat");
+  if (!soWhatEls || !soWhatEls.some((e) => e.semanticRole === "body")) {
+    return { pass: false, reason: "no soWhat body element (soWhat is mandatory for this pattern, not optional)" };
+  }
+  return { pass: true, count: entries.length, insightCount: itemEntries.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -317,6 +354,11 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
       const r = checkDecisionCountInRange(elements, def.min ?? 2, def.max ?? 4);
       if (r.pass) evidence.push(`DECISION_COUNT_IN_RANGE passed: ${r.count} decision groups`);
       else failedChecks.push(`DECISION_COUNT_IN_RANGE failed: ${r.reason}`);
+    } else if (checkName === "TAKEAWAY_SHAPE_VALID") {
+      const def = registryEntry.structuralCheckDefinitions?.TAKEAWAY_SHAPE_VALID || {};
+      const r = checkTakeawayShapeValid(elements, def.min ?? 2, def.max ?? 4);
+      if (r.pass) evidence.push(`TAKEAWAY_SHAPE_VALID passed: ${r.count} takeaways, ${r.insightCount} insight items, soWhat present`);
+      else failedChecks.push(`TAKEAWAY_SHAPE_VALID failed: ${r.reason}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }

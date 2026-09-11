@@ -23,6 +23,7 @@ import {
   preFamilyIrToKpiDashboard,
   preFamilyIrToComparisonTable,
   preFamilyIrToDecisionGroups,
+  preFamilyIrToKeyTakeaways,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -630,6 +631,195 @@ test("decision_page end to end: 3 fixtures (reference-faithful 3-decision+recomm
     assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
 
     const pptxPath = path.join(tmpDir, `dq-e2e-${i}.pptx`);
+    await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+    const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+    assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
+  }
+});
+
+// --- RP-KEY-TAKEAWAYS-01 (Library v0.2, fourth pattern) ---
+
+function twGroupElements(gid, number, category, headline, supportText, opts = {}) {
+  const els = [
+    { semanticRole: "number", groupId: gid, value: number },
+    { semanticRole: "category", groupId: gid, value: category },
+    { semanticRole: "headline", groupId: gid, value: headline },
+    { semanticRole: "body", groupId: gid, value: supportText },
+  ];
+  if (opts.icon) els.push({ semanticRole: "icon", groupId: gid, value: opts.icon });
+  if (opts.supportLabel) els.push({ semanticRole: "supportLabel", groupId: gid, value: opts.supportLabel });
+  return els;
+}
+function insightItemElements(gid, number, title, body) {
+  return [
+    { semanticRole: "number", groupId: gid, value: number },
+    { semanticRole: "title", groupId: gid, value: title },
+    { semanticRole: "body", groupId: gid, value: body },
+  ];
+}
+const SOWHAT_ELEMENTS = [
+  { semanticRole: "title", groupId: "soWhat", value: "So What" },
+  { semanticRole: "body", groupId: "soWhat", value: "So What text" },
+];
+
+test("reference_pattern_selector: 2-4 takeaways with an insightPanel and soWhat select RP-KEY-TAKEAWAYS-01; 1 and 5 takeaways are both rejected", async () => {
+  const irOf = (n) => ({
+    elements: [
+      ...Array.from({ length: n }, (_, i) => twGroupElements(`tw${i}`, String(i + 1), `Cat${i}`, `Headline ${i}`, "support")).flat(),
+      ...insightItemElements("insightPanel-i1", "1", "Insight", "body"),
+      ...SOWHAT_ELEMENTS,
+    ],
+    relationships: [],
+  });
+  const two = await selectPattern({ family: "key-takeaways", variant: "standard" }, irOf(2));
+  assert.equal(two.eligibility, "PASS");
+  assert.equal(two.selectedPattern, "RP-KEY-TAKEAWAYS-01");
+
+  const four = await selectPattern({ family: "key-takeaways", variant: "standard" }, irOf(4));
+  assert.equal(four.eligibility, "PASS");
+
+  const one = await selectPattern({ family: "key-takeaways", variant: "standard" }, irOf(1));
+  assert.equal(one.eligibility, "FAIL");
+
+  const five = await selectPattern({ family: "key-takeaways", variant: "standard" }, irOf(5));
+  assert.equal(five.eligibility, "FAIL");
+});
+
+test("reference_pattern_selector: takeaways without an insightPanel are rejected even though the takeaway count itself is valid (insightPanel is mandatory, not optional)", async () => {
+  const ir = {
+    elements: [
+      ...twGroupElements("tw0", "01", "A", "Headline A", "support A"),
+      ...twGroupElements("tw1", "02", "B", "Headline B", "support B"),
+      ...twGroupElements("tw2", "03", "C", "Headline C", "support C"),
+      ...SOWHAT_ELEMENTS,
+      // no insightPanel-* groups at all
+    ],
+    relationships: [],
+  };
+  const result = await selectPattern({ family: "key-takeaways", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("reference_pattern_selector: takeaways without a soWhat body are rejected even at the canonical 3-takeaway count (soWhat is mandatory, not optional)", async () => {
+  const ir = {
+    elements: [
+      ...twGroupElements("tw0", "01", "A", "Headline A", "support A"),
+      ...twGroupElements("tw1", "02", "B", "Headline B", "support B"),
+      ...twGroupElements("tw2", "03", "C", "Headline C", "support C"),
+      ...insightItemElements("insightPanel-i1", "1", "Insight", "body"),
+      // no soWhat group at all
+    ],
+    relationships: [],
+  };
+  const result = await selectPattern({ family: "key-takeaways", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: recommendation_pillars adapter builds takeaways/insightPanel/soWhat and preserves insight-item order", () => {
+  const ir = {
+    elements: [
+      ...twGroupElements("tw0", "01", "市場", "高付加価値セグメントが成長を牽引", "上位顧客の需要が堅調", { icon: "bar-chart", supportLabel: "サポートする示唆" }),
+      ...twGroupElements("tw1", "02", "収益", "粗利改善余地は調達統合に集中", "共同購買の即効性が高い", { icon: "coins" }),
+      { semanticRole: "title", groupId: "insightPanel", value: "示唆" },
+      ...insightItemElements("insightPanel-i2", "2", "調達統合の迅速な着手", "共同購買によるコスト削減を早期に実現する"),
+      ...insightItemElements("insightPanel-i1", "1", "成長領域への集中", "高付加価値セグメントに経営資源を優先配分する"),
+      { semanticRole: "title", groupId: "soWhat", value: "So What" },
+      { semanticRole: "body", groupId: "soWhat", value: "したがって、買収後100日間は価格より統合実行力が価値創出を左右する" },
+    ],
+    relationships: [],
+  };
+  const result = preFamilyIrToKeyTakeaways(ir);
+  assert.equal(result.takeaways.length, 2);
+  assert.deepEqual(result.takeaways[0], { number: "01", category: "市場", headline: "高付加価値セグメントが成長を牽引", supportText: "上位顧客の需要が堅調", icon: "bar-chart", supportLabel: "サポートする示唆" });
+  assert.equal(result.insightPanel.title, "示唆");
+  // authoring order in elements[] (i2 before i1) must be preserved, not re-sorted by number.
+  assert.deepEqual(result.insightPanel.items.map((it) => it.number), ["2", "1"]);
+  assert.deepEqual(result.soWhat, { text: "したがって、買収後100日間は価格より統合実行力が価値創出を左右する", label: "So What" });
+});
+
+test("pre_family_ir_to_slide_spec: recommendation_pillars adapter rejects an icon outside the bar-chart/coins/gear vocabulary", () => {
+  const ir = {
+    elements: [
+      ...twGroupElements("tw0", "01", "A", "H", "S", { icon: "people" }),
+      ...twGroupElements("tw1", "02", "B", "H", "S"),
+      ...insightItemElements("insightPanel-i1", "1", "T", "B"),
+      ...SOWHAT_ELEMENTS,
+    ],
+    relationships: [],
+  };
+  assert.throws(() => preFamilyIrToKeyTakeaways(ir), /bar-chart\/coins\/gear/);
+});
+
+test("key_takeaways end to end: 3 fixtures (reference-faithful 3-takeaway canonical, 2-takeaway adaptive width, 4-takeaway long-Japanese-text stress test) render with 0 QA findings and export to a clean PPTX", async () => {
+  const fixtures = [
+    {
+      // A: the reference image's own composition.
+      elements: [
+        ...twGroupElements("tw0", "01", "市場", "高付加価値セグメントが成長を牽引", "上位顧客の需要が堅調", { icon: "bar-chart", supportLabel: "サポートする示唆" }),
+        ...twGroupElements("tw1", "02", "収益", "粗利改善余地は調達統合に集中", "共同購買の即効性が高い", { icon: "coins", supportLabel: "サポートする示唆" }),
+        ...twGroupElements("tw2", "03", "実行", "早期PMIで100日成果の確度向上", "Day60意思決定が重要", { icon: "gear", supportLabel: "サポートする示唆" }),
+        { semanticRole: "title", groupId: "insightPanel", value: "示唆" },
+        ...insightItemElements("insightPanel-i1", "1", "成長領域への集中", "高付加価値セグメントに経営資源を優先配分する"),
+        ...insightItemElements("insightPanel-i2", "2", "調達統合の迅速な着手", "共同購買によるコスト削減を早期に実現する"),
+        ...insightItemElements("insightPanel-i3", "3", "100日計画の厳格な遂行", "Day60の意思決定を起点に統合効果の刈り取りを加速する"),
+        { semanticRole: "title", groupId: "soWhat", value: "So What" },
+        { semanticRole: "body", groupId: "soWhat", value: "したがって、買収後100日間は価格より統合実行力が価値創出を左右する" },
+      ],
+      relationships: [],
+      title: "検討全体から導く3つの結論について報告する",
+      subtitle: "検討全体から導く3つの結論",
+    },
+    {
+      // B: 2 takeaways — adaptive-width check.
+      elements: [
+        ...twGroupElements("tw0", "01", "財務影響", "買収価格はEV/EBITDA倍率の観点で妥当な水準にある", "デューデリジェンスで確認された収益性は事業計画と整合している", { icon: "bar-chart" }),
+        ...twGroupElements("tw1", "02", "統合実行", "PMI体制の早期確立が統合効果実現の鍵を握る", "週次PMOによるモニタリング体制の即時導入が推奨される", { icon: "gear" }),
+        { semanticRole: "title", groupId: "insightPanel", value: "示唆" },
+        ...insightItemElements("insightPanel-i1", "1", "価格妥当性の確認", "独立評価機関による再検証を交渉の前提とする"),
+        ...insightItemElements("insightPanel-i2", "2", "PMO即時設置", "統合初日から週次モニタリングを開始する"),
+        { semanticRole: "title", groupId: "soWhat", value: "So What" },
+        { semanticRole: "body", groupId: "soWhat", value: "したがって、価格交渉と並行してPMI体制の即時設計に着手すべきである" },
+      ],
+      relationships: [],
+      title: "財務影響とPMI体制の2論点から導く結論について報告する",
+      subtitle: "検討全体から導く2つの結論",
+    },
+    {
+      // C: 4 takeaways, long Japanese text — stress test.
+      elements: [
+        ...twGroupElements("tw0", "01", "市場浸透", "アジア新興国市場における高付加価値セグメントの獲得が全社成長を牽引している", "東南アジア主要3か国での上位顧客需要が想定を上回って堅調に推移している", { icon: "bar-chart" }),
+        ...twGroupElements("tw1", "02", "収益性", "粗利改善の余地は調達統合とサプライヤー再編への集中投資に集約される", "共同購買プラットフォームの早期導入による即効性が財務モデルで確認された", { icon: "coins" }),
+        ...twGroupElements("tw2", "03", "実行体制", "早期のPMI着手が100日プランの成果創出確度を大きく左右する", "Day60時点での組織・KPI・ガバナンスに関する意思決定が最重要変数となる", { icon: "gear" }),
+        ...twGroupElements("tw3", "04", "リスク管理", "主要リスクは人材流出と統合コスト超過であり両面での対応策が既に整備済み", "リテンションボーナスと段階的統合範囲設定により定量的な緩和効果が見込まれる", { icon: "bar-chart" }),
+        { semanticRole: "title", groupId: "insightPanel", value: "示唆" },
+        ...insightItemElements("insightPanel-i1", "1", "成長領域への集中", "高付加価値セグメントに経営資源を優先配分し、投資対効果を最大化する"),
+        ...insightItemElements("insightPanel-i2", "2", "調達統合の迅速な着手", "共同購買によるコスト削減効果を早期に実現し、粗利改善を加速する"),
+        ...insightItemElements("insightPanel-i3", "3", "100日計画の厳格な遂行", "Day60の意思決定を起点に、統合効果の刈り取りサイクルを加速させる"),
+        ...insightItemElements("insightPanel-i4", "4", "リスク対応策の前倒し実行", "人材流出・統合コスト双方について、着手時期を可能な限り前倒しする"),
+        { semanticRole: "title", groupId: "soWhat", value: "So What" },
+        { semanticRole: "body", groupId: "soWhat", value: "したがって、買収後100日間は市場機会の追求と同時にリスク対応策の早期実行が価値創出全体を左右する" },
+      ],
+      relationships: [],
+      title: "市場・収益性・実行体制・リスク管理の4論点から導く結論について報告する",
+      subtitle: "検討全体から導く4つの結論",
+    },
+  ];
+
+  for (const [i, fixture] of fixtures.entries()) {
+    const selection = await selectPattern({ family: "key-takeaways", variant: "standard" }, fixture);
+    assert.equal(selection.eligibility, "PASS", `fixture ${i}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, fixture, { title: fixture.title, subtitle: fixture.subtitle, source: "Source: test" });
+
+    const specPath = path.join(tmpDir, `kt-e2e-${i}-spec.json`);
+    const htmlPath = path.join(tmpDir, `kt-e2e-${i}.html`);
+    await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+    await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+    const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+    const gateReport = JSON.parse(gateResult.stdout);
+    assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+    const pptxPath = path.join(tmpDir, `kt-e2e-${i}.pptx`);
     await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
     const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
     assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);

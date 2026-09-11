@@ -2937,6 +2937,157 @@ body {
   line-height: 1.3;
 }
 
+/* N-column mode (recommendation_pillars with `takeaways`, vs the flat `sections` mode above) */
+.kt2-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kt2-top {
+  display: grid;
+  grid-template-columns: 1fr 0.36fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.kt2-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.kt2-col {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hairline);
+}
+
+.kt2-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--navy);
+  color: #fff;
+}
+
+.kt2-num {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.kt2-category {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.kt2-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 18px 16px;
+}
+
+.kt2-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+}
+
+.kt2-icon svg {
+  width: 27px;
+  height: 27px;
+}
+
+.kt2-headline {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.kt2-hr {
+  margin: 16px 0 10px;
+  border-top: 1px solid var(--hairline);
+}
+
+.kt2-supportlabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.kt2-supporttext {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.kt2-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--soft-blue);
+}
+
+.kt2-panel-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.kt2-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+  list-style: none;
+}
+
+.kt2-panel-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.kt2-insight-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.kt2-insight-body {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.kt2-sowhat {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 30px 14px 20px;
+  background: var(--navy);
+  color: #fff;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%);
+}
+
+.kt2-sowhat-tag {
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.kt2-sowhat-text {
+  font-size: 16px;
+  font-weight: 700;
+}
+
 /* Small multiples: shared-scale mini bar charts */
 .sm-grid {
   display: grid;
