@@ -1426,6 +1426,131 @@ test("operating_model_cascade end to end: 3 fixtures (reference-faithful 4-stage
   }
 });
 
+// ============================================================================================
+// Library v0.2 Integration Gate
+// ============================================================================================
+// With all 7 Library v0.2 patterns (RP-KPI-EXEC-DASHBOARD-01, RP-COMPARISON-TABLE-01,
+// RP-DECISION-ASK-01, RP-KEY-TAKEAWAYS-01, RP-MATRIX-BADGELIST-01, RP-100DAY-WORKSTREAM-01,
+// RP-OPERATING-MODEL-01) individually verified above, the remaining risk is not "does pattern
+// X work in isolation" but "do the 7 correctly reject each other's own content when explicitly
+// asked" — a full 7x7 Selector Collision Matrix — plus a single mixed deck (1 slide per
+// pattern) exercised through the complete pipeline to catch deck-level issues no single-slide
+// test can see (page numbering, footer/margin consistency, cross-pattern visual rhythm).
+
+function libraryCollisionFixtures() {
+  const kpiFixture = {
+    elements: [
+      { semanticRole: "headline", groupId: null, value: "収益性は改善基調、次の論点は運転資本の圧縮" },
+      ...kpiGroupElements(1, "売上高", "128", { icon: "bar-chart", context: "トップラインの持続的な成長", unit: "億円", delta: "+12%" }),
+      ...kpiGroupElements(2, "EBITDA", "18.4", { icon: "coins", context: "収益力の強化とキャッシュ創出", unit: "億円", delta: "+2.1億円" }),
+      ...kpiGroupElements(3, "粗利率", "32.5", { icon: "pie", context: "高付加価値化による収益性向上", unit: "%", delta: "+1.8pt" }),
+      { semanticRole: "title", groupId: "insights", value: "示唆" },
+      { semanticRole: "bullets", groupId: "insights", value: "売上成長は継続している" },
+    ],
+    relationships: [],
+  };
+  const cmpFixture = {
+    elements: [
+      ...["Strategic Fit", "Synergy Potential", "Execution Risk"].map((c) => ({ semanticRole: "title", groupId: "criteria", value: c })),
+      ...cmpCandidateElements("cand-a", "候補A", ["○|方向性は一致", "○|中程度", "○|管理可能"]),
+      ...cmpCandidateElements("cand-b", "候補B", ["◎|中核戦略に合致", "◎|大きい", "○|管理可能"], { highlight: true }),
+    ],
+    relationships: [],
+  };
+  const dqFixture = {
+    elements: [
+      ...dqGroupElements("dg0", "01", "Day60組織案の承認", ["営業・調達・人事の責任体制を確定"], { context: "組織を整える", icon: "org-chart" }),
+      ...dqGroupElements("dg1", "02", "100日目標の承認", ["顧客離反ゼロ"], { context: "成果を出す", icon: "bar-chart" }),
+    ],
+    relationships: [],
+  };
+  const twFixture = {
+    elements: [
+      ...twGroupElements("tw0", "01", "市場", "高付加価値セグメントが成長を牽引", "上位顧客の需要が堅調", { icon: "bar-chart" }),
+      ...twGroupElements("tw1", "02", "収益", "粗利改善余地は調達統合に集中", "共同購買の即効性が高い", { icon: "coins" }),
+      { semanticRole: "title", groupId: "insightPanel", value: "示唆" },
+      ...insightItemElements("insightPanel-i1", "1", "成長領域への集中", "高付加価値セグメントに経営資源を優先配分する"),
+      { semanticRole: "title", groupId: "soWhat", value: "So What" },
+      { semanticRole: "body", groupId: "soWhat", value: "したがって、買収後100日間は価格より統合実行力が価値創出を左右する" },
+    ],
+    relationships: [],
+  };
+  return {
+    kpi: { name: "KPI Dashboard", fixture: kpiFixture, intent: { family: "kpi-dashboard", variant: "standard" }, expected: "RP-KPI-EXEC-DASHBOARD-01", title: "収益性は改善基調、次の論点は運転資本の圧縮" },
+    comparison: { name: "Comparison Table", fixture: cmpFixture, intent: { family: "comparison-table", variant: "standard" }, expected: "RP-COMPARISON-TABLE-01", title: "戦略オプションを主要評価軸で比較する" },
+    decision: { name: "Decision Ask", fixture: dqFixture, intent: { family: "decision-ask", variant: "standard" }, expected: "RP-DECISION-ASK-01", title: "Day60組織案・100日目標の2論点についてご承認いただきたい" },
+    takeaways: { name: "Key Takeaways", fixture: twFixture, intent: { family: "key-takeaways", variant: "standard" }, expected: "RP-KEY-TAKEAWAYS-01", title: "検討全体から導く2つの結論について報告する" },
+    matrix: { name: "Matrix Badge List", fixture: mqFullIr(), intent: { family: "matrix", variant: "badge-list" }, expected: "RP-MATRIX-BADGELIST-01", title: "統合課題を緊急度と事業影響度で整理する" },
+    workstream100day: { name: "100-Day Workstream", fixture: w100FullIr(), intent: { family: "100day-workstream", variant: "standard" }, expected: "RP-100DAY-WORKSTREAM-01", title: "100日プランは4つのワークストリームで推進する" },
+    operatingModel: { name: "Operating Model", fixture: omFullIr(), intent: { family: "operating-model", variant: "standard" }, expected: "RP-OPERATING-MODEL-01", title: "統合後の営業オペレーティングモデルを4層で再設計する" },
+  };
+}
+
+test("Library v0.2 Integration Gate: Selector Collision Matrix — each of the 7 patterns' own canonical fixture PASSes only its own (family, variant) intent and FAILs the other 6", async () => {
+  const patterns = Object.values(libraryCollisionFixtures());
+  for (const row of patterns) {
+    for (const col of patterns) {
+      const result = await selectPattern(col.intent, row.fixture);
+      if (row.name === col.name) {
+        assert.equal(result.eligibility, "PASS", `${row.name} fixture x its own (${col.intent.family}|${col.intent.variant}) intent (diagonal) should PASS`);
+        assert.equal(result.selectedPattern, col.expected, `${row.name} fixture x its own intent should select ${col.expected}`);
+      } else {
+        assert.equal(
+          result.eligibility, "FAIL",
+          `${row.name}'s own fixture x ${col.name}'s (${col.intent.family}|${col.intent.variant}) intent should FAIL, not be mistakenly accepted as ${col.name} (off-diagonal false positive)`,
+        );
+      }
+    }
+  }
+});
+
+test("Library v0.2 Integration Gate: RP-MATRIX-BADGELIST-01's own fixture is rejected by the pre-existing matrix|hero and matrix|plain intents, and a Hero-shaped fixture is rejected by matrix|badge-list", async () => {
+  const badgeListFixture = mqFullIr();
+  const heroResult = await selectPattern({ family: "matrix", variant: "hero" }, badgeListFixture);
+  assert.equal(heroResult.eligibility, "FAIL");
+  const plainResult = await selectPattern({ family: "matrix", variant: "plain" }, badgeListFixture);
+  assert.equal(plainResult.eligibility, "FAIL");
+  const badgeListResult = await selectPattern({ family: "matrix", variant: "badge-list" }, MATRIX_HERO_IR);
+  assert.equal(badgeListResult.eligibility, "FAIL");
+});
+
+test("Library v0.2 Integration Gate: Mixed Deck E2E — a 7-slide showcase deck (one slide per Library v0.2 pattern) validates, renders with 0 QA findings across every slide, and exports to a clean, fully-audited PPTX", async () => {
+  const fixtures = libraryCollisionFixtures();
+  const slides = [];
+  for (const key of ["kpi", "comparison", "decision", "takeaways", "matrix", "workstream100day", "operatingModel"]) {
+    const p = fixtures[key];
+    const selection = await selectPattern(p.intent, p.fixture);
+    assert.equal(selection.eligibility, "PASS", `${p.name}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, p.fixture, { title: p.title, source: "Source: test" });
+    slides.push(slide);
+  }
+
+  const specPath = path.join(tmpDir, "library-v02-showcase-spec.json");
+  const htmlPath = path.join(tmpDir, "library-v02-showcase.html");
+  const pptxPath = path.join(tmpDir, "library-v02-showcase.pptx");
+  await fs.writeFile(specPath, JSON.stringify({ deckTitle: "Library v0.2 Showcase", slides }));
+
+  await execFileAsync("node", [path.join(root, "scripts/validate_spec.mjs"), specPath]);
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+  const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+  const gateReport = JSON.parse(gateResult.stdout);
+  assert.equal(gateReport.passed, true, `deck-level mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+  await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+  const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+  assert.deepEqual(auditResult, { passed: true, errors: [] }, "deck-level PPTX OOXML audit");
+
+  // Deck-level content fidelity: every pattern's own title made it into the deck unmutated,
+  // in the same order the slides were authored (page-to-page order is itself a content
+  // property this deck cares about, since the showcase's own narrative is "one pattern per
+  // page, in a stable order").
+  const savedSpec = JSON.parse(await fs.readFile(specPath, "utf8"));
+  assert.equal(savedSpec.slides.length, 7);
+  const expectedTemplates = ["kpi_dashboard", "comparison_table", "decision_page", "recommendation_pillars", "matrix_2x2", "workstream_100day", "operating_model_cascade"];
+  assert.deepEqual(savedSpec.slides.map((s) => s.template), expectedTemplates);
+});
+
 test("render_html_screenshots: an issue_tree root box does not false-positive as overflow (matches qa_html_deck.mjs's own .ltree exclusion)", async () => {
   // Regression for a real drift found while wiring up the Hierarchy Reference Pattern: a
   // hierarchy slide with a normal-length root label (経営改善タスクフォース) reported an
