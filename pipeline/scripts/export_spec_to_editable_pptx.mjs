@@ -627,6 +627,105 @@ function addMatrixBadgeList(item, pageNum) {
   }
 }
 
+// RP-100DAY-WORKSTREAM-01 mirror of render_spec_to_html.mjs#renderWorkstream100Day — a
+// swimlane x phase 2D matrix (workstream rail x phase band x activity grid x milestone band),
+// NOT a timeline. Per explicit review requirement, phase band / milestone band / row-height
+// lock are hard requirements here, not simplified for PPTX: phase segments use the native
+// homePlate preset (same flat-left/pointed-right flag shape as the HTML version, independent
+// segments with a real gap, not an interlocking notch/point); the milestone band is one
+// full-width filled rect (not just a line) spanning the rail-label column too; rail cards and
+// grid cells share the same per-row height via identical row math, not independent layouts.
+function addWorkstream100Day(item, pageNum) {
+  const slide = addShell(item, pageNum);
+  const workstreams = item.workstreams || [];
+  const phases = [...(item.phases || [])].sort((a, b) => a.order - b.order);
+  const activityByKey = new Map((item.activities || []).map((a) => [`${a.workstreamId}::${a.phaseId}`, a]));
+  const milestonesByPhase = new Map((item.milestones || []).map((m) => [m.phaseId, m]));
+
+  const railW = 1.55;
+  const colGap = 0.14;
+  const top = 2.0;
+  const phaseBandH = 0.5;
+  const phaseGapY = 0.12;
+  const milestoneBandH = 0.95;
+  const bottom = FOOTER_Y - milestoneBandH - 0.08;
+  const gridTop = top + phaseBandH + phaseGapY;
+  const gridX = M + railW + colGap;
+  const gridW = W - M * 2 - railW - colGap;
+  const gridH = bottom - gridTop;
+  const nWs = workstreams.length;
+  const nPh = phases.length;
+  const rowGap = 0.08;
+  const rowH = (gridH - rowGap * (nWs - 1)) / nWs;
+  const colGapX = 0.1;
+  const colW = (gridW - colGapX * (nPh - 1)) / nPh;
+
+  addBodyText(slide, "ワークストリーム", M, top + phaseBandH - 0.22, railW, 0.22, { fontSize: 10.5, bold: true, color: MUTED, valign: "bottom" });
+
+  // Phase band: independent flag segments (flat left, pointed right), a real gap between them
+  // — same homePlate idiom already used for RP-DECISION-ASK-01's recommendation bar and
+  // RP-KEY-TAKEAWAYS-01's So What bar, not an interlocking notch/point ribbon.
+  phases.forEach((p, i) => {
+    const px = gridX + i * (colW + colGapX);
+    slide.addShape(pptx.ShapeType.homePlate, { x: px, y: top, w: colW, h: phaseBandH, fill: { color: CYAN, transparency: 55 }, line: { type: "none" } });
+    addBodyText(slide, p.title, px + 0.14, top + 0.06, colW - 0.3, 0.26, { fontSize: 13, bold: true, color: NAVY });
+    if (p.subtitle) addBodyText(slide, p.subtitle, px + 0.14, top + 0.32, colW - 0.3, 0.18, { fontSize: 9, bold: true, color: BLUE });
+  });
+
+  workstreams.forEach((w, wi) => {
+    const cy = gridTop + wi * (rowH + rowGap);
+    slide.addShape(pptx.ShapeType.rect, { x: M, y: cy, w: railW, h: rowH, fill: { color: NAVY }, line: { type: "none" } });
+    const iconSize = 0.32;
+    if (w.icon) addPatternIcon(slide, w.icon, M + 0.12, cy + 0.12, iconSize, "5A4A3D", { filled: true });
+    const railTextX = M + 0.12 + iconSize + 0.1;
+    const railTextW = railW - (railTextX - M) - 0.1;
+    addBodyText(slide, w.title, railTextX, cy + 0.08, railTextW, 0.24, { fontSize: 11.5, bold: true, color: WHITE });
+    if (w.subtitle) addBodyText(slide, w.subtitle, railTextX, cy + 0.08 + 0.24, railTextW, rowH - 0.08 - 0.24 - 0.06, { fontSize: 8, color: "D8D0C8" });
+
+    phases.forEach((p, pi) => {
+      const cx = gridX + pi * (colW + colGapX);
+      slide.addShape(pptx.ShapeType.rect, { x: cx, y: cy, w: colW, h: rowH, fill: { color: "FAF7F1" }, line: { color: HAIR, width: 0.75 } });
+      const a = activityByKey.get(`${w.id}::${p.id}`);
+      if (!a) return;
+      const iconSizeC = 0.22;
+      const ty0 = cy + 0.08;
+      if (a.icon) addPatternIcon(slide, a.icon, cx + 0.1, ty0, iconSizeC, BLUE, { filled: false });
+      const titleX = cx + 0.1 + iconSizeC + 0.08;
+      addBodyText(slide, a.title, titleX, ty0 - 0.02, cx + colW - 0.1 - titleX, 0.34, { fontSize: 10.5, bold: true, color: NAVY });
+      const bulletsY = ty0 + iconSizeC + 0.06;
+      const bullets = toFormattedBullets(a.bullets);
+      if (bullets) addBodyText(slide, bullets, cx + 0.1, bulletsY, colW - 0.2, cy + rowH - bulletsY - 0.06, { fontSize: 8.5, color: INK });
+    });
+  });
+
+  // Milestone band: one full-width filled rect (rail-label column included), not just a line
+  // under the grid — this is what makes it read as a structural closing band, per Visual
+  // Contract review, not a plain timeline row.
+  const bandY = bottom + 0.1;
+  slide.addShape(pptx.ShapeType.rect, { x: M, y: bandY, w: W - M * 2, h: milestoneBandH, fill: { color: CYAN, transparency: 78 }, line: { type: "none" } });
+  slide.addShape(pptx.ShapeType.line, { x: M, y: bandY, w: W - M * 2, h: 0, line: { color: HAIR, width: 0.75 } });
+  addBodyText(slide, "主要マイルストーン", M + 0.14, bandY + 0.16, railW - 0.14, 0.3, { fontSize: 10.5, bold: true, color: MUTED });
+
+  const lineY = bandY + 0.32;
+  slide.addShape(pptx.ShapeType.line, { x: gridX, y: lineY, w: gridW - 0.16, h: 0, line: { color: BLUE, width: 2.2 } });
+  slide.addShape(pptx.ShapeType.rightArrow, { x: gridX + gridW - 0.16, y: lineY - 0.05, w: 0.16, h: 0.1, fill: { color: BLUE }, line: { type: "none" } });
+
+  phases.forEach((p, i) => {
+    const m = milestonesByPhase.get(p.id);
+    if (!m) return;
+    const mx = gridX + i * (colW + colGapX);
+    const centerX = mx + colW / 2;
+    const groupW = 0.9;
+    const gx = centerX - groupW / 2;
+    const numR = 0.11;
+    slide.addShape(pptx.ShapeType.ellipse, { x: gx, y: lineY - numR, w: numR * 2, h: numR * 2, fill: { color: NAVY }, line: { type: "none" } });
+    addBodyText(slide, String(m.position), gx, lineY - numR, numR * 2, numR * 2, { fontSize: 9, bold: true, color: WHITE, align: "center", valign: "middle" });
+    addBodyText(slide, m.label, gx + numR * 2 + 0.06, lineY - numR - 0.02, groupW - numR * 2 - 0.06, 0.2, { fontSize: 10.5, bold: true, color: NAVY });
+    addBodyText(slide, m.title, mx, lineY + 0.16, colW, 0.22, { fontSize: 10, bold: true, color: INK, align: "center" });
+    if (m.body) addBodyText(slide, m.body, mx, lineY + 0.38, colW, bandY + milestoneBandH - (lineY + 0.38) - 0.06, { fontSize: 8.5, color: MUTED, align: "center" });
+  });
+}
+
 function addMatrix(item, pageNum) {
   if (Array.isArray(item.quadrants) && item.quadrants.some((q) => Array.isArray(q.items))) return addMatrixBadgeList(item, pageNum);
   if (Array.isArray(item.quadrants)) return addMatrixQuadrants(item, pageNum);
@@ -2310,6 +2409,9 @@ deck.slides.forEach((item, i) => {
       break;
     case "matrix_2x2":
       addMatrix(item, i + 1);
+      break;
+    case "workstream_100day":
+      addWorkstream100Day(item, i + 1);
       break;
     case "waterfall":
       addWaterfall(item, i + 1);

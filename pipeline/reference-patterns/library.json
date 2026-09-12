@@ -209,6 +209,38 @@
       ],
       "slideSpecTemplate": "matrix_2x2",
       "slideSpecShape": "matrixBadgeList"
+    },
+    {
+      "patternId": "RP-100DAY-WORKSTREAM-01",
+      "name": "100-Day Workstream Plan",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-100DAY-WORKSTREAM-01.jpg — Library v0.2, sixth pattern implemented (independently defined for this project), and the first implemented under references/reference-pattern-implementation-policy.md's mandatory Visual Contract process. Full Visual Contract at pipeline/reference-patterns/visual-contracts/RP-100DAY-WORKSTREAM-01.md. This is a swimlane x phase 2D matrix (an independent workstream rail x a fixed 3-phase band x a 2D activity grid x a cross-cutting milestone rail), NOT a timeline — the existing `roadmap` template's contains/sequence shape is not reused or extended for this.",
+      "useWhen": "the slide's job is to lay out a short, fixed-horizon execution plan (e.g. a 100-day plan) as several parallel workstreams, each with its own concrete action per time phase, closing with a small number of cross-workstream milestones anchored to those same phases.",
+      "canonicalVariant": "4 workstreams x 3 phases (Day0-30/Day31-60/Day61-100), each workstream x phase cell holding an icon + action title + 2 supporting bullets, closing with exactly 3 milestones (one per phase, Day30/Day60/Day100) on a full-width rail beneath the grid. 3-5 workstreams are supported ADAPTIVE variants of this same composition; phase count is fixed at 3 for v1 (not variable) — see the Visual Contract's own Adaptive Rules for why phase count specifically was kept conservative.",
+      "requiredSemanticRoles": [
+        "3-5 workstream groups (groupId prefix \"workstream-\"), each with a title and an icon",
+        "exactly 3 phase groups (groupId prefix \"phase-\"), each with a title and a unique order (1/2/3)",
+        "exactly (workstream count x 3) activity groups (groupId prefix \"activity-\"), each with a title, an icon, >=1 bullets, a workstreamRef, and a phaseRef — covering every workstream x phase pair exactly once",
+        "exactly 3 milestone groups (groupId prefix \"milestone-\"), each with a label, a title, a unique position (1/2/3), and a phaseRef — one milestone per authored phase"
+      ],
+      "optionalSemanticRoles": [
+        "a subtitle on a workstream group",
+        "a subtitle on a phase group",
+        "a body on a milestone group"
+      ],
+      "relationshipsRequired": [],
+      "visualIntent": "execute",
+      "densityRange": "high",
+      "emphasisModel": "no structural emphasis mechanism for this pattern — every workstream/phase/cell carries equal visual weight; the milestone rail's 1/2/3 numbering is sequence, not emphasis. Don't author an emphasis flag here.",
+      "supportingBand": "mandatory — the milestone rail is a load-bearing 5th structural band (not a 5th workstream row, not optional), the same discipline as RP-KEY-TAKEAWAYS-01's insightPanel/soWhat and RP-MATRIX-BADGELIST-01's insights panel.",
+      "doNotUseWhen": [
+        "the content is genuinely a single-lane timeline (one sequence of phases/milestones, no parallel workstreams) — use the existing `roadmap` template instead",
+        "there is only 1 workstream, or fewer than 3, or more than 5 — outside the v1 supported range",
+        "the plan doesn't actually need a fixed 3-phase structure (e.g. a variable number of phases) — not yet supported, see the Visual Contract's Adaptive Rules",
+        "cells don't need bullets, just a single headline per workstream x phase — use a plain table instead"
+      ],
+      "slideSpecTemplate": "workstream_100day",
+      "slideSpecShape": "workstream100day"
     }
   ]
 }

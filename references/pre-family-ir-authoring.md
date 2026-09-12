@@ -338,6 +338,84 @@ RP-MATRIX-PLAIN-01 instead), only 1 axis is authored or both axis words describe
 dimension (→ cards), or the items don't actually need 2-axis triage at all, just a flat
 categorized list (→ plain cards or a table).
 
+## 100-Day Workstream Plan (RP-100DAY-WORKSTREAM-01, Library v0.2) → `workstream_100day` (`workstream100day` shape)
+
+Independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-100DAY-WORKSTREAM-01.jpg` and the full
+Visual Contract at `pipeline/reference-patterns/visual-contracts/RP-100DAY-WORKSTREAM-01.md`
+(the first pattern implemented under `references/reference-pattern-implementation-policy.md`'s
+mandatory Visual Contract process). This is a **swimlane x phase 2D matrix, not a timeline** —
+an independent workstream rail x a fixed 3-phase band x a genuine 2D activity grid x a
+cross-cutting milestone band. The existing `roadmap` template's `contains`/`sequence` timeline
+shape is NOT reused or extended here; a 2D grid needs a different Semantic Contract, not a
+richer 1D one.
+
+- **3-5 workstream groups**, groupId prefix `"workstream-"` (the groupId itself becomes the
+  `id` in the output SlideSpec — no separate id element needed), each with:
+  - `"title"` — the workstream's own name (e.g. "営業").
+  - `"icon"` — **required, not optional** (Component Anatomy's own rail-card definition
+    requires an icon; a card with no icon is a degraded card). Closed vocabulary: `people` /
+    `coins` / `person` / `bar-chart` — reused as-is from other patterns' existing icon sets,
+    deliberately not expanded, since these 4 already cover this pattern's own workstream
+    concepts (commercial/people, cost/procurement, HR/individual, management/metrics).
+  - Optional `"subtitle"` — a short one-line role description (e.g. "収益成長の加速").
+- **Exactly 3 phase groups** (fixed for v1, not a variable count — see Adaptive Rules below),
+  groupId prefix `"phase-"`, each with:
+  - `"title"` — the phase label (e.g. "Day0-30").
+  - `"order"` — **required**, one of `1`/`2`/`3`, each used exactly once. Authored directly,
+    like every other "number"/"order" field in this library — never inferred.
+  - Optional `"subtitle"` — a short phase description (e.g. "基盤整備・計画策定").
+- **Exactly (workstream count x 3) activity groups** — one per workstream x phase
+  intersection, 100% coverage, no gaps or duplicates — groupId prefix `"activity-"`, each with:
+  - `"title"` — the cell's own action headline.
+  - `"icon"` — **required, not optional** (Reference-defining Feature #4 is icon + title +
+    bullets TOGETHER — an activity cell missing any of the three is degraded, not adaptive).
+    Closed vocabulary: `target` / `search` / `org-chart` / `gear` / `trending-up` / `handshake`
+    / `document` / `bar-chart` — a DIFFERENT set from `workstreams[].icon` (this pattern
+    deliberately keeps 2 separate icon vocabularies at 2 different structural levels, the same
+    way RP-DECISION-ASK-01's and RP-KEY-TAKEAWAYS-01's icon sets don't overlap either).
+  - `"bullets"` elements, >=1, order preserved — the supporting detail under the headline.
+  - `"workstreamRef"` and `"phaseRef"` — **required** cross-reference elements naming the
+    groupId of the workstream/phase this activity belongs to. This is deliberately NOT encoded
+    by parsing the activity's own groupId string (e.g. splitting `"activity-sales-1"`) — an
+    author's workstream or phase id could itself contain a `-`, which string-parsing would
+    silently mis-split. Explicit reference elements are unambiguous regardless of what the
+    referenced ids look like.
+- **Exactly 3 milestone groups** (fixed for v1, one per phase — not `>=1`), groupId prefix
+  `"milestone-"`, each with:
+  - `"label"` — the short tag (e.g. "Day30").
+  - `"title"` — the milestone's own headline.
+  - `"position"` — **required**, one of `1`/`2`/`3`, each used exactly once.
+  - `"phaseRef"` — **required**, naming which phase group this milestone sits under. Each of
+    the 3 authored phases must be referenced by exactly one milestone (a strict 1:1 mapping,
+    not an independently-sized list) — the milestone band's markers align under their own
+    phase column, so a milestone with no phase, or a phase with no milestone, would silently
+    break that alignment.
+  - Optional `"body"` — a short supporting sentence.
+- No `emphasis` field anywhere for this pattern — its reference image doesn't single out one
+  workstream/phase/cell as "the important one" the way RP-MATRIX-HERO-01/PLAIN-01 or
+  RP-MATRIX-BADGELIST-01 do; the milestone band's 1/2/3 numbering is sequence, not emphasis.
+  Don't author one speculatively.
+- No relationship type is required — workstream/phase/activity/milestone groups are all
+  identified by their reserved groupId PREFIX (same idiom as RP-KEY-TAKEAWAYS-01's
+  `"insightPanel-*"`, just with 4 distinct prefixes instead of 1, since there's no small fixed
+  set of literal position names to reuse here the way RP-MATRIX-BADGELIST-01 has exactly 4
+  canonical quadrant positions).
+
+**Adaptive Rules (deliberately conservative for v1)**: canonical is 4 workstreams x 3 phases —
+the reference image's own composition. **3-5 workstreams are supported adaptive variants; phase
+count is fixed at exactly 3, not variable.** 4+ phases and 6+ workstreams are explicitly out of
+scope for v1 — phase count drives the whole grid's column structure and the phase band's own
+chevron geometry, so making it variable multiplies the fidelity-maintenance burden well before
+there's real authoring evidence 3 phases is ever insufficient. If that need materializes later,
+it should be its own follow-up review, not something this first pass tries to future-proof for.
+
+**Do not use when**: the content is genuinely a single-lane timeline (one sequence of phases/
+milestones, no parallel workstreams) — use the existing `roadmap` template instead; there are
+fewer than 3 or more than 5 workstreams; the plan doesn't actually need a fixed 3-phase
+structure; or cells don't need bullets, just a single headline per workstream x phase (use a
+plain table instead).
+
 ## What NOT to do
 
 - Don't author a pattern's `elements`/`relationships` first and decide the family afterward —

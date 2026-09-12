@@ -1258,6 +1258,270 @@ body {
   font-weight: 600;
 }
 
+/* RP-100DAY-WORKSTREAM-01 — a swimlane x phase 2D matrix (workstream rail x phase band x
+   activity grid x milestone rail), NOT a timeline/roadmap. See
+   pipeline/reference-patterns/visual-contracts/RP-100DAY-WORKSTREAM-01.md. Alignment is
+   achieved by sharing one outer grid (rail-width column + content column) and matching
+   row/column counts between the rail/phaseband/grid/milestone-track nested grids, not by
+   per-element pixel math. */
+.w100-outer {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  column-gap: 16px;
+  row-gap: 6px;
+  height: 100%;
+}
+
+.w100-rail-head {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Chevron ribbon — same clip-path idiom already used elsewhere in this stylesheet for
+   independent flag/pennant segments (per explicit review correction) — flat left edge, pointed
+   right edge, same homePlate idiom this stylesheet already uses elsewhere (RP-DECISION-ASK-01's
+   recommendation bar, RP-KEY-TAKEAWAYS-01's So What bar), with a real gap between segments
+   rather than an interlocking notch/point. */
+.w100-phaseband {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  gap: 10px;
+}
+
+.w100-phase {
+  position: relative;
+  padding: 10px 22px 10px 18px;
+  background: rgba(197, 166, 129, 0.28);
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%);
+}
+
+.w100-phase-label {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.w100-phase-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.w100-rail {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  gap: 4px;
+  height: 100%;
+  min-height: 0;
+}
+
+.w100-rail-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  background: var(--navy);
+  color: #fff;
+  overflow: hidden;
+}
+
+.w100-rail-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.w100-rail-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.w100-rail-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.w100-rail-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.w100-grid {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  gap: 4px;
+  height: 100%;
+  min-height: 0;
+}
+
+.w100-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 12px;
+  background: rgba(197, 166, 129, 0.08);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+
+.w100-cell-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.w100-cell-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(197, 166, 129, 0.4);
+  color: var(--blue);
+}
+
+.w100-cell-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.w100-cell-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--navy);
+}
+
+.w100-cell-bullets {
+  margin: 0;
+  padding-left: 14px;
+  list-style: disc;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.w100-cell-bullets li + li {
+  margin-top: 2px;
+}
+
+/* A single full-width band (spans BOTH outer-grid columns, including the rail-width label
+   area) with its own tan tint — the reference image's milestone row reads as one structural
+   band closing out the whole grid, not a plain timeline row that happens to sit under it.
+   Internally re-splits into the same [rail-width, content] proportions as the outer grid so
+   the caption and the track still line up with the rail/grid above. */
+.w100-milestone-band {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  column-gap: 16px;
+  align-items: stretch;
+  background: rgba(197, 166, 129, 0.22);
+  border-top: 1px solid var(--hairline);
+  padding: 12px 16px;
+}
+
+.w100-milestone-caption {
+  display: flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.w100-milestone-track {
+  position: relative;
+  display: grid;
+  padding-top: 14px;
+}
+
+.w100-milestone-line {
+  position: absolute;
+  top: 11px;
+  left: 0;
+  width: calc(100% - 14px);
+  height: 3px;
+  background: var(--blue);
+}
+
+.w100-milestone-arrow {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-top: 6.5px solid transparent;
+  border-bottom: 6.5px solid transparent;
+  border-left: 9px solid var(--blue);
+}
+
+.w100-milestone {
+  position: relative;
+  padding: 0 10px;
+  text-align: center;
+}
+
+.w100-milestone-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.w100-milestone-num {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.w100-milestone-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.w100-milestone-title {
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.w100-milestone-body {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
 .issue-tree {
   display: grid;
   grid-template-columns: 260px 1fr 1.15fr;
@@ -4018,6 +4282,17 @@ body {
    gap between the title and the first card row. */
 .slide--top-align .slide-inner > .content {
   align-self: start;
+}
+
+/* RP-100DAY-WORKSTREAM-01's grid fills the ENTIRE content row (height:100% at every nested
+   grid level down to .w100-rail/.w100-grid) — but .slide-inner's shared row template is plain
+   `1fr`, not `minmax(0, 1fr)`, so at higher workstream counts (near this pattern's own v1
+   ceiling) .content's default min-height:auto (from its own min-content) can exceed the
+   actually-available row height even though every element visually fits once painted —
+   scrollHeight reports the larger pre-resolution size regardless. Scoped to this pattern only,
+   not the shared .slide-inner rule other templates rely on. */
+.slide--fill-grid .slide-inner > .content {
+  min-height: 0;
 }
 
 .slide--parts .slide-inner > .content {

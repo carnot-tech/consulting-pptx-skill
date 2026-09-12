@@ -65,6 +65,7 @@ const templates = new Set([
   "nested_row_matrix",
   "calc_flow",
   "chevron_value_chain",
+  "workstream_100day",
 ]);
 
 // ── 型プラグイン（scripts/archetypes/*.mjs）。PPTX エクスポーターと同じ登録簿。
@@ -296,6 +297,75 @@ function renderMatrixBadgeList(slide, n) {
     n,
     `<div class="mqb-wrap"><div class="mqb-main"><div class="mqb-row"><div class="mqb-axis-y"><span class="mqb-axis-end">${esc(m.yAxisHigh || "")}</span><div class="mqb-axis-y-arrow"></div><div class="mqb-axis-y-line"></div><span class="mqb-axis-title-y">${esc(m.yAxis || "")}</span><span class="mqb-axis-end">${esc(m.yAxisLow || "")}</span></div><div class="mqb-grid">${cells}</div></div><div class="mqb-axis-x"><span class="mqb-axis-end">${esc(m.xAxisLow || "")}</span><div class="mqb-axis-x-line"></div><div class="mqb-axis-x-arrow"></div><span class="mqb-axis-title">${esc(m.xAxis || "")}</span><span class="mqb-axis-end">${esc(m.xAxisHigh || "")}</span></div></div><div class="mqb-insight">${insights}</div></div>`,
     { noTitleRule: true, className: "slide--top-align" },
+  );
+}
+
+// RP-100DAY-WORKSTREAM-01: a swimlane x phase 2D matrix (workstream rail x phase band x
+// activity grid x milestone rail), NOT a timeline — independent of renderRoadmap. See
+// pipeline/reference-patterns/visual-contracts/RP-100DAY-WORKSTREAM-01.md for the full Visual
+// Contract this renderer is built to satisfy. Alignment (rail rows <-> grid rows, phase band
+// columns <-> grid columns <-> milestone columns) is achieved via CSS Grid line-up, not
+// per-element pixel math — each of rail/phaseband/grid/milestone-track is its own nested grid
+// sharing the same row/column count as its counterpart, all placed within one shared 2-column
+// outer grid (rail-width column + content column).
+function renderWorkstream100Day(slide, n) {
+  const workstreams = slide.workstreams || [];
+  const phases = [...(slide.phases || [])].sort((a, b) => a.order - b.order);
+  const activityByKey = new Map((slide.activities || []).map((a) => [`${a.workstreamId}::${a.phaseId}`, a]));
+  const milestonesByPhase = new Map((slide.milestones || []).map((m) => [m.phaseId, m]));
+
+  const phaseCells = phases
+    .map(
+      (p) =>
+        `<div class="w100-phase"><div class="w100-phase-label">${esc(p.title)}</div>${p.subtitle ? `<div class="w100-phase-sub">${esc(p.subtitle)}</div>` : ""}</div>`,
+    )
+    .join("");
+
+  const railCards = workstreams
+    .map((w) => {
+      const icon = w.icon && PATTERN_ICONS[w.icon] ? `<div class="w100-rail-icon">${PATTERN_ICONS[w.icon]}</div>` : "";
+      return `<div class="w100-rail-card">${icon}<div class="w100-rail-text"><div class="w100-rail-title">${esc(w.title)}</div>${w.subtitle ? `<div class="w100-rail-sub">${esc(w.subtitle)}</div>` : ""}</div></div>`;
+    })
+    .join("");
+
+  const cells = workstreams
+    .map((w) =>
+      phases
+        .map((p) => {
+          const a = activityByKey.get(`${w.id}::${p.id}`);
+          if (!a) return `<div class="w100-cell"></div>`;
+          const icon = a.icon && PATTERN_ICONS[a.icon] ? `<div class="w100-cell-icon">${PATTERN_ICONS[a.icon]}</div>` : "";
+          const bullets = a.bullets.map((b) => `<li>${esc(b)}</li>`).join("");
+          return `<div class="w100-cell"><div class="w100-cell-head">${icon}<div class="w100-cell-title">${esc(a.title)}</div></div><ul class="w100-cell-bullets">${bullets}</ul></div>`;
+        })
+        .join(""),
+    )
+    .join("");
+
+  const milestoneItems = phases
+    .map((p) => {
+      const m = milestonesByPhase.get(p.id);
+      if (!m) return `<div class="w100-milestone"></div>`;
+      return `<div class="w100-milestone"><div class="w100-milestone-head"><span class="w100-milestone-num">${esc(String(m.position))}</span><span class="w100-milestone-label">${esc(m.label)}</span></div><div class="w100-milestone-title">${esc(m.title)}</div>${m.body ? `<div class="w100-milestone-body">${esc(m.body)}</div>` : ""}</div>`;
+    })
+    .join("");
+
+  const n_ph = phases.length;
+  const n_ws = workstreams.length;
+  return shell(
+    slide,
+    n,
+    `<div class="w100-outer">
+      <div class="w100-rail-head">ワークストリーム</div>
+      <div class="w100-phaseband" style="grid-template-columns: repeat(${n_ph}, minmax(0, 1fr));">${phaseCells}</div>
+      <div class="w100-rail" style="grid-template-rows: repeat(${n_ws}, minmax(0, 1fr));">${railCards}</div>
+      <div class="w100-grid" style="grid-template-columns: repeat(${n_ph}, minmax(0, 1fr)); grid-template-rows: repeat(${n_ws}, minmax(0, 1fr));">${cells}</div>
+      <div class="w100-milestone-band">
+        <div class="w100-milestone-caption">主要マイルストーン</div>
+        <div class="w100-milestone-track" style="grid-template-columns: repeat(${n_ph}, minmax(0, 1fr));"><div class="w100-milestone-line"></div><div class="w100-milestone-arrow"></div>${milestoneItems}</div>
+      </div>
+    </div>`,
+    { noTitleRule: true, className: "slide--top-align slide--fill-grid" },
   );
 }
 
@@ -944,6 +1014,13 @@ const PATTERN_ICONS = {
   // Decorative header icon for the Matrix Badge List insights panel — not part of any
   // per-item closed vocabulary.
   bulb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M8.5 14.6A5.5 5.5 0 1 1 15.5 14.6c-.75.9-1.5 1.6-1.5 2.9H10c0-1.3-.75-2-1.5-2.9Z"/></svg>',
+  // RP-100DAY-WORKSTREAM-01's own activity-icon closed vocabulary (target/search/trending-up/
+  // handshake/document are new — org-chart/gear/bar-chart above are reused as-is).
+  target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="20.5" y2="20.5"/></svg>',
+  "trending-up": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 5h6v6"/></svg>',
+  handshake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12.5l4.5-3.5 3 2.2-2 2.3 2.3 2-1.4 1.8"/><path d="M22 12.5l-4.5-3.5-3 2.2 2 2.3-2.3 2 1.4 1.8"/></svg>',
+  document: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17H6z"/><path d="M15 2v3h3"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>',
 };
 
 function kpiTileHtml(k) {
@@ -1266,6 +1343,8 @@ function renderSlide(slide, n) {
       return renderChartInsight(slide, n);
     case "matrix_2x2":
       return renderMatrix(slide, n);
+    case "workstream_100day":
+      return renderWorkstream100Day(slide, n);
     case "waterfall":
       return renderWaterfall(slide, n);
     case "comparison_table":

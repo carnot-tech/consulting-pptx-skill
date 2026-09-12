@@ -56,6 +56,7 @@ const FAMILY_VARIANT_MAP = {
   "comparison-table|standard": ["RP-COMPARISON-TABLE-01"],
   "decision-ask|standard": ["RP-DECISION-ASK-01"],
   "key-takeaways|standard": ["RP-KEY-TAKEAWAYS-01"],
+  "100day-workstream|standard": ["RP-100DAY-WORKSTREAM-01"],
 };
 
 export async function runRegistryConsistencyGate(registry, library) {
@@ -320,6 +321,90 @@ function checkMatrixBadgeListShape(elements) {
   return { pass: true, insightCount: insightItems.length };
 }
 
+// RP-100DAY-WORKSTREAM-01: a swimlane x phase 2D matrix, not a timeline — independent of
+// RP-PMI-ROADMAP-01's contains/sequence shape. Groups are classified by a reserved groupId
+// PREFIX (same idiom as this library's other reserved-prefix conventions, e.g.
+// RP-KEY-TAKEAWAYS-01's "insightPanel-*"), since — unlike Matrix Badge List's 4 fixed
+// canonical positions — there is no small fixed set of literal names to reuse here:
+// "workstream-*" / "phase-*" / "activity-*" / "milestone-*". Activities and milestones cross-
+// reference their workstream/phase by an explicit authored `workstreamRef`/`phaseRef` element
+// (the referenced group's own groupId) rather than by parsing structure out of the groupId
+// string, which would be fragile if an author's own workstream/phase id ever contained a
+// separator character.
+function checkWorkstream100DayShape(elements) {
+  const byGroup = elementsByGroupId(elements);
+  const groupIds = [...byGroup.keys()];
+  const workstreamIds = groupIds.filter((g) => g.startsWith("workstream-"));
+  const phaseIds = groupIds.filter((g) => g.startsWith("phase-"));
+  const activityIds = groupIds.filter((g) => g.startsWith("activity-"));
+  const milestoneIds = groupIds.filter((g) => g.startsWith("milestone-"));
+
+  if (workstreamIds.length < 3 || workstreamIds.length > 5) {
+    return { pass: false, reason: `${workstreamIds.length} workstream groups (need 3-5)` };
+  }
+  for (const gid of workstreamIds) {
+    const els = byGroup.get(gid);
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `workstream "${gid}" has no title element` };
+    if (!els.some((e) => e.semanticRole === "icon")) return { pass: false, reason: `workstream "${gid}" has no icon element (icon is required for this pattern)` };
+  }
+
+  if (phaseIds.length !== 3) {
+    return { pass: false, reason: `${phaseIds.length} phase groups (need exactly 3 — phase count is fixed for this pattern's v1)` };
+  }
+  const orders = new Set();
+  for (const gid of phaseIds) {
+    const els = byGroup.get(gid);
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `phase "${gid}" has no title element` };
+    const order = els.find((e) => e.semanticRole === "order")?.value;
+    if (!["1", "2", "3"].includes(String(order))) return { pass: false, reason: `phase "${gid}" has no valid order element (must be 1, 2, or 3)` };
+    if (orders.has(String(order))) return { pass: false, reason: `phase "${gid}" duplicates order ${order} — each of 1/2/3 must be used exactly once` };
+    orders.add(String(order));
+  }
+
+  const expectedActivityCount = workstreamIds.length * phaseIds.length;
+  if (activityIds.length !== expectedActivityCount) {
+    return { pass: false, reason: `${activityIds.length} activity groups, expected exactly ${expectedActivityCount} (${workstreamIds.length} workstreams x ${phaseIds.length} phases — 100% coverage, no gaps or duplicates)` };
+  }
+  const coverage = new Set();
+  for (const gid of activityIds) {
+    const els = byGroup.get(gid);
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `activity "${gid}" has no title element` };
+    if (!els.some((e) => e.semanticRole === "icon")) return { pass: false, reason: `activity "${gid}" has no icon element (icon is required for this pattern)` };
+    if (!els.some((e) => e.semanticRole === "bullets")) return { pass: false, reason: `activity "${gid}" has no bullets elements (need >=1)` };
+    const wsRef = els.find((e) => e.semanticRole === "workstreamRef")?.value;
+    const phRef = els.find((e) => e.semanticRole === "phaseRef")?.value;
+    if (!wsRef || !workstreamIds.includes(wsRef)) return { pass: false, reason: `activity "${gid}" has no valid workstreamRef (must name an authored workstream group)` };
+    if (!phRef || !phaseIds.includes(phRef)) return { pass: false, reason: `activity "${gid}" has no valid phaseRef (must name an authored phase group)` };
+    const key = `${wsRef}::${phRef}`;
+    if (coverage.has(key)) return { pass: false, reason: `activity "${gid}" duplicates the workstream/phase pair already covered by another activity (cross-assignment error)` };
+    coverage.add(key);
+  }
+  if (coverage.size !== expectedActivityCount) {
+    return { pass: false, reason: `only ${coverage.size} of ${expectedActivityCount} workstream x phase combinations are covered by an activity` };
+  }
+
+  if (milestoneIds.length !== 3) {
+    return { pass: false, reason: `${milestoneIds.length} milestone groups (need exactly 3 for v1 — one per phase)` };
+  }
+  const milestonePositions = new Set();
+  const milestonePhaseRefs = new Set();
+  for (const gid of milestoneIds) {
+    const els = byGroup.get(gid);
+    if (!els.some((e) => e.semanticRole === "label")) return { pass: false, reason: `milestone "${gid}" has no label element` };
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `milestone "${gid}" has no title element` };
+    const position = els.find((e) => e.semanticRole === "position")?.value;
+    if (!["1", "2", "3"].includes(String(position))) return { pass: false, reason: `milestone "${gid}" has no valid position element (must be 1, 2, or 3)` };
+    if (milestonePositions.has(String(position))) return { pass: false, reason: `milestone "${gid}" duplicates position ${position} — each of 1/2/3 must be used exactly once` };
+    milestonePositions.add(String(position));
+    const phRef = els.find((e) => e.semanticRole === "phaseRef")?.value;
+    if (!phRef || !phaseIds.includes(phRef)) return { pass: false, reason: `milestone "${gid}" has no valid phaseRef (must name an authored phase group)` };
+    if (milestonePhaseRefs.has(phRef)) return { pass: false, reason: `milestone "${gid}" shares a phaseRef with another milestone — each phase gets exactly one milestone` };
+    milestonePhaseRefs.add(phRef);
+  }
+
+  return { pass: true, workstreamCount: workstreamIds.length, phaseCount: phaseIds.length, activityCount: activityIds.length, milestoneCount: milestoneIds.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -406,6 +491,10 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
       const r = checkMatrixBadgeListShape(elements);
       if (r.pass) evidence.push(`MATRIX_BADGELIST_SHAPE passed: 4 quadrants, ${r.insightCount} insight items`);
       else failedChecks.push(`MATRIX_BADGELIST_SHAPE failed: ${r.reason}`);
+    } else if (checkName === "WORKSTREAM_100DAY_SHAPE") {
+      const r = checkWorkstream100DayShape(elements);
+      if (r.pass) evidence.push(`WORKSTREAM_100DAY_SHAPE passed: ${r.workstreamCount} workstreams x ${r.phaseCount} phases, ${r.activityCount} activities, ${r.milestoneCount} milestones`);
+      else failedChecks.push(`WORKSTREAM_100DAY_SHAPE failed: ${r.reason}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }

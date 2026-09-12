@@ -2,7 +2,7 @@
   "label": "Selector Rule Registry — filtered subset matching pipeline/reference-patterns/library.json",
   "sourceLibraryPin": {
     "file": "library.json",
-    "sha256": "939b8b30bfe05cc80fdce2fb8ed5c775e9edb099a2cc86bd8ff42a4f608fba78"
+    "sha256": "c4b5afb6d6bfa1f691810690f699c7db024ea29a436b6223f272b10e574fff06"
   },
   "patterns": {
     "RP-MATRIX-HERO-01": {
@@ -132,6 +132,18 @@
       "structuralCheckDefinitions": {
         "MATRIX_BADGELIST_SHAPE": {
           "description": "all 4 of the canonical quadrant groupIds (\"top-left\"/\"top-right\"/\"bottom-left\"/\"bottom-right\") must be present, each with a number + title element and >=1 item sub-group (groupId prefix \"${position}-item-\") that itself has a title element. Additionally (unconditionally): an \"axisX\" group and an \"axisY\" group, each with a title element and exactly 2 label elements (low, then high); and an \"insights\" group with >=1 bullets element (mandatory, not optional)."
+        }
+      },
+      "disqualifiers": []
+    },
+    "RP-100DAY-WORKSTREAM-01": {
+      "reachability": "REACHABLE_V0",
+      "requiredRoles": [],
+      "requiredRelationships": [],
+      "structuralChecks": ["WORKSTREAM_100DAY_SHAPE"],
+      "structuralCheckDefinitions": {
+        "WORKSTREAM_100DAY_SHAPE": {
+          "description": "3-5 groups with groupId prefix \"workstream-\", each with a title + icon element. Exactly 3 groups with prefix \"phase-\", each with a title + a unique order element (1/2/3). Exactly (workstream count x 3) groups with prefix \"activity-\", each with a title + icon + >=1 bullets + a workstreamRef + a phaseRef, covering every workstream x phase pair exactly once (100% coverage, no cross-assignment errors). Exactly 3 groups with prefix \"milestone-\", each with a label + title + a unique position element (1/2/3) + a phaseRef, one milestone per authored phase (1:1 mapping, not an independent count)."
         }
       },
       "disqualifiers": []

@@ -126,7 +126,8 @@
             "scenario_lines_cagr",
             "research_basis",
             "issue_action_columns",
-            "agenda_separator"
+            "agenda_separator",
+            "workstream_100day"
           ]
         },
         "title": {
@@ -224,6 +225,22 @@
             "xAxisLow": { "type": "string" },
             "xAxisHigh": { "type": "string" }
           }
+        },
+        "workstreams": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/workstream100dayWorkstream" }
+        },
+        "activities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workstream100dayActivity" }
+        },
+        "milestones": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/workstream100dayMilestone" }
         },
         "ask": {
           "type": "string"
@@ -702,6 +719,26 @@
               { "required": ["sections"] },
               { "required": ["phases"] }
             ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "template": {
+                "const": "workstream_100day"
+              }
+            }
+          },
+          "then": {
+            "required": ["workstreams", "phases", "activities", "milestones"],
+            "properties": {
+              "phases": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": { "$ref": "#/$defs/workstream100dayPhase" }
+              }
+            }
           }
         },
         {
@@ -1677,6 +1714,52 @@
           "minItems": 1,
           "items": { "$ref": "#/$defs/matrixBadgeItem" }
         }
+      }
+    },
+    "workstream100dayWorkstream": {
+      "type": "object",
+      "required": ["id", "title", "icon"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "icon": { "enum": ["people", "coins", "person", "bar-chart"] }
+      }
+    },
+    "workstream100dayPhase": {
+      "type": "object",
+      "required": ["id", "title", "order"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "order": { "type": "integer", "minimum": 1, "maximum": 3 }
+      }
+    },
+    "workstream100dayActivity": {
+      "type": "object",
+      "required": ["workstreamId", "phaseId", "title", "bullets", "icon"],
+      "properties": {
+        "workstreamId": { "type": "string" },
+        "phaseId": { "type": "string" },
+        "title": { "type": "string" },
+        "bullets": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "icon": { "enum": ["target", "search", "org-chart", "gear", "trending-up", "handshake", "document", "bar-chart"] }
+      }
+    },
+    "workstream100dayMilestone": {
+      "type": "object",
+      "required": ["phaseId", "position", "label", "title"],
+      "properties": {
+        "phaseId": { "type": "string" },
+        "position": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "label": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" }
       }
     },
     "decisionGroup": {

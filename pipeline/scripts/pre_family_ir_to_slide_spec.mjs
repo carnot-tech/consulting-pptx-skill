@@ -531,6 +531,88 @@ export function preFamilyIrToMatrixBadgeList({ elements }) {
   return { quadrants, matrix, insights };
 }
 
+// RP-100DAY-WORKSTREAM-01: a swimlane x phase 2D matrix — independent of RP-PMI-ROADMAP-01's
+// contains/sequence timeline shape (see reference_pattern_selector.mjs's own comment on
+// checkWorkstream100DayShape for why). Groups are classified by reserved groupId PREFIX
+// ("workstream-*"/"phase-*"/"activity-*"/"milestone-*"); each group's own groupId becomes its
+// `id` in the output. Activities/milestones cross-reference their workstream/phase via an
+// authored `workstreamRef`/`phaseRef` element (the referenced group's groupId), not by parsing
+// the activity/milestone's own groupId string.
+const WORKSTREAM_ICON_NAMES = new Set(["people", "coins", "person", "bar-chart"]);
+const ACTIVITY_ICON_NAMES = new Set(["target", "search", "org-chart", "gear", "trending-up", "handshake", "document", "bar-chart"]);
+
+export function preFamilyIrToWorkstream100Day({ elements }) {
+  const byGroup = elementsByGroupId(elements);
+  const groupIds = [...byGroup.keys()];
+  const workstreamGroupIds = groupIds.filter((g) => g.startsWith("workstream-"));
+  const phaseGroupIds = groupIds.filter((g) => g.startsWith("phase-"));
+  const activityGroupIds = groupIds.filter((g) => g.startsWith("activity-"));
+  const milestoneGroupIds = groupIds.filter((g) => g.startsWith("milestone-"));
+
+  const workstreams = workstreamGroupIds.map((gid) => {
+    const els = byGroup.get(gid);
+    const title = findRole(els, "title");
+    const icon = findRole(els, "icon");
+    if (!title) throw new Error(`workstream_100day adapter: workstream "${gid}" has no title element`);
+    if (!icon) throw new Error(`workstream_100day adapter: workstream "${gid}" has no icon element (icon is required for this pattern)`);
+    if (!WORKSTREAM_ICON_NAMES.has(icon)) throw new Error(`workstream_100day adapter: workstream "${gid}" icon "${icon}" is not one of ${[...WORKSTREAM_ICON_NAMES].join("/")}`);
+    const workstream = { id: gid, title, icon };
+    const subtitle = findRole(els, "subtitle");
+    if (subtitle) workstream.subtitle = subtitle;
+    return workstream;
+  });
+
+  const phases = phaseGroupIds
+    .map((gid) => {
+      const els = byGroup.get(gid);
+      const title = findRole(els, "title");
+      if (!title) throw new Error(`workstream_100day adapter: phase "${gid}" has no title element`);
+      const order = parseInt(findRole(els, "order"), 10);
+      if (!Number.isInteger(order) || order < 1 || order > 3) throw new Error(`workstream_100day adapter: phase "${gid}" has no valid order element (must be 1-3)`);
+      const phase = { id: gid, title, order };
+      const subtitle = findRole(els, "subtitle");
+      if (subtitle) phase.subtitle = subtitle;
+      return phase;
+    })
+    .sort((a, b) => a.order - b.order);
+
+  const activities = activityGroupIds.map((gid) => {
+    const els = byGroup.get(gid);
+    const title = findRole(els, "title");
+    const icon = findRole(els, "icon");
+    if (!title) throw new Error(`workstream_100day adapter: activity "${gid}" has no title element`);
+    if (!icon) throw new Error(`workstream_100day adapter: activity "${gid}" has no icon element (icon is required for this pattern)`);
+    if (!ACTIVITY_ICON_NAMES.has(icon)) throw new Error(`workstream_100day adapter: activity "${gid}" icon "${icon}" is not one of ${[...ACTIVITY_ICON_NAMES].join("/")}`);
+    const bullets = els.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+    if (!bullets.length) throw new Error(`workstream_100day adapter: activity "${gid}" has no bullets elements`);
+    const workstreamId = findRole(els, "workstreamRef");
+    const phaseId = findRole(els, "phaseRef");
+    if (!workstreamId) throw new Error(`workstream_100day adapter: activity "${gid}" has no workstreamRef element`);
+    if (!phaseId) throw new Error(`workstream_100day adapter: activity "${gid}" has no phaseRef element`);
+    return { workstreamId, phaseId, title, bullets, icon };
+  });
+
+  const milestones = milestoneGroupIds
+    .map((gid) => {
+      const els = byGroup.get(gid);
+      const label = findRole(els, "label");
+      const title = findRole(els, "title");
+      if (!label) throw new Error(`workstream_100day adapter: milestone "${gid}" has no label element`);
+      if (!title) throw new Error(`workstream_100day adapter: milestone "${gid}" has no title element`);
+      const position = parseInt(findRole(els, "position"), 10);
+      if (!Number.isInteger(position) || position < 1 || position > 3) throw new Error(`workstream_100day adapter: milestone "${gid}" has no valid position element (must be 1-3)`);
+      const phaseId = findRole(els, "phaseRef");
+      if (!phaseId) throw new Error(`workstream_100day adapter: milestone "${gid}" has no phaseRef element`);
+      const milestone = { phaseId, position, label, title };
+      const body = findRole(els, "body");
+      if (body) milestone.body = body;
+      return milestone;
+    })
+    .sort((a, b) => a.position - b.position);
+
+  return { workstreams, phases, activities, milestones };
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -569,6 +651,7 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   else if (selection.slideSpecShape === "decisionGroups") body = preFamilyIrToDecisionGroups(preFamilyIR);
   else if (selection.slideSpecShape === "keyTakeaways") body = preFamilyIrToKeyTakeaways(preFamilyIR);
   else if (selection.slideSpecShape === "matrixBadgeList") body = preFamilyIrToMatrixBadgeList(preFamilyIR);
+  else if (selection.slideSpecShape === "workstream100day") body = preFamilyIrToWorkstream100Day(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {

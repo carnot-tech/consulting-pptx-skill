@@ -25,6 +25,7 @@ import {
   preFamilyIrToDecisionGroups,
   preFamilyIrToKeyTakeaways,
   preFamilyIrToMatrixBadgeList,
+  preFamilyIrToWorkstream100Day,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -994,6 +995,225 @@ test("matrix_badgelist end to end: 3 fixtures (reference-faithful canonical, spa
     assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
 
     const pptxPath = path.join(tmpDir, `mqb-e2e-${i}.pptx`);
+    await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+    const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+    assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
+  }
+});
+
+// --- RP-100DAY-WORKSTREAM-01 (Library v0.2, sixth pattern, first under the mandatory Visual
+// Contract process — see pipeline/reference-patterns/visual-contracts/RP-100DAY-WORKSTREAM-01.md) ---
+
+function w100WorkstreamElements(id, title, subtitle, icon) {
+  const gid = `workstream-${id}`;
+  const els = [
+    { semanticRole: "title", groupId: gid, value: title },
+    { semanticRole: "icon", groupId: gid, value: icon },
+  ];
+  if (subtitle) els.push({ semanticRole: "subtitle", groupId: gid, value: subtitle });
+  return els;
+}
+function w100PhaseElements(id, title, subtitle, order) {
+  const gid = `phase-${id}`;
+  const els = [
+    { semanticRole: "title", groupId: gid, value: title },
+    { semanticRole: "order", groupId: gid, value: String(order) },
+  ];
+  if (subtitle) els.push({ semanticRole: "subtitle", groupId: gid, value: subtitle });
+  return els;
+}
+function w100ActivityElements(workstreamId, phaseId, title, bullets, icon) {
+  const gid = `activity-${workstreamId}-${phaseId}`;
+  const els = [
+    { semanticRole: "title", groupId: gid, value: title },
+    { semanticRole: "icon", groupId: gid, value: icon },
+    { semanticRole: "workstreamRef", groupId: gid, value: `workstream-${workstreamId}` },
+    { semanticRole: "phaseRef", groupId: gid, value: `phase-${phaseId}` },
+  ];
+  bullets.forEach((b) => els.push({ semanticRole: "bullets", groupId: gid, value: b }));
+  return els;
+}
+function w100MilestoneElements(id, phaseId, position, label, title, body) {
+  const gid = `milestone-${id}`;
+  const els = [
+    { semanticRole: "label", groupId: gid, value: label },
+    { semanticRole: "title", groupId: gid, value: title },
+    { semanticRole: "position", groupId: gid, value: String(position) },
+    { semanticRole: "phaseRef", groupId: gid, value: `phase-${phaseId}` },
+  ];
+  if (body) els.push({ semanticRole: "body", groupId: gid, value: body });
+  return els;
+}
+function w100FullIr(overrides = {}) {
+  return {
+    elements: [
+      ...w100WorkstreamElements("sales", "営業", "収益成長の加速", "people"),
+      ...w100WorkstreamElements("procurement", "調達", "コスト競争力の強化", "coins"),
+      ...w100WorkstreamElements("hr", "人事", "組織・人の最適化", "person"),
+      ...w100WorkstreamElements("mgmt", "経営管理", "統合効果の可視化", "bar-chart"),
+      ...w100PhaseElements("1", "Day0-30", "基盤整備・計画策定", 1),
+      ...w100PhaseElements("2", "Day31-60", "実行準備・意思決定", 2),
+      ...w100PhaseElements("3", "Day61-100", "本格実行・成果創出", 3),
+      ...w100ActivityElements("sales", "1", "重点顧客150社の引継ぎ設計", ["顧客リストの精査・優先順位付け", "引継ぎ計画と担当体制の設計"], "target"),
+      ...w100ActivityElements("sales", "2", "営業KPI指標を設計", ["売上・粗利・新規・継続・顧客満足の5指標を定義", "モニタリングの仕組みを構築"], "bar-chart"),
+      ...w100ActivityElements("sales", "3", "新体制でモニタリング開始", ["新体制での営業活動を開始", "KPIの月次モニタリングと改善アクションの実行"], "trending-up"),
+      ...w100ActivityElements("procurement", "1", "共通購買候補の洗い出し", ["両社の購買データを分析", "共通化可能な品目・サプライヤーをリスト化"], "search"),
+      ...w100ActivityElements("procurement", "2", "対象30品目を選定", ["インパクト・実現性で優先順位付け", "対象30品目を確定"], "document"),
+      ...w100ActivityElements("procurement", "3", "価格交渉を開始", ["サプライヤーとの価格交渉を開始", "早期のコスト削減効果の創出"], "handshake"),
+      ...w100ActivityElements("hr", "1", "人員配置案を整理", ["現状の組織・人員を可視化", "重複・ギャップを分析し、配置案を作成"], "org-chart"),
+      ...w100ActivityElements("hr", "2", "新組織案を確定", ["経営陣での協議・合意形成", "新組織の役割・体制を確定"], "org-chart"),
+      ...w100ActivityElements("hr", "3", "制度統合の方針を通知", ["人事制度統合の方針を策定・通知", "従業員への説明とエンゲージメント強化"], "document"),
+      ...w100ActivityElements("mgmt", "1", "PMI会議体を設計", ["ガバナンス体制・会議体を設計", "レポーティングラインと運営ルールを策定"], "gear"),
+      ...w100ActivityElements("mgmt", "2", "Day60意思決定を実施", ["統合シナジーの詳細計画を承認", "主要施策の投資判断を実施"], "document"),
+      ...w100ActivityElements("mgmt", "3", "進捗/KPIレビューを定着", ["月次での進捗レビューを実施", "課題の早期是正とPDCAの定着"], "bar-chart"),
+      ...w100MilestoneElements("1", "1", 1, "Day30", "重点顧客対応方針", "引継ぎ方針を確定し、実行を開始"),
+      ...w100MilestoneElements("2", "2", 2, "Day60", "新組織決定", "新組織案を確定し、主要施策を承認"),
+      ...w100MilestoneElements("3", "3", 3, "Day100", "KPI運用開始", "KPIモニタリングを本格運用し、成果創出フェーズへ"),
+    ],
+    relationships: [],
+    ...overrides,
+  };
+}
+
+test("reference_pattern_selector: a fully-authored 4-workstream x 3-phase IR (100% activity coverage, 3 milestones) selects RP-100DAY-WORKSTREAM-01", async () => {
+  const result = await selectPattern({ family: "100day-workstream", variant: "standard" }, w100FullIr());
+  assert.equal(result.eligibility, "PASS");
+  assert.equal(result.selectedPattern, "RP-100DAY-WORKSTREAM-01");
+});
+
+test("reference_pattern_selector: an activity grid missing one workstream x phase combination (incomplete coverage) is rejected", async () => {
+  const ir = w100FullIr();
+  ir.elements = ir.elements.filter((e) => e.groupId !== "activity-mgmt-3");
+  const result = await selectPattern({ family: "100day-workstream", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("reference_pattern_selector: a valid 4x3 grid with only 2 milestones (instead of exactly 3) is rejected — milestones are fixed at 3 for v1, not >=1", async () => {
+  const ir = w100FullIr();
+  ir.elements = ir.elements.filter((e) => e.groupId !== "milestone-3");
+  const result = await selectPattern({ family: "100day-workstream", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("reference_pattern_selector: 6 workstreams (above the 3-5 v1 supported range) is rejected", async () => {
+  const ir = w100FullIr(); // already has 4 (sales/procurement/hr/mgmt) — add 2 more to reach 6
+  for (const id of ["it", "legal"]) {
+    ir.elements.push(...w100WorkstreamElements(id, id, undefined, "person"));
+    for (const p of ["1", "2", "3"]) ir.elements.push(...w100ActivityElements(id, p, `${id} activity`, ["a", "b"], "gear"));
+  }
+  const result = await selectPattern({ family: "100day-workstream", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: workstream_100day adapter builds workstreams/phases (order-sorted)/activities/milestones with icon vocabularies enforced", () => {
+  const result = preFamilyIrToWorkstream100Day(w100FullIr());
+  assert.equal(result.workstreams.length, 4);
+  assert.deepEqual(result.phases.map((p) => p.id), ["phase-1", "phase-2", "phase-3"]);
+  const salesPhase1 = result.activities.find((a) => a.workstreamId === "workstream-sales" && a.phaseId === "phase-1");
+  assert.deepEqual(salesPhase1, {
+    workstreamId: "workstream-sales", phaseId: "phase-1", title: "重点顧客150社の引継ぎ設計",
+    bullets: ["顧客リストの精査・優先順位付け", "引継ぎ計画と担当体制の設計"], icon: "target",
+  });
+  assert.equal(result.activities.length, 12);
+  assert.deepEqual(result.milestones.map((m) => m.position), [1, 2, 3]);
+});
+
+test("pre_family_ir_to_slide_spec: workstream_100day adapter rejects a workstream icon outside people/coins/person/bar-chart", () => {
+  const ir = w100FullIr();
+  const iconEl = ir.elements.find((e) => e.groupId === "workstream-sales" && e.semanticRole === "icon");
+  iconEl.value = "gear";
+  assert.throws(() => preFamilyIrToWorkstream100Day(ir), /people\/coins\/person\/bar-chart/);
+});
+
+test("pre_family_ir_to_slide_spec: workstream_100day adapter rejects an activity icon outside its own closed vocabulary", () => {
+  const ir = w100FullIr();
+  const iconEl = ir.elements.find((e) => e.groupId === "activity-sales-1" && e.semanticRole === "icon");
+  iconEl.value = "coins";
+  assert.throws(() => preFamilyIrToWorkstream100Day(ir), /target\/search\/org-chart\/gear\/trending-up\/handshake\/document\/bar-chart/);
+});
+
+test("workstream_100day end to end: 3 fixtures (reference-faithful 4-workstream canonical, 3-workstream adaptive minimum, 5-workstream adaptive maximum with longer text) render with 0 QA findings and export to a clean PPTX", async () => {
+  const fixtures = [
+    { ir: w100FullIr(), title: "100日プランは4つのワークストリームで推進する", subtitle: "統合後のシナジーを早期に実現するため、4つのワークストリームで計画から実行・定着までを一気通貫で推進する" },
+    {
+      ir: {
+        elements: [
+          ...w100WorkstreamElements("sales", "営業", "収益成長の加速", "people"),
+          ...w100WorkstreamElements("hr", "人事", "組織・人の最適化", "person"),
+          ...w100WorkstreamElements("mgmt", "経営管理", "統合効果の可視化", "bar-chart"),
+          ...w100PhaseElements("1", "Day0-30", "基盤整備・計画策定", 1),
+          ...w100PhaseElements("2", "Day31-60", "実行準備・意思決定", 2),
+          ...w100PhaseElements("3", "Day61-100", "本格実行・成果創出", 3),
+          ...w100ActivityElements("sales", "1", "重点顧客の引継ぎ設計", ["顧客リストの精査・優先順位付け", "引継ぎ計画の設計"], "target"),
+          ...w100ActivityElements("sales", "2", "営業KPIを設計", ["主要指標を定義", "モニタリング体制を構築"], "bar-chart"),
+          ...w100ActivityElements("sales", "3", "新体制で運用開始", ["新体制での活動を開始", "月次モニタリングを実行"], "trending-up"),
+          ...w100ActivityElements("hr", "1", "人員配置案を整理", ["現状を可視化", "配置案を作成"], "org-chart"),
+          ...w100ActivityElements("hr", "2", "新組織案を確定", ["協議・合意形成", "役割・体制を確定"], "org-chart"),
+          ...w100ActivityElements("hr", "3", "制度統合の方針を通知", ["方針を策定・通知", "説明会を実施"], "document"),
+          ...w100ActivityElements("mgmt", "1", "PMI会議体を設計", ["体制を設計", "運営ルールを策定"], "gear"),
+          ...w100ActivityElements("mgmt", "2", "Day60意思決定を実施", ["詳細計画を承認", "投資判断を実施"], "document"),
+          ...w100ActivityElements("mgmt", "3", "進捗レビューを定着", ["月次レビューを実施", "PDCAを定着"], "bar-chart"),
+          ...w100MilestoneElements("1", "1", 1, "Day30", "重点顧客対応方針", "引継ぎ方針を確定"),
+          ...w100MilestoneElements("2", "2", 2, "Day60", "新組織決定", "新組織案を確定"),
+          ...w100MilestoneElements("3", "3", 3, "Day100", "KPI運用開始", "本格運用へ移行"),
+        ],
+        relationships: [],
+      },
+      title: "100日プランは3つのワークストリームで推進する",
+    },
+    {
+      // 5 workstreams (the v1 max) with longer Japanese titles/bullets — stress test.
+      ir: {
+        elements: [
+          ...w100WorkstreamElements("sales", "営業", "収益成長の加速", "people"),
+          ...w100WorkstreamElements("procurement", "調達", "コスト競争力の強化", "coins"),
+          ...w100WorkstreamElements("hr", "人事", "組織・人の最適化", "person"),
+          ...w100WorkstreamElements("mgmt", "経営管理", "統合効果の可視化", "bar-chart"),
+          ...w100WorkstreamElements("it", "IT", "システム統合の推進", "person"),
+          ...w100PhaseElements("1", "Day0-30", "基盤整備・計画策定", 1),
+          ...w100PhaseElements("2", "Day31-60", "実行準備・意思決定", 2),
+          ...w100PhaseElements("3", "Day61-100", "本格実行・成果創出", 3),
+          ...w100ActivityElements("sales", "1", "重点顧客150社の引継ぎ設計を完了する", ["顧客リストの精査・優先順位付けを実施", "引継ぎ計画と担当体制の設計を完了"], "target"),
+          ...w100ActivityElements("sales", "2", "営業KPI指標を設計し合意形成する", ["売上・粗利・新規・継続・満足度の5指標を定義", "モニタリングの仕組みを構築"], "bar-chart"),
+          ...w100ActivityElements("sales", "3", "新体制でモニタリングを開始する", ["新体制での営業活動を開始", "KPIの月次モニタリングと改善アクションを実行"], "trending-up"),
+          ...w100ActivityElements("procurement", "1", "共通購買候補の洗い出しを実施する", ["両社の購買データを分析", "共通化可能な品目・サプライヤーをリスト化"], "search"),
+          ...w100ActivityElements("procurement", "2", "対象品目30点を選定し合意する", ["インパクト・実現性で優先順位付け", "対象品目を確定"], "document"),
+          ...w100ActivityElements("procurement", "3", "価格交渉を開始し早期効果を刈り取る", ["サプライヤーとの価格交渉を開始", "早期のコスト削減効果を創出"], "handshake"),
+          ...w100ActivityElements("hr", "1", "人員配置案を整理し可視化する", ["現状の組織・人員を可視化", "重複・ギャップを分析し配置案を作成"], "org-chart"),
+          ...w100ActivityElements("hr", "2", "新組織案を確定し合意形成する", ["経営陣での協議・合意形成", "新組織の役割・体制を確定"], "org-chart"),
+          ...w100ActivityElements("hr", "3", "制度統合の方針を通知し浸透させる", ["人事制度統合の方針を策定・通知", "従業員への説明とエンゲージメント強化"], "document"),
+          ...w100ActivityElements("mgmt", "1", "PMI会議体を設計し運用開始する", ["ガバナンス体制・会議体を設計", "レポーティングラインと運営ルールを策定"], "gear"),
+          ...w100ActivityElements("mgmt", "2", "Day60意思決定を実施し前進する", ["統合シナジーの詳細計画を承認", "主要施策の投資判断を実施"], "document"),
+          ...w100ActivityElements("mgmt", "3", "進捗/KPIレビューを定着させる", ["月次での進捗レビューを実施", "課題の早期是正とPDCAの定着"], "bar-chart"),
+          ...w100ActivityElements("it", "1", "システム統合方針を策定し合意する", ["現行システムの棚卸しを実施", "統合方式の選定基準を策定"], "gear"),
+          ...w100ActivityElements("it", "2", "移行計画を確定し体制を整える", ["データ移行計画を策定", "移行体制・スケジュールを確定"], "document"),
+          ...w100ActivityElements("it", "3", "本番移行を完了し安定運用に入る", ["本番移行を実施", "安定運用に向けた監視体制を構築"], "trending-up"),
+          ...w100MilestoneElements("1", "1", 1, "Day30", "重点顧客対応方針の確定", "引継ぎ方針を確定し、実行を開始する"),
+          ...w100MilestoneElements("2", "2", 2, "Day60", "新組織・システム方針の決定", "新組織案と統合方式を確定し、主要施策を承認する"),
+          ...w100MilestoneElements("3", "3", 3, "Day100", "KPI運用と本番移行の完了", "KPIモニタリングと本番移行を完了し、成果創出フェーズへ移行する"),
+        ],
+        relationships: [],
+      },
+      title: "100日プランは5つのワークストリームで推進する（詳細版）",
+      subtitle: "統合後のシナジーを早期に実現するため、5つのワークストリームで計画から実行・定着までを一気通貫で推進する",
+    },
+  ];
+
+  for (const [i, fixture] of fixtures.entries()) {
+    const selection = await selectPattern({ family: "100day-workstream", variant: "standard" }, fixture.ir);
+    assert.equal(selection.eligibility, "PASS", `fixture ${i}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, fixture.ir, { title: fixture.title, subtitle: fixture.subtitle, source: "Source: test" });
+
+    const specPath = path.join(tmpDir, `w100-e2e-${i}-spec.json`);
+    const htmlPath = path.join(tmpDir, `w100-e2e-${i}.html`);
+    await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+    await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+    const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+    const gateReport = JSON.parse(gateResult.stdout);
+    assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+    const pptxPath = path.join(tmpDir, `w100-e2e-${i}.pptx`);
     await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
     const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
     assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
