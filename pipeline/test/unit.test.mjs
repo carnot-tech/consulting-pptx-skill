@@ -26,6 +26,7 @@ import {
   preFamilyIrToKeyTakeaways,
   preFamilyIrToMatrixBadgeList,
   preFamilyIrToWorkstream100Day,
+  preFamilyIrToOperatingModelCascade,
   preFamilyIrToSlideSpec,
 } from "../scripts/pre_family_ir_to_slide_spec.mjs";
 import JSZip from "jszip";
@@ -1214,6 +1215,211 @@ test("workstream_100day end to end: 3 fixtures (reference-faithful 4-workstream 
     assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
 
     const pptxPath = path.join(tmpDir, `w100-e2e-${i}.pptx`);
+    await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
+    const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
+    assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);
+  }
+});
+
+// --- RP-OPERATING-MODEL-01 (Library v0.2, seventh pattern, second under the mandatory Visual
+// Contract process — see pipeline/reference-patterns/visual-contracts/RP-OPERATING-MODEL-01.md) ---
+
+function omStageElements(id, number, title, question, cards) {
+  const gid = `stage-${id}`;
+  const els = [
+    { semanticRole: "number", groupId: gid, value: number },
+    { semanticRole: "title", groupId: gid, value: title },
+    { semanticRole: "question", groupId: gid, value: question },
+  ];
+  cards.forEach((c, i) => {
+    const cardGid = `${gid}-card-${i + 1}`;
+    els.push({ semanticRole: "title", groupId: cardGid, value: c.title });
+    els.push({ semanticRole: "body", groupId: cardGid, value: c.body });
+    els.push({ semanticRole: "icon", groupId: cardGid, value: c.icon });
+  });
+  return els;
+}
+function omKeyMessageElements(label, headline, checklist) {
+  const els = [];
+  if (label) els.push({ semanticRole: "label", groupId: "keyMessage", value: label });
+  els.push({ semanticRole: "headline", groupId: "keyMessage", value: headline });
+  checklist.forEach((c) => els.push({ semanticRole: "bullets", groupId: "keyMessage", value: c }));
+  return els;
+}
+function omFullIr(overrides = {}) {
+  return {
+    elements: [
+      ...omStageElements("segment", "01", "顧客セグメント", "誰に価値を届けるか", [
+        { title: "大口顧客", body: "戦略的パートナーとして深耕", icon: "building" },
+        { title: "地域顧客", body: "地域特性に合わせたきめ細かな対応", icon: "pin" },
+        { title: "新規開拓", body: "新たな市場・業界への積極的なアプローチ", icon: "people" },
+      ]),
+      ...omStageElements("value", "02", "提供価値", "どのような価値を提供するか", [
+        { title: "専門提案", body: "業界知見に基づく課題解決型の提案", icon: "diamond" },
+        { title: "迅速供給", body: "最適なサプライチェーンで安定・迅速に供給", icon: "truck" },
+        { title: "コスト最適化", body: "スケールメリットを活かした競争力のある価格・コスト", icon: "bar-chart" },
+      ]),
+      ...omStageElements("capability", "03", "実行ケイパビリティ", "どのように実行するか", [
+        { title: "重点顧客担当制", body: "大口顧客に専任チームを配置", icon: "person" },
+        { title: "共同購買", body: "統合による調達力の最大化", icon: "org-chart" },
+        { title: "拠点再編", body: "最適な拠点配置で営業・物流を効率化", icon: "gear" },
+        { title: "標準KPI", body: "共通の指標で実行を管理", icon: "bar-chart" },
+      ]),
+      ...omStageElements("governance", "04", "ガバナンス", "どのように統制・推進するか", [
+        { title: "営業本部長", body: "全体戦略の策定・意思決定", icon: "person" },
+        { title: "PMI会議", body: "部門横断での進捗管理・課題解決", icon: "people" },
+        { title: "月次レビュー", body: "KPIの達成状況をモニタリングし、継続的に改善", icon: "document" },
+      ]),
+      ...omKeyMessageElements("KEY MESSAGE", "顧客起点で拠点・調達・KPIを一体運営", [
+        "顧客ニーズに基づく一気通貫の運営体制",
+        "統合シナジーを実行力に変える仕組み",
+        "持続的な成長を支えるガバナンス",
+      ]),
+    ],
+    relationships: [],
+    ...overrides,
+  };
+}
+
+test("reference_pattern_selector: a fully-authored 4-stage cascade (asymmetric 3/3/4/3 card counts, keyMessage with 3 checklist items) selects RP-OPERATING-MODEL-01", async () => {
+  const result = await selectPattern({ family: "operating-model", variant: "standard" }, omFullIr());
+  assert.equal(result.eligibility, "PASS");
+  assert.equal(result.selectedPattern, "RP-OPERATING-MODEL-01");
+});
+
+// Regression test for a real bug this pattern's implementation hit: a card group's own
+// groupId shares the "stage-" prefix with its parent stage group (cards are named
+// `${stageGroupId}-card-N`), so a naive `groupId.startsWith("stage-")` check double-counts
+// every card as an additional stage. This fixture's card count (13 cards total across 4
+// stages) would inflate a naive stage count to 17 if the "-card-" exclusion regressed.
+test("reference_pattern_selector: cascade stage groups are never miscounted as capability card groups (or vice versa) — a card's groupId sharing the 'stage-' prefix with its parent must not inflate the stage count", async () => {
+  const ir = omFullIr();
+  const stageGroupIds = new Set(ir.elements.filter((e) => e.groupId?.startsWith("stage-") && !e.groupId.includes("-card-")).map((e) => e.groupId));
+  const cardGroupIds = new Set(ir.elements.filter((e) => e.groupId?.includes("-card-")).map((e) => e.groupId));
+  assert.equal(stageGroupIds.size, 4, "sanity check: 4 stage groups authored");
+  assert.equal(cardGroupIds.size, 13, "sanity check: 13 card groups authored (3+3+4+3)");
+  const result = await selectPattern({ family: "operating-model", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "PASS");
+  const adapted = preFamilyIrToOperatingModelCascade(ir);
+  assert.equal(adapted.cascadeStages.length, 4, "adapter must see exactly 4 stages, not 17 (4 stages + 13 cards)");
+});
+
+test("reference_pattern_selector: 6 stages (above the 3-5 v1 supported range) is rejected", async () => {
+  const ir = omFullIr();
+  ir.elements.push(...omStageElements("extra1", "05", "追加層1", "追加の問い", [{ title: "a", body: "b", icon: "gear" }, { title: "c", body: "d", icon: "document" }]));
+  ir.elements.push(...omStageElements("extra2", "06", "追加層2", "追加の問い", [{ title: "a", body: "b", icon: "gear" }, { title: "c", body: "d", icon: "document" }]));
+  const result = await selectPattern({ family: "operating-model", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("reference_pattern_selector: a stage with only 1 card (below the 2-4 per-stage range) is rejected", async () => {
+  const ir = omFullIr();
+  ir.elements = ir.elements.filter((e) => !(e.groupId === "stage-segment-card-2" || e.groupId === "stage-segment-card-3"));
+  const result = await selectPattern({ family: "operating-model", variant: "standard" }, ir);
+  assert.equal(result.eligibility, "FAIL");
+});
+
+test("pre_family_ir_to_slide_spec: operating_model_cascade adapter builds cascadeStages (with independent per-stage card counts) and keyMessageBand", () => {
+  const result = preFamilyIrToOperatingModelCascade(omFullIr());
+  assert.deepEqual(result.cascadeStages.map((s) => s.cards.length), [3, 3, 4, 3]);
+  const segment = result.cascadeStages[0];
+  assert.deepEqual(segment.cards[0], { title: "大口顧客", body: "戦略的パートナーとして深耕", icon: "building" });
+  assert.deepEqual(result.keyMessageBand, {
+    label: "KEY MESSAGE",
+    headline: "顧客起点で拠点・調達・KPIを一体運営",
+    checklist: ["顧客ニーズに基づく一気通貫の運営体制", "統合シナジーを実行力に変える仕組み", "持続的な成長を支えるガバナンス"],
+  });
+});
+
+test("pre_family_ir_to_slide_spec: operating_model_cascade adapter rejects a card icon outside its own closed vocabulary", () => {
+  const ir = omFullIr();
+  const iconEl = ir.elements.find((e) => e.groupId === "stage-segment-card-1" && e.semanticRole === "icon");
+  iconEl.value = "coins";
+  assert.throws(() => preFamilyIrToOperatingModelCascade(ir), /building\/pin\/people\/diamond\/truck\/bar-chart\/person\/org-chart\/gear\/document/);
+});
+
+test("operating_model_cascade end to end: 3 fixtures (reference-faithful 4-stage canonical with asymmetric 3/3/4/3 cards, 3-stage adaptive minimum, 5-stage adaptive maximum with longer text) render with 0 QA findings and export to a clean PPTX", async () => {
+  const fixtures = [
+    { ir: omFullIr(), title: "統合後の営業オペレーティングモデルを4層で再設計する", subtitle: "顧客起点で提供価値・実行ケイパビリティ・ガバナンスを連動させ、統合シナジーを最大化する" },
+    {
+      ir: {
+        elements: [
+          ...omStageElements("segment", "01", "顧客セグメント", "誰に価値を届けるか", [
+            { title: "大口顧客", body: "戦略的パートナーとして深耕", icon: "building" },
+            { title: "地域顧客", body: "地域特性に合わせたきめ細かな対応", icon: "pin" },
+          ]),
+          ...omStageElements("value", "02", "提供価値", "どのような価値を提供するか", [
+            { title: "専門提案", body: "業界知見に基づく課題解決型の提案", icon: "diamond" },
+            { title: "コスト最適化", body: "スケールメリットを活かした価格競争力", icon: "bar-chart" },
+            { title: "迅速供給", body: "最適なサプライチェーンで安定供給", icon: "truck" },
+          ]),
+          ...omStageElements("governance", "03", "ガバナンス", "どのように統制・推進するか", [
+            { title: "営業本部長", body: "全体戦略の策定・意思決定", icon: "person" },
+            { title: "月次レビュー", body: "KPIの達成状況をモニタリング", icon: "document" },
+          ]),
+          ...omKeyMessageElements(null, "顧客起点で意思決定を一体運営", ["顧客ニーズに基づく運営体制", "持続的な成長を支えるガバナンス"]),
+        ],
+        relationships: [],
+      },
+      title: "統合後の営業オペレーティングモデルを3層で再設計する",
+    },
+    {
+      // 5 stages (the v1 max) with longer Japanese titles/bodies — stress test.
+      ir: {
+        elements: [
+          ...omStageElements("segment", "01", "顧客セグメント", "誰に価値を届けるか判断する", [
+            { title: "大口戦略顧客", body: "戦略的パートナーとして深耕し関係を強化する", icon: "building" },
+            { title: "地域密着顧客", body: "地域特性に合わせたきめ細かな対応を徹底する", icon: "pin" },
+            { title: "新規市場開拓", body: "新たな市場・業界への積極的なアプローチを行う", icon: "people" },
+          ]),
+          ...omStageElements("value", "02", "提供価値", "どのような価値を提供するか明確化する", [
+            { title: "専門性の高い提案", body: "業界知見に基づく課題解決型の提案を徹底する", icon: "diamond" },
+            { title: "迅速な供給体制", body: "最適なサプライチェーンで安定・迅速に供給する", icon: "truck" },
+            { title: "コスト最適化戦略", body: "スケールメリットを活かした価格競争力を実現する", icon: "bar-chart" },
+          ]),
+          ...omStageElements("capability", "03", "実行ケイパビリティ", "どのように実行するか具体化する", [
+            { title: "重点顧客担当制の導入", body: "大口顧客に専任チームを配置し関係を深化させる", icon: "person" },
+            { title: "共同購買体制の構築", body: "統合による調達力の最大化を図る", icon: "org-chart" },
+            { title: "拠点再編の実行", body: "最適な拠点配置で営業・物流を効率化する", icon: "gear" },
+          ]),
+          ...omStageElements("technology", "04", "テクノロジー", "どのように技術を活用するか定める", [
+            { title: "データ統合基盤の整備", body: "顧客データを一元管理し意思決定を高度化する", icon: "gear" },
+            { title: "営業支援システムの導入", body: "商談プロセスをデジタル化し生産性を向上させる", icon: "document" },
+          ]),
+          ...omStageElements("governance", "05", "ガバナンス", "どのように統制・推進するか設計する", [
+            { title: "営業本部長主導の体制", body: "全体戦略の策定・意思決定を一元化する", icon: "person" },
+            { title: "部門横断PMI会議の設置", body: "部門横断での進捗管理・課題解決を推進する", icon: "people" },
+            { title: "月次KPIレビューの定着", body: "KPIの達成状況をモニタリングし継続的に改善する", icon: "document" },
+          ]),
+          ...omKeyMessageElements("KEY MESSAGE", "顧客起点で拠点・調達・技術・KPIを一体運営する", [
+            "顧客ニーズに基づく一気通貫の運営体制を構築する",
+            "統合シナジーを実行力に変える仕組みを整備する",
+            "テクノロジー活用で意思決定の質を高める",
+            "持続的な成長を支えるガバナンスを確立する",
+          ]),
+        ],
+        relationships: [],
+      },
+      title: "統合後の営業オペレーティングモデルを5層で再設計する（詳細版）",
+      subtitle: "顧客起点で提供価値・実行ケイパビリティ・テクノロジー・ガバナンスを連動させ、統合シナジーを最大化する",
+    },
+  ];
+
+  for (const [i, fixture] of fixtures.entries()) {
+    const selection = await selectPattern({ family: "operating-model", variant: "standard" }, fixture.ir);
+    assert.equal(selection.eligibility, "PASS", `fixture ${i}: ${JSON.stringify(selection.rejectedCandidates)}`);
+    const slide = preFamilyIrToSlideSpec(selection, fixture.ir, { title: fixture.title, subtitle: fixture.subtitle, source: "Source: test" });
+
+    const specPath = path.join(tmpDir, `om-e2e-${i}-spec.json`);
+    const htmlPath = path.join(tmpDir, `om-e2e-${i}.html`);
+    await fs.writeFile(specPath, JSON.stringify({ deckTitle: "t", slides: [slide] }));
+    await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlPath]);
+
+    const gateResult = await execFileAsync("node", [path.join(root, "scripts/run_mechanical_gate.mjs"), specPath, htmlPath]);
+    const gateReport = JSON.parse(gateResult.stdout);
+    assert.equal(gateReport.passed, true, `fixture ${i} mechanical gate: ${JSON.stringify(gateReport.errors)}`);
+
+    const pptxPath = path.join(tmpDir, `om-e2e-${i}.pptx`);
     await execFileAsync("node", [path.join(root, "scripts/export_spec_to_editable_pptx.mjs"), specPath, pptxPath]);
     const auditResult = await auditPptxStructure(await fs.readFile(pptxPath));
     assert.deepEqual(auditResult, { passed: true, errors: [] }, `fixture ${i} PPTX audit`);

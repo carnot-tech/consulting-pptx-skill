@@ -416,6 +416,96 @@ fewer than 3 or more than 5 workstreams; the plan doesn't actually need a fixed 
 structure; or cells don't need bullets, just a single headline per workstream x phase (use a
 plain table instead).
 
+## Operating Model Cascade (RP-OPERATING-MODEL-01, Library v0.2) → `operating_model_cascade` (`operatingModelCascade` shape)
+
+Independently defined for this project — see
+`pipeline/reference-patterns/golden-fixtures-v0.2/RP-OPERATING-MODEL-01.jpg` and the full
+Visual Contract at `pipeline/reference-patterns/visual-contracts/RP-OPERATING-MODEL-01.md`
+(the second pattern implemented under
+`references/reference-pattern-implementation-policy.md`'s mandatory Visual Contract process).
+A **left-to-right cascade of INDEPENDENTLY-SIZED stage columns** — unlike
+RP-100DAY-WORKSTREAM-01's uniform workstream×phase grid (every cell must exist), this pattern's
+reference image itself shows a 3/3/4/3 card distribution across its 4 stages: "same shape per
+stage, different content" is the wrong mental model here; "a chevron of N columns, each its
+own small stack" is the right one. Confirmed at implementation time (a dedicated fit check, not
+just an assumption) that none of this library's existing chevron/pillar templates
+(`chevron_rail`, `chevron_steps`, `chevron_value_chain`, `pillars_foundation`) already support
+stacked icon+title+body cards nested independently per segment, so this is a new template
+rather than an extension of any of them.
+
+**Output SlideSpec field names are `cascadeStages`/`keyMessageBand`, not `stages`/
+`keyMessage`** — an earlier draft of this pattern's own Visual Contract used the latter names,
+but both collided with unrelated, differently-shaped fields already used by other templates in
+this schema (`stages` already belongs to an existing template requiring `label`+`heading`;
+`keyMessage` already exists elsewhere as a plain string). The Visual Contract has since been
+corrected to match; if you're reading this from an LLM-authoring context, use the names below,
+not the pattern's own conceptual name.
+
+- **3-5 stage groups**, groupId prefix `"stage-"` (order = authoring order, never re-ranked —
+  the left-to-right sequence IS the pattern's own meaning: 01 customer segment → 02 value
+  proposition → 03 execution capability → 04 governance), each with:
+  - `"number"` — the stage's own display label (e.g. "01"). Authored directly, not derived
+    from position, same discipline as every other "number" field in this library.
+  - `"title"` — the stage's own headline (e.g. "顧客セグメント").
+  - `"question"` — **required** — the header's own guiding question (e.g. "誰に価値を届ける
+    か"). A header missing this loses the "what is this stage actually answering" framing the
+    reference image treats as integral, not decorative.
+  - **>=2 card sub-groups**, groupId prefix `${stageGroupId}-card-` (e.g.
+    `"stage-segment-card-1"`, `"stage-segment-card-2"`) — the SAME nesting idiom
+    RP-MATRIX-BADGELIST-01 uses for badge items nested under an author-chosen quadrant groupId
+    (as opposed to RP-100DAY-WORKSTREAM-01's 4 globally-fixed prefixes — there is no small
+    fixed set of literal stage names to reuse here, and cards nest under ONE specific stage
+    rather than cross-referencing two axes). **Independently counted per stage (2-4) — NOT
+    required to match other stages' counts.** Each card group has:
+    - `"title"` — the card's own headline (e.g. "大口顧客").
+    - `"body"` — the supporting 1-2 line description.
+    - `"icon"` — **required** — closed vocabulary: `building` / `pin` / `people` / `diamond` /
+      `truck` / `bar-chart` / `person` / `org-chart` / `gear` / `document` — a DIFFERENT set
+      from every other pattern's own icon vocabulary in this library (e.g.
+      RP-100DAY-WORKSTREAM-01's activity icons), picked per-pattern the same way every
+      previous pattern has its own closed set.
+- **A "keyMessage" reserved group** (becomes `keyMessageBand` in the output), with:
+  - `"headline"` — **required** — the closing synthesis statement.
+  - `"label"` — optional, defaults to "KEY MESSAGE".
+  - `"bullets"` elements, 2-4, order preserved — the checklist items (plain strings; a fixed
+    checkmark glyph, not a per-item icon choice, same discipline as RP-100DAY-WORKSTREAM-01's
+    milestone numbered circles being the semantic cue rather than an icon).
+  Mandatory, not optional — same discipline as every other Library v0.2 pattern's closing
+  synthesis band (RP-KEY-TAKEAWAYS-01's insightPanel/soWhat, RP-MATRIX-BADGELIST-01's insights
+  panel, RP-100DAY-WORKSTREAM-01's milestone band).
+- **No `emphasis` field anywhere** — this pattern's reference image doesn't single out one
+  stage or one card as "the important one"; the Key Message band's own visual distinction
+  (dark iconWedge vs. pale cascade) is a pattern-level distinction, not a within-cascade
+  emphasis flag.
+- No relationship type is required — stages and cards are all identified by reserved groupId
+  PREFIX, same idiom as every other Library v0.2 pattern's repeatable children.
+
+**A real bug this pattern's implementation hit and fixed**: a card group's own groupId shares
+the `"stage-"` prefix with its parent stage group (cards are named `${stageGroupId}-card-N`),
+so naive `groupId.startsWith("stage-")` logic silently double-counts every card as an
+additional stage. Both the Selector's structural check and the adapter must explicitly exclude
+any groupId containing `"-card-"` when collecting stage groupIds. A regression test in
+`test/unit.test.mjs` guards this specifically.
+
+**Adaptive Rules**: canonical is 4 stages with an asymmetric card count per stage (3/3/4/3, the
+reference image's own composition — per-stage card counts are NOT forced to match across
+stages, in canonical or any adaptive variant). **3-5 stages are supported adaptive variants; 2-4
+cards per stage, independently per stage.** Unlike RP-100DAY-WORKSTREAM-01's fixed-at-exactly-3
+phase count, stage count here IS the adaptive axis — the "4層" framing is this specific deck's
+own authored claim (like the numeric claim in any slide's own title), not a structural constant
+the way RP-100DAY-WORKSTREAM-01's phase-per-milestone alignment was. At 5 stages, gaps between
+columns and the connector's own width may shrink slightly to keep card content legible — what
+must NOT change is the connector's PRESENCE between every adjacent pair of stages (exactly
+stage count − 1 connectors), not its exact pixel width.
+
+**Do not use when**: the stages don't actually have their own elaborating items — just one
+sentence per stage (use `chevron_rail`/`chevron_steps` instead); there are fewer than 3 or more
+than 5 stages, or any single stage needs fewer than 2 or more than 4 cards; the columns need to
+align row-for-row across stages (a shared item count / cross-stage coverage requirement — this
+pattern's whole point is independently-sized stages; use `chevron_value_chain`'s rails or
+RP-100DAY-WORKSTREAM-01's grid instead); or there's no single closing headline + checklist
+synthesis (use a plain card cascade instead).
+
 ## What NOT to do
 
 - Don't author a pattern's `elements`/`relationships` first and decide the family afterward —

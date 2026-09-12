@@ -635,6 +635,79 @@ function addMatrixBadgeList(item, pageNum) {
 // segments with a real gap, not an interlocking notch/point); the milestone band is one
 // full-width filled rect (not just a line) spanning the rail-label column too; rail cards and
 // grid cells share the same per-row height via identical row math, not independent layouts.
+// RP-OPERATING-MODEL-01 mirror of render_spec_to_html.mjs#renderOperatingModelCascade — a
+// left-to-right cascade of INDEPENDENTLY-SIZED stage columns, NOT a uniform grid. Per explicit
+// review, stage header height lock / per-stage card count independence / stage-count-1
+// connectors sitting in the gap (not inside a column) / the Key Message band's 3-part
+// iconWedge+messageZone+checklistZone split are all hard requirements carried over unsimplified
+// from the HTML canonical, not re-derived independently for PPTX.
+function addOperatingModelCascade(item, pageNum) {
+  const slide = addShell(item, pageNum);
+  const stages = item.cascadeStages || [];
+  const n = stages.length;
+  const top = 2.0;
+  const headH = 0.5;
+  const cardsTop = top + headH + 0.1;
+  const keyMessageBandH = 0.95;
+  const bottom = FOOTER_Y - keyMessageBandH - 0.1;
+  const connectorW = n >= 5 ? 0.22 : 0.32;
+  const totalW = W - M * 2;
+  const stageW = (totalW - connectorW * (n - 1)) / n;
+
+  stages.forEach((s, i) => {
+    const sx = M + i * (stageW + connectorW);
+    slide.addShape(pptx.ShapeType.homePlate, { x: sx, y: top, w: stageW, h: headH, fill: { color: NAVY }, line: { type: "none" } });
+    const numW = 0.5;
+    addBodyText(slide, s.number || "", sx + 0.12, top, numW, headH, { fontSize: 20, bold: true, color: WHITE, valign: "middle" });
+    slide.addShape(pptx.ShapeType.line, { x: sx + 0.12 + numW, y: top + 0.1, w: 0, h: headH - 0.2, line: { color: "FFFFFF", width: 0.75, transparency: 55 } });
+    const titleX = sx + 0.12 + numW + 0.14;
+    addBodyText(slide, s.title || "", titleX, top, stageW * 0.42, headH, { fontSize: 11.5, bold: true, color: WHITE, valign: "middle" });
+    const qX = sx + stageW * 0.52;
+    addBodyText(slide, s.question || "", qX, top, sx + stageW - 0.18 - qX, headH, { fontSize: 8.5, bold: true, color: "D8D0C8", align: "right", valign: "middle" });
+
+    let cy = cardsTop;
+    (s.cards || []).forEach((c) => {
+      const bodyLines = Math.ceil((c.body || "").length / 20);
+      const cardH = 0.32 + bodyLines * 0.19;
+      slide.addShape(pptx.ShapeType.rect, { x: sx, y: cy, w: stageW, h: cardH, fill: { color: "FAF7F1" }, line: { color: HAIR, width: 0.75 } });
+      const iconSize = 0.32;
+      if (c.icon) addPatternIcon(slide, c.icon, sx + 0.1, cy + 0.08, iconSize, BLUE, { filled: true });
+      const textX = sx + 0.1 + iconSize + 0.1;
+      addBodyText(slide, c.title || "", textX, cy + 0.06, sx + stageW - 0.1 - textX, 0.2, { fontSize: 10, bold: true, color: NAVY });
+      addBodyText(slide, c.body || "", textX, cy + 0.24, sx + stageW - 0.1 - textX, cardH - 0.26, { fontSize: 9, color: INK });
+      cy += cardH + 0.07;
+    });
+
+    if (i < n - 1) {
+      const cxLeft = sx + stageW;
+      slide.addShape(pptx.ShapeType.chevron, { x: cxLeft + connectorW * 0.15, y: top + headH / 2 + 0.35, w: connectorW * 0.7, h: 0.28, fill: { color: BLUE }, line: { type: "none" } });
+    }
+  });
+
+  const bandY = bottom + 0.1;
+  const km = item.keyMessageBand || {};
+  const wedgeW = 0.9;
+  slide.addShape(pptx.ShapeType.rect, { x: M, y: bandY, w: W - M * 2, h: keyMessageBandH, fill: { color: "F2EEE6" }, line: { type: "none" } });
+  slide.addShape(pptx.ShapeType.homePlate, { x: M, y: bandY, w: wedgeW, h: keyMessageBandH, fill: { color: NAVY }, line: { type: "none" } });
+  const iconSize = 0.5;
+  addPatternIcon(slide, "target", M + wedgeW / 2 - iconSize / 2 - 0.08, bandY + keyMessageBandH / 2 - iconSize / 2, iconSize, WHITE, { filled: false });
+
+  const msgX = M + wedgeW + 0.24;
+  const msgW = (W - M * 2 - wedgeW - 0.24) * 0.56;
+  addBodyText(slide, km.label || "KEY MESSAGE", msgX, bandY + keyMessageBandH * 0.28, msgW, 0.22, { fontSize: 10.5, bold: true, color: BLUE });
+  addBodyText(slide, km.headline || "", msgX, bandY + keyMessageBandH * 0.5, msgW, 0.4, { fontSize: 15.5, bold: true, color: NAVY });
+
+  const listX = msgX + msgW + 0.3;
+  slide.addShape(pptx.ShapeType.line, { x: listX - 0.15, y: bandY + 0.14, w: 0, h: keyMessageBandH - 0.28, line: { color: HAIR, width: 0.75 } });
+  const checklist = km.checklist || [];
+  const itemH = keyMessageBandH / Math.max(checklist.length, 1);
+  checklist.forEach((textItem, i) => {
+    const iy = bandY + i * itemH;
+    addBodyText(slide, "✓", listX, iy, 0.24, itemH, { fontSize: 12, bold: true, color: BLUE, valign: "middle" });
+    addBodyText(slide, textItem, listX + 0.26, iy, W - M - (listX + 0.26), itemH, { fontSize: 10.5, color: INK, valign: "middle" });
+  });
+}
+
 function addWorkstream100Day(item, pageNum) {
   const slide = addShell(item, pageNum);
   const workstreams = item.workstreams || [];
@@ -1913,6 +1986,55 @@ function addPatternIcon(slide, name, x, y, size, color, opts = {}) {
     [ix + bodyW * 0.25, ix + bodyW + cabW * 0.55].forEach((wx) => {
       slide.addShape(pptx.ShapeType.ellipse, { x: wx - wheelR, y: bodyY + bodyH - wheelR, w: wheelR * 2, h: wheelR * 2, fill: { color: gc }, line: { type: "none" } });
     });
+  } else if (name === "target") {
+    // Retroactive fix: RP-100DAY-WORKSTREAM-01 added this icon to the HTML SVG set but never
+    // added a matching PPTX branch, so it silently fell through to the bar-chart default —
+    // caught while implementing RP-OPERATING-MODEL-01's own iconWedge, which reuses "target".
+    // Ring + center dot (badgeColor "punches" the ring's hole, same cutout trick as "tag").
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" } });
+    const midR = iw * 0.32;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - midR, y: iy + iw / 2 - midR, w: midR * 2, h: midR * 2, fill: { color: badgeColor }, line: { type: "none" } });
+    const dotR = iw * 0.12;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - dotR, y: iy + iw / 2 - dotR, w: dotR * 2, h: dotR * 2, fill: { color: gc }, line: { type: "none" } });
+  } else if (name === "search") {
+    // Retroactive fix, same gap as "target" above.
+    const r = iw * 0.3;
+    const cx = ix + r + iw * 0.05, cy = iy + r + iw * 0.05;
+    slide.addShape(pptx.ShapeType.ellipse, { x: cx - r, y: cy - r, w: r * 2, h: r * 2, fill: { type: "none" }, line: { color: gc, width: iw * 0.09 } });
+    slide.addShape(pptx.ShapeType.line, { x: cx + r * 0.55, y: cy + r * 0.55, w: iw * 0.32, h: iw * 0.32, line: { color: gc, width: iw * 0.09 } });
+  } else if (name === "trending-up") {
+    // Retroactive fix, same gap as "target" above. Native upArrow rotated to a diagonal reads
+    // as an ascending trend line more reliably than a hand-drawn zigzag.
+    slide.addShape(pptx.ShapeType.upArrow, { x: ix + iw * 0.15, y: iy + iw * 0.15, w: iw * 0.7, h: iw * 0.7, fill: { color: gc }, line: { type: "none" }, rotate: 45 });
+  } else if (name === "handshake") {
+    // Retroactive fix, same gap as "target" above. Two nodes + a connecting line — a
+    // simplified "connection/agreement" glyph, same spirit as the HTML SVG's own simplified
+    // zigzag-clasp approximation.
+    const r = iw * 0.2;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix, y: iy + iw * 0.18, w: r * 2, h: r * 2, fill: { color: gc }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw - r * 2, y: iy + iw * 0.18, w: r * 2, h: r * 2, fill: { color: gc }, line: { type: "none" } });
+    slide.addShape(pptx.ShapeType.line, { x: ix + r * 1.7, y: iy + iw * 0.18 + r, w: iw - r * 3.4, h: 0, line: { color: gc, width: iw * 0.09 } });
+  } else if (name === "document") {
+    // Retroactive fix, same gap as "target" above.
+    slide.addShape(pptx.ShapeType.rect, { x: ix + iw * 0.12, y: iy, w: iw * 0.76, h: iw, fill: { type: "none" }, line: { color: gc, width: iw * 0.08 } });
+    slide.addShape(pptx.ShapeType.line, { x: ix + iw * 0.27, y: iy + iw * 0.4, w: iw * 0.46, h: 0, line: { color: gc, width: iw * 0.06 } });
+    slide.addShape(pptx.ShapeType.line, { x: ix + iw * 0.27, y: iy + iw * 0.65, w: iw * 0.46, h: 0, line: { color: gc, width: iw * 0.06 } });
+  } else if (name === "building") {
+    slide.addShape(pptx.ShapeType.rect, { x: ix + iw * 0.15, y: iy, w: iw * 0.7, h: iw, fill: { color: gc }, line: { type: "none" } });
+    const winR = iw * 0.04;
+    [0.32, 0.68].forEach((fx) => {
+      [0.25, 0.5, 0.75].forEach((fy) => {
+        slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw * fx - winR, y: iy + iw * fy - winR, w: winR * 2, h: winR * 2, fill: { color: badgeColor }, line: { type: "none" } });
+      });
+    });
+  } else if (name === "pin") {
+    // Native teardrop preset — a location-pin silhouette — plus a punch-hole dot (same cutout
+    // trick as "tag"/"target" above).
+    slide.addShape(pptx.ShapeType.teardrop, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" }, rotate: 180 });
+    const holeR = iw * 0.11;
+    slide.addShape(pptx.ShapeType.ellipse, { x: ix + iw / 2 - holeR, y: iy + iw * 0.28 - holeR, w: holeR * 2, h: holeR * 2, fill: { color: badgeColor }, line: { type: "none" } });
+  } else if (name === "diamond") {
+    slide.addShape(pptx.ShapeType.diamond, { x: ix, y: iy, w: iw, h: iw, fill: { color: gc }, line: { type: "none" } });
   } else {
     // bar-chart (default): 3 small bars, increasing height, bottom-aligned within the badge.
     const bw = iw / 3 - 0.02;
@@ -2412,6 +2534,9 @@ deck.slides.forEach((item, i) => {
       break;
     case "workstream_100day":
       addWorkstream100Day(item, i + 1);
+      break;
+    case "operating_model_cascade":
+      addOperatingModelCascade(item, i + 1);
       break;
     case "waterfall":
       addWaterfall(item, i + 1);

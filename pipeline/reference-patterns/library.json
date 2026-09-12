@@ -241,6 +241,35 @@
       ],
       "slideSpecTemplate": "workstream_100day",
       "slideSpecShape": "workstream100day"
+    },
+    {
+      "patternId": "RP-OPERATING-MODEL-01",
+      "name": "Operating Model Cascade",
+      "referenceLocator": "user_reference",
+      "groundedIn": "pipeline/reference-patterns/golden-fixtures-v0.2/RP-OPERATING-MODEL-01.jpg — Library v0.2, seventh (final of the originally-scoped 7) pattern implemented, and the second under references/reference-pattern-implementation-policy.md's mandatory Visual Contract process. Full Visual Contract at pipeline/reference-patterns/visual-contracts/RP-OPERATING-MODEL-01.md. A left-to-right cascade of INDEPENDENTLY-SIZED stage columns — the reference image's own 3/3/4/3 card distribution across its 4 stages is the direct evidence this is not a uniform grid the way RP-100DAY-WORKSTREAM-01's workstream x phase matrix is. Confirmed at implementation time that none of this library's existing chevron/pillar templates (chevron_rail, chevron_steps, chevron_value_chain, pillars_foundation) already cover stacked icon+title+body cards nested independently per segment plus a 3-part closing Key Message band, so this is a new template rather than an extension.",
+      "useWhen": "the slide's job is to lay out an operating-model or capability redesign as a small number of sequential stages (e.g. segment -> value proposition -> execution capability -> governance), each stage itself elaborated by several independently-counted capability items, closing with one headline synthesis statement plus a short supporting checklist.",
+      "canonicalVariant": "4 stages with an asymmetric card count per stage (3/3/4/3, the reference image's own composition) — the reference's own per-stage card counts are NOT uniform and should not be forced to match across stages. 3 and 5-stage compositions are supported ADAPTIVE variants of this same cascade; per-stage card count (2-4) is independently authored per stage in every variant, not a shared count.",
+      "requiredSemanticRoles": [
+        "3-5 stage groups (groupId prefix \"stage-\"), each with a number, a title, and a question — order preserved from authoring order (never re-ranked)",
+        "2-4 card groups per stage (groupId prefix \"${stageGroupId}-card-\"), each with a title, a body, and an icon — independently counted per stage, no cross-stage coverage requirement",
+        "a \"keyMessage\" group with a headline element and 2-4 bullets elements (the checklist) — mandatory, not optional"
+      ],
+      "optionalSemanticRoles": [
+        "a label element on the \"keyMessage\" group (kicker text, defaults to \"KEY MESSAGE\")"
+      ],
+      "relationshipsRequired": [],
+      "visualIntent": "redesign",
+      "densityRange": "high",
+      "emphasisModel": "no structural emphasis mechanism for this pattern — every stage and every card within it carries equal visual weight; the Key Message band's own distinct (dark iconWedge vs. pale cascade) treatment is a pattern-level distinction, not a within-cascade emphasis flag. Don't author one.",
+      "supportingBand": "mandatory — the Key Message band (iconWedge + messageZone headline + checklistZone) is a load-bearing 3-part closing band, the same discipline as RP-100DAY-WORKSTREAM-01's milestone band, RP-KEY-TAKEAWAYS-01's insightPanel/soWhat, and RP-MATRIX-BADGELIST-01's insights panel.",
+      "doNotUseWhen": [
+        "the stages don't actually have their own elaborating items — just one sentence per stage — use chevron_rail/chevron_steps instead",
+        "there are fewer than 3 or more than 5 stages, or any single stage needs fewer than 2 or more than 4 cards — outside the v1 supported range",
+        "the columns need to align row-for-row across stages (a shared item count / cross-stage coverage requirement) — this pattern's whole point is independently-sized stages; use chevron_value_chain's rails or RP-100DAY-WORKSTREAM-01's grid instead",
+        "there's no single closing headline + checklist synthesis — use a plain card cascade instead"
+      ],
+      "slideSpecTemplate": "operating_model_cascade",
+      "slideSpecShape": "operatingModelCascade"
     }
   ]
 }

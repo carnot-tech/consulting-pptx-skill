@@ -613,6 +613,61 @@ export function preFamilyIrToWorkstream100Day({ elements }) {
   return { workstreams, phases, activities, milestones };
 }
 
+// RP-OPERATING-MODEL-01: a left-to-right cascade of independently-sized stage columns — see
+// reference_pattern_selector.mjs's own comment on checkOperatingModelCascadeShape for why this
+// is NOT a uniform grid like RP-100DAY-WORKSTREAM-01. Stages are classified by reserved
+// groupId prefix "stage-"; each stage's own cards are classified by a prefix parameterized on
+// THAT stage's own groupId (`${stageGroupId}-card-`) — the same nesting idiom
+// RP-MATRIX-BADGELIST-01 uses for badge items nested under an author-chosen quadrant groupId.
+const OPERATING_MODEL_CARD_ICON_NAMES = new Set(["building", "pin", "people", "diamond", "truck", "bar-chart", "person", "org-chart", "gear", "document"]);
+
+export function preFamilyIrToOperatingModelCascade({ elements }) {
+  const byGroup = elementsByGroupId(elements);
+  const groupIds = [...byGroup.keys()];
+  const stageIds = [];
+  for (const el of elements) {
+    if (el.groupId != null && el.groupId.startsWith("stage-") && !el.groupId.includes("-card-") && !stageIds.includes(el.groupId)) stageIds.push(el.groupId);
+  }
+
+  const stages = stageIds.map((gid) => {
+    const els = byGroup.get(gid);
+    const number = findRole(els, "number");
+    const title = findRole(els, "title");
+    const question = findRole(els, "question");
+    if (!number) throw new Error(`operating_model_cascade adapter: stage "${gid}" has no number element`);
+    if (!title) throw new Error(`operating_model_cascade adapter: stage "${gid}" has no title element`);
+    if (!question) throw new Error(`operating_model_cascade adapter: stage "${gid}" has no question element`);
+
+    const cardPrefix = `${gid}-card-`;
+    const cardIds = groupIds.filter((g) => g.startsWith(cardPrefix));
+    if (!cardIds.length) throw new Error(`operating_model_cascade adapter: stage "${gid}" has no cards`);
+    const cards = cardIds.map((cardGid) => {
+      const cardEls = byGroup.get(cardGid);
+      const cardTitle = findRole(cardEls, "title");
+      const body = findRole(cardEls, "body");
+      const icon = findRole(cardEls, "icon");
+      if (!cardTitle) throw new Error(`operating_model_cascade adapter: card "${cardGid}" has no title element`);
+      if (!body) throw new Error(`operating_model_cascade adapter: card "${cardGid}" has no body element`);
+      if (!icon) throw new Error(`operating_model_cascade adapter: card "${cardGid}" has no icon element`);
+      if (!OPERATING_MODEL_CARD_ICON_NAMES.has(icon)) throw new Error(`operating_model_cascade adapter: card "${cardGid}" icon "${icon}" is not one of ${[...OPERATING_MODEL_CARD_ICON_NAMES].join("/")}`);
+      return { title: cardTitle, body, icon };
+    });
+
+    return { id: gid, number, title, question, cards };
+  });
+
+  const keyMessageEls = byGroup.get("keyMessage") || [];
+  const headline = findRole(keyMessageEls, "headline");
+  if (!headline) throw new Error('operating_model_cascade adapter: no "keyMessage" group headline element found');
+  const checklist = keyMessageEls.filter((e) => e.semanticRole === "bullets").map((e) => e.value);
+  if (!checklist.length) throw new Error('operating_model_cascade adapter: no "keyMessage" checklist bullets found');
+  const keyMessageBand = { headline, checklist };
+  const label = findRole(keyMessageEls, "label");
+  if (label) keyMessageBand.label = label;
+
+  return { cascadeStages: stages, keyMessageBand };
+}
+
 function topoSort(ids, seqRelationships) {
   const next = new Map();
   const hasIncoming = new Set();
@@ -652,6 +707,7 @@ export function preFamilyIrToSlideSpec(selection, preFamilyIR, slideMeta) {
   else if (selection.slideSpecShape === "keyTakeaways") body = preFamilyIrToKeyTakeaways(preFamilyIR);
   else if (selection.slideSpecShape === "matrixBadgeList") body = preFamilyIrToMatrixBadgeList(preFamilyIR);
   else if (selection.slideSpecShape === "workstream100day") body = preFamilyIrToWorkstream100Day(preFamilyIR);
+  else if (selection.slideSpecShape === "operatingModelCascade") body = preFamilyIrToOperatingModelCascade(preFamilyIR);
   else throw new Error(`preFamilyIrToSlideSpec: no adapter for slideSpecShape "${selection.slideSpecShape}"`);
 
   return {

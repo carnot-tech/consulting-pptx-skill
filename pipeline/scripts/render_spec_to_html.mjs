@@ -66,6 +66,7 @@ const templates = new Set([
   "calc_flow",
   "chevron_value_chain",
   "workstream_100day",
+  "operating_model_cascade",
 ]);
 
 // ── 型プラグイン（scripts/archetypes/*.mjs）。PPTX エクスポーターと同じ登録簿。
@@ -308,6 +309,47 @@ function renderMatrixBadgeList(slide, n) {
 // per-element pixel math — each of rail/phaseband/grid/milestone-track is its own nested grid
 // sharing the same row/column count as its counterpart, all placed within one shared 2-column
 // outer grid (rail-width column + content column).
+// RP-OPERATING-MODEL-01: a left-to-right cascade of INDEPENDENTLY-SIZED stage columns, NOT a
+// uniform grid (unlike renderWorkstream100Day's workstream x phase matrix) — see
+// pipeline/reference-patterns/visual-contracts/RP-OPERATING-MODEL-01.md. Each stage's own card
+// stack is only as tall as it needs to be; a 3-card stage does not stretch to match a 4-card
+// neighbor. Connectors sit in the grid gap between adjacent stage columns as their own grid
+// cells, not absolutely-positioned overlays (avoiding the overflow false-positive risk already
+// documented for RP-MATRIX-BADGELIST-01's axis arrows).
+function renderOperatingModelCascade(slide, n) {
+  const stages = slide.cascadeStages || [];
+  const connectorSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 4 16 12 8 20"/></svg>';
+
+  const stageCells = stages.map((s) => {
+    const cards = (s.cards || [])
+      .map((c) => {
+        const icon = c.icon && PATTERN_ICONS[c.icon] ? `<div class="om-card-icon">${PATTERN_ICONS[c.icon]}</div>` : "";
+        return `<div class="om-card">${icon}<div class="om-card-text"><div class="om-card-title">${esc(c.title)}</div><div class="om-card-body">${esc(c.body)}</div></div></div>`;
+      })
+      .join("");
+    return `<div class="om-stage"><div class="om-head"><span class="om-num">${esc(s.number)}</span><span class="om-title">${esc(s.title)}</span><span class="om-question">${esc(s.question)}</span></div><div class="om-cards">${cards}</div></div>`;
+  });
+  let cascadeInner = "";
+  stageCells.forEach((cell, i) => {
+    if (i > 0) cascadeInner += `<div class="om-connector">${connectorSvg}</div>`;
+    cascadeInner += cell;
+  });
+  const templateColumns = stages.map(() => "1fr").join(" auto ");
+
+  const km = slide.keyMessageBand || {};
+  const checklist = (km.checklist || [])
+    .map((item) => `<li><span class="om-km-check">${PATTERN_ICONS.check}</span><span>${esc(item)}</span></li>`)
+    .join("");
+  const keyMessageHtml = `<div class="om-keymessage"><div class="om-km-wedge">${PATTERN_ICONS.target}</div><div class="om-km-message"><div class="om-km-kicker">${esc(km.label || "KEY MESSAGE")}</div><div class="om-km-headline">${esc(km.headline || "")}</div></div><div class="om-km-divider"></div><ul class="om-km-checklist">${checklist}</ul></div>`;
+
+  return shell(
+    slide,
+    n,
+    `<div class="om-outer"><div class="om-cascade" style="grid-template-columns: ${templateColumns};">${cascadeInner}</div>${keyMessageHtml}</div>`,
+    { noTitleRule: true, className: "slide--top-align" },
+  );
+}
+
 function renderWorkstream100Day(slide, n) {
   const workstreams = slide.workstreams || [];
   const phases = [...(slide.phases || [])].sort((a, b) => a.order - b.order);
@@ -1021,6 +1063,14 @@ const PATTERN_ICONS = {
   "trending-up": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 5h6v6"/></svg>',
   handshake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12.5l4.5-3.5 3 2.2-2 2.3 2.3 2-1.4 1.8"/><path d="M22 12.5l-4.5-3.5-3 2.2 2 2.3-2.3 2 1.4 1.8"/></svg>',
   document: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17H6z"/><path d="M15 2v3h3"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>',
+  // RP-OPERATING-MODEL-01's own capability-card icon additions (building/pin/diamond are new
+  // — people/truck/bar-chart/person/org-chart/gear/document above are reused as-is). `check`
+  // is a fixed, non-choosable glyph for the Key Message band's checklist, not part of any
+  // per-item closed vocabulary.
+  building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="1"/><line x1="9.5" y1="7" x2="9.5" y2="7.01"/><line x1="14.5" y1="7" x2="14.5" y2="7.01"/><line x1="9.5" y1="11" x2="9.5" y2="11.01"/><line x1="14.5" y1="11" x2="14.5" y2="11.01"/><line x1="9.5" y1="15" x2="9.5" y2="15.01"/><line x1="14.5" y1="15" x2="14.5" y2="15.01"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-7.5 7-12.5a7 7 0 0 0-14 0C5 14.5 12 22 12 22Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>',
+  diamond: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 8l6-5 6 5-6 13z"/><path d="M6 8h12M9.5 8L12 3l2.5 5M9.5 8l2.5 13M14.5 8l-2.5 13"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9.5 18 20 6"/></svg>',
 };
 
 function kpiTileHtml(k) {
@@ -1345,6 +1395,8 @@ function renderSlide(slide, n) {
       return renderMatrix(slide, n);
     case "workstream_100day":
       return renderWorkstream100Day(slide, n);
+    case "operating_model_cascade":
+      return renderOperatingModelCascade(slide, n);
     case "waterfall":
       return renderWaterfall(slide, n);
     case "comparison_table":

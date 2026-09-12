@@ -127,7 +127,8 @@
             "research_basis",
             "issue_action_columns",
             "agenda_separator",
-            "workstream_100day"
+            "workstream_100day",
+            "operating_model_cascade"
           ]
         },
         "title": {
@@ -241,6 +242,15 @@
           "minItems": 3,
           "maxItems": 3,
           "items": { "$ref": "#/$defs/workstream100dayMilestone" }
+        },
+        "cascadeStages": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/operatingModelStage" }
+        },
+        "keyMessageBand": {
+          "$ref": "#/$defs/operatingModelKeyMessageBand"
         },
         "ask": {
           "type": "string"
@@ -739,6 +749,18 @@
                 "items": { "$ref": "#/$defs/workstream100dayPhase" }
               }
             }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "template": {
+                "const": "operating_model_cascade"
+              }
+            }
+          },
+          "then": {
+            "required": ["cascadeStages", "keyMessageBand"]
           }
         },
         {
@@ -1760,6 +1782,44 @@
         "label": { "type": "string" },
         "title": { "type": "string" },
         "body": { "type": "string" }
+      }
+    },
+    "operatingModelCard": {
+      "type": "object",
+      "required": ["title", "body", "icon"],
+      "properties": {
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "icon": { "enum": ["building", "pin", "people", "diamond", "truck", "bar-chart", "person", "org-chart", "gear", "document"] }
+      }
+    },
+    "operatingModelStage": {
+      "type": "object",
+      "required": ["number", "title", "question", "cards"],
+      "properties": {
+        "number": { "type": "string" },
+        "title": { "type": "string" },
+        "question": { "type": "string" },
+        "cards": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/operatingModelCard" }
+        }
+      }
+    },
+    "operatingModelKeyMessageBand": {
+      "type": "object",
+      "required": ["headline", "checklist"],
+      "properties": {
+        "label": { "type": "string" },
+        "headline": { "type": "string" },
+        "checklist": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": { "type": "string" }
+        }
       }
     },
     "decisionGroup": {

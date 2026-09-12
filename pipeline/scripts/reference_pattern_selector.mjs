@@ -57,6 +57,7 @@ const FAMILY_VARIANT_MAP = {
   "decision-ask|standard": ["RP-DECISION-ASK-01"],
   "key-takeaways|standard": ["RP-KEY-TAKEAWAYS-01"],
   "100day-workstream|standard": ["RP-100DAY-WORKSTREAM-01"],
+  "operating-model|standard": ["RP-OPERATING-MODEL-01"],
 };
 
 export async function runRegistryConsistencyGate(registry, library) {
@@ -405,6 +406,63 @@ function checkWorkstream100DayShape(elements) {
   return { pass: true, workstreamCount: workstreamIds.length, phaseCount: phaseIds.length, activityCount: activityIds.length, milestoneCount: milestoneIds.length };
 }
 
+// RP-OPERATING-MODEL-01: a left-to-right cascade of INDEPENDENTLY-SIZED stage columns, not a
+// uniform grid (unlike RP-100DAY-WORKSTREAM-01's workstream x phase matrix, where every cell
+// must exist) — the reference image itself shows 3/3/4/3 cards across its 4 stages. Stages are
+// classified by reserved groupId prefix "stage-"; each stage's own cards are classified by a
+// prefix PARAMETERIZED on that specific stage's groupId (`${stageGroupId}-card-`), the same
+// idiom RP-MATRIX-BADGELIST-01 already uses for badge items nested under an author-chosen
+// quadrant groupId (as opposed to RP-100DAY-WORKSTREAM-01's 4 globally-fixed prefixes — there
+// is no small fixed set of literal stage names to reuse here, and cards nest under ONE
+// specific stage rather than cross-referencing two axes the way activities do).
+function checkOperatingModelCascadeShape(elements) {
+  const byGroup = elementsByGroupId(elements);
+  const groupIds = [...byGroup.keys()];
+  // Stage order = first-appearance order in elements[] (authoring order), not re-sorted by
+  // "number" — the "number" field is an authored display label, like every other pattern's
+  // "number" field, not a re-ranking key (this pattern has no analogue to
+  // RP-100DAY-WORKSTREAM-01's phase "order" field, since there is no cross-cutting alignment
+  // requirement forcing a canonical numeric order here).
+  const stageIds = [];
+  for (const el of elements) {
+    if (el.groupId != null && el.groupId.startsWith("stage-") && !el.groupId.includes("-card-") && !stageIds.includes(el.groupId)) stageIds.push(el.groupId);
+  }
+
+  if (stageIds.length < 3 || stageIds.length > 5) {
+    return { pass: false, reason: `${stageIds.length} stage groups (need 3-5)` };
+  }
+  let totalCards = 0;
+  for (const gid of stageIds) {
+    const els = byGroup.get(gid);
+    if (!els.some((e) => e.semanticRole === "number")) return { pass: false, reason: `stage "${gid}" has no number element` };
+    if (!els.some((e) => e.semanticRole === "title")) return { pass: false, reason: `stage "${gid}" has no title element` };
+    if (!els.some((e) => e.semanticRole === "question")) return { pass: false, reason: `stage "${gid}" has no question element (question is required for this pattern)` };
+    const cardPrefix = `${gid}-card-`;
+    const cardIds = groupIds.filter((g) => g.startsWith(cardPrefix));
+    if (cardIds.length < 2 || cardIds.length > 4) {
+      return { pass: false, reason: `stage "${gid}" has ${cardIds.length} cards (need 2-4, independently per stage)` };
+    }
+    for (const cardGid of cardIds) {
+      const cardEls = byGroup.get(cardGid);
+      if (!cardEls.some((e) => e.semanticRole === "title")) return { pass: false, reason: `card "${cardGid}" has no title element` };
+      if (!cardEls.some((e) => e.semanticRole === "body")) return { pass: false, reason: `card "${cardGid}" has no body element` };
+      if (!cardEls.some((e) => e.semanticRole === "icon")) return { pass: false, reason: `card "${cardGid}" has no icon element (icon is required for this pattern)` };
+    }
+    totalCards += cardIds.length;
+  }
+
+  const keyMessageEls = byGroup.get("keyMessage");
+  if (!keyMessageEls || !keyMessageEls.some((e) => e.semanticRole === "headline")) {
+    return { pass: false, reason: 'no "keyMessage" group headline element found (mandatory for this pattern)' };
+  }
+  const checklistItems = keyMessageEls.filter((e) => e.semanticRole === "bullets");
+  if (checklistItems.length < 2 || checklistItems.length > 4) {
+    return { pass: false, reason: `keyMessage has ${checklistItems.length} checklist bullets (need 2-4)` };
+  }
+
+  return { pass: true, stageCount: stageIds.length, totalCards, checklistCount: checklistItems.length };
+}
+
 function checkPmiHasEmphasisInSomeGroup(elements, relationships) {
   const groupIds = new Set();
   relationships.filter((r) => r.type === "contains" || r.type === "sequence").forEach((r) => {
@@ -495,6 +553,10 @@ function evaluatePattern(patternId, registryEntry, elements, relationships) {
       const r = checkWorkstream100DayShape(elements);
       if (r.pass) evidence.push(`WORKSTREAM_100DAY_SHAPE passed: ${r.workstreamCount} workstreams x ${r.phaseCount} phases, ${r.activityCount} activities, ${r.milestoneCount} milestones`);
       else failedChecks.push(`WORKSTREAM_100DAY_SHAPE failed: ${r.reason}`);
+    } else if (checkName === "OPERATING_MODEL_CASCADE_SHAPE") {
+      const r = checkOperatingModelCascadeShape(elements);
+      if (r.pass) evidence.push(`OPERATING_MODEL_CASCADE_SHAPE passed: ${r.stageCount} stages, ${r.totalCards} total cards, ${r.checklistCount} checklist items`);
+      else failedChecks.push(`OPERATING_MODEL_CASCADE_SHAPE failed: ${r.reason}`);
     } else {
       failedChecks.push(`unknown structuralCheck: ${checkName}`);
     }
