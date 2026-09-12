@@ -38,6 +38,7 @@ FAIL 0 と目視で仕上げる。パーツ集と型カタログは規約を効�
 | `references/visual-qa-prompt.md` | Visual QAの指示文（画像を見た見た目のレビュー） | Lane B・手順6 |
 | `references/rule-index.json` | slide-rules.md各項目のID・カテゴリ索引（QA/Reviewerが指摘を紐付ける） | 随時 |
 | `pipeline/scripts/run_pipeline.mjs` | CLIオーケストレーター（--mode fast/standard/rigorous） | Lane B 全体 |
+| `references/reference-pattern-library-shadow-mode.md` | Reference Pattern Library v0.2 Shadow Modeの詳細（対象pattern・ログschema・Promotion Gate基準） | 手順3と並行のShadow評価時 |
 
 ## 規約の要点（入口。全文は必ず読む）
 
@@ -104,6 +105,44 @@ Targeted Revision → Regression QA → Editable PPTX → PDF Preview
    `references/archetype-catalog.md` と1:1）。数値の主張には `claims:[{text, sourceId}]` を付け、
    ユーザーから与えられていない数字は `basis:"assumption"|"illustrative"|"example"` を明示する
    （`sources:[{id,label}]` に出典を登録）。`node pipeline/scripts/validate_spec.mjs <spec.json>`。
+
+### Shadow Mode（Reference Pattern Library v0.2 観測、納品物に影響しない）
+
+Productionは常に通常どおり進む: Ghost Deck → 本番のSlide Specification作成 → レンダリング／QA／
+納品。Shadowはそれと並行する別経路（sidecar）であり、Production経路へ戻る矢印は存在しない。
+
+```
+Production:  Ghost Deck → 本番authoring → SlideSpec → render / QA / delivery
+Shadow:                    └→ candidate screen → Pre-family IR → Selector → ログのみ
+                                                                  （Productionへの合流なし）
+```
+
+対象slideが `kpi-dashboard` / `comparison-table` / `decision-ask` / `key-takeaways` /
+`matrix|badge-list` / `100day-workstream` / `operating-model` のいずれか（判定基準は
+`pipeline/reference-patterns/library.json` の各patternの `useWhen`）に合致しそうなときだけ
+（= candidate screen）、Ghost Deckの意味内容が確定した後、`shadow_evaluate_slide.mjs`の
+`evaluateSlideForShadow()` を呼ぶ（`references/pre-family-ir-authoring.md` に沿ってPre-family IR
+を組み、内部で `selectPattern()` を実行し、`pipeline/shadow/shadow-routing.json` へ1slide=1
+immutable recordとして記録する）。合致しないslideは無理に7 patternへ分類せず、Shadow評価自体を
+スキップする（`NOT_EVALUATED`を大量に残さない）。
+
+**Shadow processing must never affect production output, and a shadow-side failure must never
+halt or alter the production pipeline.**
+
+具体的には、Shadowが選んだpatternは:
+- 本番の型選択を変えない
+- 本番のSlideSpecを変えない
+- 本番のレンダリングHTML/PPTXを変えない
+- 本番のQA合否を変えない
+- 納品を止めない
+
+Shadowは「draft IR → selectPattern() → ログのみ」で完結する。`evaluateSlideForShadow()` は
+Selector側の例外もログ書き込み側の失敗も内部で捕捉し、呼び出し元へは一切例外を投げない
+（本番コードがShadowの結果を無視しても安全という保証はここに実装されている）。詳細・ログ
+schema・人手判定（adjudication）の分離・Promotion Gateの判定基準
+（`pipeline/scripts/aggregate_shadow_promotion_gate.mjs`）は
+`references/reference-pattern-library-shadow-mode.md` を参照。
+
 4. **Mechanical Quality Gate**（`pipeline/scripts/run_mechanical_gate.mjs <spec.json> [rendered.html]`）:
    schema・placeholder/TODO/lorem/空chart・数値整合（waterfall/CAGR/%合計/小計）・
    （レンダリング後は）重なり・はみ出し・フォント・出典欠落を1本のJSONで判定する。Critical 1件でも次工程に進めない。

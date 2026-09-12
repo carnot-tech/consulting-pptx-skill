@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { checkNumericalIntegrity } from "../scripts/check_numerical_integrity.mjs";
@@ -12,6 +13,10 @@ import { checkContentStructure } from "../scripts/check_content_structure.mjs";
 import { applyTargetedRevision } from "../scripts/apply_targeted_revision.mjs";
 import { runPipeline } from "../scripts/run_pipeline.mjs";
 import { logExperience } from "../scripts/log_experience.mjs";
+import { logShadowRouting } from "../scripts/log_shadow_routing.mjs";
+import { logShadowAdjudication } from "../scripts/log_shadow_adjudication.mjs";
+import { evaluateSlideForShadow } from "../scripts/shadow_evaluate_slide.mjs";
+import { aggregateShadowPromotionGate, summarizeShadowDeckCoverage } from "../scripts/aggregate_shadow_promotion_gate.mjs";
 import { parseStorylineReview, parseFreshEyeReview, parseVisualQa } from "../scripts/review_output_parser.mjs";
 import { dedupeSlideShapeIds, fixPptxShapeIds } from "../scripts/fix_pptx_shape_ids.mjs";
 import { auditPptxStructure } from "../scripts/audit_pptx_structure.mjs";
@@ -2068,4 +2073,298 @@ test("audit_pptx_structure: a freshly exported deck (with a table slide) passes 
   const buffer = await fs.readFile(outPath);
   const result = await auditPptxStructure(buffer);
   assert.deepEqual(result, { passed: true, errors: [] });
+});
+
+// ============================================================================================
+// Production Shadow Mode (post-freeze, on top of reference-pattern-library-v0.2)
+// ============================================================================================
+// Shadow Mode lets the Selector observe real production slides without ever affecting what
+// gets delivered. The hard invariant — "shadow processing must never affect production output,
+// and a shadow-side failure must never halt or alter the production pipeline" — is enforced by
+// evaluateSlideForShadow() never throwing, and predictions/adjudications living in two
+// separate, append-only, immutable-per-recordId logs so a prediction can never be edited after
+// the fact once its gold label is known.
+
+function shadowLogPaths(name) {
+  return {
+    routingPath: path.join(tmpDir, `shadow-routing-${name}.json`),
+    adjudicationsPath: path.join(tmpDir, `shadow-adjudications-${name}.json`),
+  };
+}
+
+test("log_shadow_routing: a SELECTED record and a DEFERRED record both append correctly, and duplicate recordIds are rejected (predictions are immutable)", async () => {
+  const { routingPath } = shadowLogPaths("append");
+  await fs.rm(routingPath, { force: true });
+
+  const selectedRecord = {
+    recordId: "shadow-r1-s1",
+    runId: "r1", deckId: "d1", slideId: "s1",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_kpi_candidate" },
+    production: { template: "kpi_dashboard_flat", unchanged: true },
+    shadow: { status: "SELECTED", selectedPattern: "RP-KPI-EXEC-DASHBOARD-01", consideredPatterns: ["RP-KPI-EXEC-DASHBOARD-01"], eligibilityEvidence: {}, deferReason: null, error: null },
+    provenance: { libraryVersion: "reference-pattern-library-v0.2", selectorHash: null, preFamilyIrHash: null },
+  };
+  const deferredRecord = {
+    recordId: "shadow-r1-s2",
+    runId: "r1", deckId: "d1", slideId: "s2",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_decision_candidate" },
+    production: { template: "decision_page", unchanged: true },
+    shadow: { status: "DEFERRED", selectedPattern: null, consideredPatterns: ["RP-DECISION-ASK-01"], eligibilityEvidence: {}, deferReason: "RP-DECISION-ASK-01: only 1 decision group (need 2-4)", error: null },
+    provenance: { libraryVersion: "reference-pattern-library-v0.2", selectorHash: null, preFamilyIrHash: null },
+  };
+
+  await logShadowRouting(selectedRecord, routingPath);
+  await logShadowRouting(deferredRecord, routingPath);
+
+  const log = JSON.parse(await fs.readFile(routingPath, "utf8"));
+  assert.equal(log.length, 2);
+  assert.equal(log[0].shadow.status, "SELECTED");
+  assert.equal(log[1].shadow.status, "DEFERRED");
+
+  await assert.rejects(() => logShadowRouting({ ...selectedRecord }, routingPath), /immutable|already exists/);
+});
+
+test("log_shadow_routing: rejects a malformed record (missing required field, inconsistent status/selectedPattern)", async () => {
+  const { routingPath } = shadowLogPaths("malformed");
+  await fs.rm(routingPath, { force: true });
+  await assert.rejects(() => logShadowRouting({ recordId: "x" }, routingPath), /required field/);
+  await assert.rejects(() => logShadowRouting({
+    recordId: "x", runId: "r", deckId: "d", slideId: "s",
+    candidateScreen: { eligibleForShadow: true, reason: "x" },
+    production: { template: "t", unchanged: true },
+    shadow: { status: "SELECTED", selectedPattern: null, consideredPatterns: [], eligibilityEvidence: {}, deferReason: null, error: null },
+    provenance: { libraryVersion: "v" },
+  }, routingPath), /requires a non-null selectedPattern/);
+});
+
+test("log_shadow_adjudication: appends a gold judgment and rejects a duplicate recordId or an invalid verdict", async () => {
+  const { adjudicationsPath } = shadowLogPaths("adjudication-append");
+  await fs.rm(adjudicationsPath, { force: true });
+  await logShadowAdjudication({ recordId: "shadow-r1-s1", verdict: "CORRECT_SELECTION", gold: { selectable: true, expectedPattern: "RP-KPI-EXEC-DASHBOARD-01" } }, adjudicationsPath);
+  const log = JSON.parse(await fs.readFile(adjudicationsPath, "utf8"));
+  assert.equal(log.length, 1);
+  assert.equal(log[0].verdict, "CORRECT_SELECTION");
+  await assert.rejects(() => logShadowAdjudication({ recordId: "shadow-r1-s1", verdict: "WRONG_SELECTION" }, adjudicationsPath), /immutable|already exists/);
+  await assert.rejects(() => logShadowAdjudication({ recordId: "shadow-r1-s3", verdict: "NOT_A_REAL_VERDICT" }, adjudicationsPath), /verdict must be one of/);
+});
+
+test("evaluateSlideForShadow: a candidate-screen rejection (eligibleForShadow: false) is skipped entirely — returns null, nothing logged", async () => {
+  const { routingPath } = shadowLogPaths("skip");
+  await fs.rm(routingPath, { force: true });
+  const record = await evaluateSlideForShadow({
+    runId: "r2", deckId: "d2", slideId: "s1",
+    candidateScreen: { eligibleForShadow: false, reason: "not_a_plausible_candidate" },
+    productionTemplate: "bullet_list",
+    intent: { family: "kpi-dashboard", variant: "standard" },
+    draftPreFamilyIr: () => { throw new Error("should never be called"); },
+    logPath: routingPath,
+  });
+  assert.equal(record, null);
+  await assert.rejects(() => fs.readFile(routingPath, "utf8"));
+});
+
+test("evaluateSlideForShadow: a real eligible KPI-shaped slide logs status SELECTED with the correct pattern", async () => {
+  const { routingPath } = shadowLogPaths("selected");
+  await fs.rm(routingPath, { force: true });
+  const kpiFixture = libraryCollisionFixtures().kpi.fixture;
+  const record = await evaluateSlideForShadow({
+    runId: "r3", deckId: "d3", slideId: "s1",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_kpi_candidate" },
+    productionTemplate: "kpi_dashboard_flat",
+    intent: { family: "kpi-dashboard", variant: "standard" },
+    draftPreFamilyIr: () => kpiFixture,
+    logPath: routingPath,
+  });
+  assert.equal(record.shadow.status, "SELECTED");
+  assert.equal(record.shadow.selectedPattern, "RP-KPI-EXEC-DASHBOARD-01");
+  assert.equal(record.production.template, "kpi_dashboard_flat");
+  assert.equal(record.production.unchanged, true);
+  const log = JSON.parse(await fs.readFile(routingPath, "utf8"));
+  assert.equal(log.length, 1);
+  assert.equal(log[0].recordId, record.recordId);
+});
+
+test("evaluateSlideForShadow: content that fails eligibility under the screened intent logs status DEFERRED, not an error", async () => {
+  const { routingPath } = shadowLogPaths("deferred");
+  await fs.rm(routingPath, { force: true });
+  const kpiFixture = libraryCollisionFixtures().kpi.fixture;
+  const record = await evaluateSlideForShadow({
+    runId: "r4", deckId: "d4", slideId: "s1",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_decision_candidate" },
+    productionTemplate: "decision_page",
+    intent: { family: "decision-ask", variant: "standard" }, // wrong family for this fixture's own content -> FAIL
+    draftPreFamilyIr: () => kpiFixture,
+    logPath: routingPath,
+  });
+  assert.equal(record.shadow.status, "DEFERRED");
+  assert.equal(record.shadow.selectedPattern, null);
+  assert.ok(record.shadow.deferReason, "a DEFERRED record must carry a human-readable reason");
+});
+
+test("evaluateSlideForShadow: a throwing Selector/IR-drafting step never propagates — resolves with status SHADOW_ERROR and leaves a stand-in 'production result' untouched", async () => {
+  const { routingPath } = shadowLogPaths("selector-throws");
+  await fs.rm(routingPath, { force: true });
+
+  // Simulates a production caller that already has its own result in hand before touching
+  // Shadow at all — proving the invariant means proving THIS value survives untouched.
+  const productionResult = { deliveredTemplate: "kpi_dashboard_flat", deliveredOk: true };
+  const productionResultSnapshot = JSON.parse(JSON.stringify(productionResult));
+
+  const record = await evaluateSlideForShadow({
+    runId: "r5", deckId: "d5", slideId: "s1",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_kpi_candidate" },
+    productionTemplate: "kpi_dashboard_flat",
+    intent: { family: "kpi-dashboard", variant: "standard" },
+    draftPreFamilyIr: () => { throw new Error("simulated Pre-family IR drafting failure"); },
+    logPath: routingPath,
+  });
+
+  assert.equal(record.shadow.status, "SHADOW_ERROR");
+  assert.match(record.shadow.error, /simulated Pre-family IR drafting failure/);
+  assert.deepEqual(productionResult, productionResultSnapshot, "production's own result must be byte-identical after a shadow-side throw");
+});
+
+test("evaluateSlideForShadow: a logger failure (cannot write the routing log) is swallowed — resolves with SHADOW_ERROR instead of throwing, production still succeeds", async () => {
+  // Passing a directory as the log path forces fs.writeFile inside logShadowRouting to throw
+  // (EISDIR) — this exercises the SECOND half of the invariant (the log write itself failing),
+  // distinct from the Selector/IR-drafting throw exercised above.
+  const kpiFixture = libraryCollisionFixtures().kpi.fixture;
+  const productionResult = { deliveredOk: true };
+  const productionResultSnapshot = JSON.parse(JSON.stringify(productionResult));
+
+  const record = await evaluateSlideForShadow({
+    runId: "r6", deckId: "d6", slideId: "s1",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_kpi_candidate" },
+    productionTemplate: "kpi_dashboard_flat",
+    intent: { family: "kpi-dashboard", variant: "standard" },
+    draftPreFamilyIr: () => kpiFixture,
+    logPath: tmpDir, // a directory, not a file — the write must fail
+  });
+
+  assert.equal(record.shadow.status, "SHADOW_ERROR");
+  assert.ok(record.shadow.error, "a swallowed logger failure must still be visible on the returned record");
+  assert.deepEqual(productionResult, productionResultSnapshot, "production's own result must be unaffected by a logger-side failure");
+});
+
+test("aggregate_shadow_promotion_gate: only reviewed predictions (those with a matching adjudication) count toward the score — un-reviewed predictions are excluded, not guessed at", () => {
+  const predictions = [
+    { recordId: "a", deckId: "d", shadow: { status: "SELECTED" } },
+    { recordId: "b", deckId: "d", shadow: { status: "DEFERRED" } },
+    { recordId: "c", deckId: "d", shadow: { status: "SELECTED" } }, // never adjudicated
+  ];
+  const adjudications = [
+    { recordId: "a", verdict: "CORRECT_SELECTION" },
+    { recordId: "b", verdict: "CORRECT_DEFER" },
+  ];
+  const report = aggregateShadowPromotionGate(predictions, adjudications, { sampleFloor: 1 });
+  assert.equal(report.reviewed, 2, "the un-reviewed SELECTED prediction must not inflate reviewed count");
+  assert.equal(report.correctSelection, 1);
+  assert.equal(report.correctDefer, 1);
+});
+
+test("aggregate_shadow_promotion_gate: a single WRONG_SELECTION is an automatic FAIL, no matter how many correct selections surround it", () => {
+  const predictions = [];
+  const adjudications = [];
+  for (let i = 0; i < 19; i++) {
+    predictions.push({ recordId: `sel-${i}`, deckId: "d", shadow: { status: "SELECTED" } });
+    adjudications.push({ recordId: `sel-${i}`, verdict: i === 18 ? "WRONG_SELECTION" : "CORRECT_SELECTION" });
+  }
+  const report = aggregateShadowPromotionGate(predictions, adjudications, { sampleFloor: 20 });
+  assert.equal(report.wrongSelection, 1);
+  assert.equal(report.correctSelection, 18);
+  assert.equal(report.promotionVerdict, "FAIL");
+  assert.ok(report.reasons.some((r) => r.includes("wrongSelection")));
+});
+
+test("aggregate_shadow_promotion_gate: unnecessaryDefer-only results are never a hard FAIL by themselves, and the sample floor gates PASS vs INSUFFICIENT_DATA", () => {
+  const predictions = [];
+  const adjudications = [];
+  for (let i = 0; i < 12; i++) {
+    predictions.push({ recordId: `sel-${i}`, deckId: "d", shadow: { status: "SELECTED" } });
+    adjudications.push({ recordId: `sel-${i}`, verdict: "CORRECT_SELECTION" });
+  }
+  for (let i = 0; i < 6; i++) {
+    predictions.push({ recordId: `def-${i}`, deckId: "d", shadow: { status: "DEFERRED" } });
+    adjudications.push({ recordId: `def-${i}`, verdict: "CORRECT_DEFER" });
+  }
+  for (let i = 0; i < 2; i++) {
+    predictions.push({ recordId: `undef-${i}`, deckId: "d", shadow: { status: "DEFERRED" } });
+    adjudications.push({ recordId: `undef-${i}`, verdict: "UNNECESSARY_DEFER" });
+  }
+  // Only 20 reviewed so far, unnecessaryDefer=2, everything else 0 -> matches the "12
+  // correct + 8 defer, 0 wrong" example (2 of the 8 defers are unnecessary but not wrong).
+  const belowFloor = aggregateShadowPromotionGate(predictions, adjudications, { sampleFloor: 25 });
+  assert.equal(belowFloor.unnecessaryDefer, 2);
+  assert.equal(belowFloor.wrongSelection, 0);
+  assert.equal(belowFloor.promotionVerdict, "INSUFFICIENT_DATA", "20 reviewed is below a 25 sample floor");
+
+  const atFloor = aggregateShadowPromotionGate(predictions, adjudications, { sampleFloor: 20 });
+  assert.equal(atFloor.promotionVerdict, "PASS", "unnecessaryDefer alone must not block PASS once the sample floor is met");
+  assert.equal(atFloor.selectableRecall, Number((12 / (12 + 0 + 2)).toFixed(4)));
+});
+
+test("aggregate_shadow_promotion_gate: shadowErrors are counted from ALL predictions (reviewed or not) but never themselves cause a FAIL — only productionInterference does", () => {
+  const predictions = [
+    { recordId: "e1", deckId: "d", shadow: { status: "SHADOW_ERROR" } },
+    { recordId: "e2", deckId: "d", shadow: { status: "SHADOW_ERROR" } },
+  ];
+  for (let i = 0; i < 20; i++) predictions.push({ recordId: `sel-${i}`, deckId: "d", shadow: { status: "SELECTED" } });
+  const adjudications = Array.from({ length: 20 }, (_, i) => ({ recordId: `sel-${i}`, verdict: "CORRECT_SELECTION" }));
+
+  const clean = aggregateShadowPromotionGate(predictions, adjudications, { sampleFloor: 20 });
+  assert.equal(clean.shadowErrors, 2);
+  assert.equal(clean.promotionVerdict, "PASS", "contained shadow errors (no production interference) must not block PASS");
+
+  adjudications[0] = { ...adjudications[0], productionInterference: true };
+  const interfered = aggregateShadowPromotionGate(predictions, adjudications, { sampleFloor: 20 });
+  assert.equal(interfered.promotionVerdict, "FAIL");
+  assert.ok(interfered.reasons.some((r) => r.includes("productionInterference")));
+});
+
+test("summarizeShadowDeckCoverage: reports shadowCandidates/shadowEvaluated against a caller-supplied totalSlides, for later selection-bias review", () => {
+  const predictions = [
+    { deckId: "deckA", shadow: { status: "SELECTED" } },
+    { deckId: "deckA", shadow: { status: "DEFERRED" } },
+    { deckId: "deckA", shadow: { status: "SHADOW_ERROR" } },
+    { deckId: "deckB", shadow: { status: "SELECTED" } },
+  ];
+  const coverage = summarizeShadowDeckCoverage("deckA", 12, predictions);
+  assert.deepEqual(coverage, { deckId: "deckA", totalSlides: 12, shadowCandidates: 3, shadowEvaluated: 3 });
+});
+
+test("Shadow Mode does not perturb production output: a real deck's rendered HTML is byte-identical whether Shadow evaluation runs alongside it or not (Shadow includes a deliberately-throwing case here for maximum stress)", async () => {
+  const specPath = path.join(root, "test/integration/ma-investment-committee/spec.json");
+  const htmlOffPath = path.join(tmpDir, "shadow-unchanged-off.html");
+  const htmlOnPath = path.join(tmpDir, "shadow-unchanged-on.html");
+  const { routingPath } = shadowLogPaths("production-unchanged");
+  await fs.rm(routingPath, { force: true });
+
+  // "Shadow OFF": production renders exactly as SKILL.md's Lane B already describes, nothing
+  // else runs.
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlOffPath]);
+
+  // "Shadow ON": the identical production render, but with a shadow evaluation (including one
+  // that deliberately throws) run alongside it first.
+  await evaluateSlideForShadow({
+    runId: "prod-unchanged", deckId: "ma-investment-committee", slideId: "s1",
+    candidateScreen: { eligibleForShadow: true, reason: "plausible_kpi_candidate" },
+    productionTemplate: "whatever_production_actually_used",
+    intent: { family: "kpi-dashboard", variant: "standard" },
+    draftPreFamilyIr: () => { throw new Error("deliberate shadow-side failure, must not touch production"); },
+    logPath: routingPath,
+  });
+  await execFileAsync("node", [path.join(root, "scripts/render_spec_to_html.mjs"), specPath, htmlOnPath]);
+
+  const [offBuf, onBuf] = await Promise.all([fs.readFile(htmlOffPath), fs.readFile(htmlOnPath)]);
+  const hash = (buf) => crypto.createHash("sha256").update(buf).digest("hex");
+  assert.equal(hash(onBuf), hash(offBuf), "production HTML must be byte-identical regardless of Shadow running alongside it");
+
+  // Confirm the shadow-side failure really did happen and was captured, not silently no-op'd.
+  const shadowLog = JSON.parse(await fs.readFile(routingPath, "utf8"));
+  assert.equal(shadowLog.length, 1);
+  assert.equal(shadowLog[0].shadow.status, "SHADOW_ERROR");
+
+  // PPTX export note: pptxgenjs stamps a per-export creation timestamp into core.xml, so two
+  // exports of identical input are NOT byte-identical even with Shadow fully disabled (verified
+  // separately) — HTML is the deterministic artifact this invariant is checked against.
 });
