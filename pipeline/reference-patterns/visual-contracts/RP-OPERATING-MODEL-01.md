@@ -242,17 +242,24 @@ adaptive variant of this one:
 
 ## Semantic Contract
 
-Independent of any existing chevron/pillar template in this library (`chevron_rail`,
-`chevron_steps`, `chevron_value_chain`, `pillars_foundation`) — to be confirmed at
-implementation time whether any of those already cover part of this shape closely enough to
-extend, but the STACKED, independently-counted capability cards per stage plus the closing
-Key Message band are not currently covered by any of them as far as this Visual Contract's own
-research determined; treated as requiring a new `operating_model_cascade` (working name)
-SlideSpec shape unless implementation-time investigation finds a closer existing fit worth
-extending instead of duplicating.
+Independent of any existing chevron/pillar template in this library — confirmed at
+implementation time via a dedicated fit check against `chevron_rail`, `chevron_steps`,
+`chevron_value_chain`, and `pillars_foundation`: none of the four supports stacked icon+title+
+body cards nested independently per segment, independently-variable per-segment item counts,
+or a 3-part closing Key Message band, so a new `operating_model_cascade` SlideSpec template
+was implemented rather than extending any of them.
+
+**Field names below are the authoritative SlideSpec property names actually implemented — kept
+in sync with schema.json/the adapter, not a conceptual sketch.** The names differ from an
+earlier draft of this contract (`stages[]`/`keyMessage`) because both collided with unrelated,
+differently-shaped fields already used by other templates in this schema (`stages[]` already
+belongs to an existing template requiring `label`+`heading`; `keyMessage` already exists
+elsewhere as a plain string). Renamed once, here, rather than left as a "contract says X,
+implementation says Y" drift — an LLM authoring against this contract, or a future adapter
+change, must not read a name this pattern doesn't actually use.
 
 ```
-stages[]
+cascadeStages[]
   id
   number       // e.g. "01" — authored directly, same discipline as every other
                // "number" field in this library, not derived from array position
@@ -262,7 +269,7 @@ stages[]
     title
     body
     icon       // REQUIRED — closed vocabulary, confirm exact set at implementation time
-keyMessage
+keyMessageBand
   label?       // defaults "KEY MESSAGE"
   headline
   checklist[]  // 2-4 items, plain strings (a fixed checkmark glyph, not a per-item icon
@@ -271,14 +278,18 @@ keyMessage
 
 - **Required**: all authored stages (3-5 supported; 4 canonical) present with a number, title,
   and question; every stage has >=2 cards (2-4 supported), each with a title, body, and icon;
-  a `keyMessage` with a headline and 2-4 checklist items.
-- **Optional**: `keyMessage.label` (defaults to "KEY MESSAGE").
+  a `keyMessageBand` with a headline and 2-4 checklist items.
+- **Optional**: `keyMessageBand.label` (defaults to "KEY MESSAGE").
 - **No `emphasis` field anywhere** — see Emphasis Logic above.
 - The Selector's structural check needs to verify, at minimum: stage count in the supported
   range (3-5), every stage's own card count in range (2-4) independently, and the Key
   Message's checklist count in range (2-4) — there is no cross-stage coverage requirement the
   way RP-100DAY-WORKSTREAM-01's grid needs (no "stage x card" pairing to validate; each
-  stage's cards are self-contained).
+  stage's cards are self-contained). **A card group's own groupId shares the "stage-" prefix
+  with its parent stage group** (cards are named `${stageGroupId}-card-N`) — stage-counting
+  logic must explicitly exclude any groupId containing `-card-`, or every card silently
+  double-counts as an additional stage (a real bug this implementation hit and fixed; see the
+  regression test guarding it in `test/unit.test.mjs`).
 - The exact `elements[]`/`relationships[]` Pre-family IR encoding (reserved groupId
   conventions for stages/cards/checklist items) is an implementation-time decision, to be
   written into `references/pre-family-ir-authoring.md` alongside the other patterns.
