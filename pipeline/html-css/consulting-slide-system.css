@@ -1267,10 +1267,22 @@ body {
 .w100-outer {
   display: grid;
   grid-template-columns: 160px 1fr;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* The rail/grid row is a FIXED height, not `1fr` of whatever's left — per explicit review,
+     the grid's own body height should stay ~constant across the 3-5 supported workstream
+     counts (canonical's own 4-workstream natural height), with per-row height simply
+     following body-height/count: fewer workstreams get TALLER rows, not a shorter overall
+     grid with empty space trailing below it. A percentage/1fr-based height here would instead
+     make the whole grid shrink-wrap smaller at low counts (or, if forced to stretch via the
+     ancestor .content's own sizing, drift into a several-px structural mismatch against
+     .slide-inner's shared, un-scoped row template — confirmed by testing that approach first).
+     420px matches the 5-workstream (this pattern's own v1 maximum) fixture's own measured
+     natural height — the tallest of the 3-5 supported counts' own natural sizes — so every
+     supported count fits within it without further per-count density tuning; canonical
+     (4 workstreams) and the 3-workstream case both end up with correspondingly taller, more
+     comfortable rows than their own bare natural minimum, which is the point. */
+  grid-template-rows: auto 420px auto;
   column-gap: 16px;
   row-gap: 6px;
-  height: 100%;
 }
 
 .w100-rail-head {
@@ -4286,11 +4298,11 @@ body {
 
 /* RP-100DAY-WORKSTREAM-01's grid fills the ENTIRE content row (height:100% at every nested
    grid level down to .w100-rail/.w100-grid) — but .slide-inner's shared row template is plain
-   `1fr`, not `minmax(0, 1fr)`, so at higher workstream counts (near this pattern's own v1
-   ceiling) .content's default min-height:auto (from its own min-content) can exceed the
-   actually-available row height even though every element visually fits once painted —
-   scrollHeight reports the larger pre-resolution size regardless. Scoped to this pattern only,
-   not the shared .slide-inner rule other templates rely on. */
+   `1fr`, not `minmax(0, 1fr)`, so at higher workstream counts .content's default
+   min-height:auto (from its own min-content) can exceed the actually-available row height even
+   though every element visually fits once painted — scrollHeight reports the larger
+   pre-resolution size regardless. Scoped to this pattern only, not the shared .slide-inner
+   rule other templates rely on. */
 .slide--fill-grid .slide-inner > .content {
   min-height: 0;
 }
