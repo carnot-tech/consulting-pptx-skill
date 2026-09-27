@@ -48,7 +48,7 @@ git clone https://github.com/carnot-tech/consulting-pptx-skill.git ~/.claude/ski
 # 2.（任意）実レンダリング検査 check_layout.mjs を使う場合。Node.js が必要。playwright と Chromium が入る
 cd ~/.claude/skills/consulting-pptx-skill && npm run setup
 
-# 3.（任意）PPTX ファイルを check_deck.py で検査する場合
+# 3.（任意）PPTX に変換する・PPTX を check_deck.py で検査する場合（変換には Node.js 22 以上と Chrome も使う）
 pip3 install python-pptx
 ```
 
@@ -65,7 +65,18 @@ python3 scripts/check_deck.py mydeck.html           # 規約の機械チェッ�
 node scripts/check_layout.mjs mydeck.html           # フッター重なり・はみ出しの実レンダリング検査
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu \
   --no-pdf-header-footer --print-to-pdf=mydeck.pdf mydeck.html
+python3 scripts/html_to_pptx.py mydeck.html         # PPTX を求められたときだけ: 編集できる PPTX に変換
 ```
+
+## PowerPoint（.pptx）にする流れ
+
+**まず HTML で仕上げ、PPTX にするのはユーザーから明示されたときだけ**にしています。
+
+1. HTML でデッキを組み、機械チェック・レビュー・PDF での目視まで HTML 上で済ませる（修正の往復が速く、機械チェックもかけやすい）
+2. 「PPTX で欲しい」と言われたら `scripts/html_to_pptx.py` で変換する。Chrome で描画した結果を読み取り、PowerPoint の図形として組み直すので、文字・表・図形はそのまま PowerPoint で編集できる
+3. PPTX を渡した後に修正が来たら、HTML を直して変換し直す（PPTX を手で直すと HTML と中身がずれる）
+
+SVG のチャートや画像は画像として貼られます（中の数値は編集できません）。書体は Yu Gothic / Yu Mincho に置き換わるので、変換後は PowerPoint で開いて折り返しを確認してください。
 
 ## 中身
 
@@ -80,6 +91,7 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 | `references/ai-smell-lexicon.md` | AI臭ワード・言い回しのリストとセルフチェック |
 | `scripts/new_deck.py` | パーツ番号を並べて1本のデッキHTMLを生成（両パーツ集のCSSをスコープして結合・ページ番号の振り直し） |
 | `scripts/check_deck.py` | 規約の機械チェック（HTML / PPTX 両対応。テンプレ集の検査は `--template`）。タイトルの「N段階」と本文の連番の食い違いも FAIL にする |
+| `scripts/html_to_pptx.py` | HTMLデッキを編集できる PPTX に変換（ユーザーが PPTX を求めたときだけ使う）。`scripts/html_dump.mjs` が Chrome で描画した要素を書き出し、python-pptx で組み立てる。追加の npm パッケージは不要（`scripts/lib_cdp.mjs` が Chrome を直接操作する） |
 | `scripts/check_layout.mjs` | HTMLデッキの実レンダリング検査（フッターとの重なり・右端/下端のはみ出し） |
 | `assets/SlideCatalog_16x9.pdf` | **62型のスライド型カタログ（両パーツ集を印刷した62ページ）。型を探すときの入口** |
 | `assets/SuperTemplate_62type.pptx` | 62型のPPTX見本帳（全スライド編集可能）。PowerPoint で手動コピーして使うときの見本。パーツ集の正本ではない |
@@ -89,7 +101,7 @@ node scripts/check_layout.mjs mydeck.html           # フッター重なり・�
 - **いちばん効くのは slide-rules.md への追記**です。レビューで受けた指摘を1行ずつ足していくと、御社専用の資料作成AIに育ちます
 - 色・書体は両パーツ集の `<style>` 冒頭 `:root` トークンで差し替えます。ブランドに合わせるときは両ファイルを同じ値にします
 - 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈を入れます
-- PowerPoint（.pptx）が要るときは、PDFで渡す／`assets/SuperTemplate_62type.pptx` から手でコピーする、のどちらかです。HTML から PPTX への自動変換は含めていません。以前あった JSON から編集可能PPTXを書き出す仕組みは、使用頻度が低かったため外しました（git タグ `pipeline-archived` の時点のリポジトリに残っています）
+- PowerPoint（.pptx）が要るときは、HTML で仕上げてから `scripts/html_to_pptx.py` で変換します（上の「PowerPoint（.pptx）にする流れ」）。以前あった JSON から編集可能PPTXを書き出す仕組みは外しました（git タグ `pipeline-archived` の時点のリポジトリに残っています）
 
 ## About
 

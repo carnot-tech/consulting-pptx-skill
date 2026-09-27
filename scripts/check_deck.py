@@ -177,6 +177,8 @@ def check_orphan(idx, shape, label="タイトル"):
         if not (shape.has_text_frame and shape.width):
             return
         tf = shape.text_frame
+        if tf.word_wrap is False:  # 折り返しなしの文字（html_to_pptx.py の1行テキスト等）は泣き別れしない
+            return
         raw = tf.text
         if not raw.strip():
             return
@@ -286,8 +288,11 @@ def check_pptx(path):
 
     for i, s in enumerate(prs.slides, 1):
         title = ""
+        named = next((sh for sh in s.shapes if sh.has_text_frame and sh.name.startswith("Title")), None)
         if s.shapes.title is not None and s.shapes.title.has_text_frame:
             title = s.shapes.title.text_frame.text
+        elif named is not None:  # html_to_pptx.py が「Title」と名付けたテキストボックス
+            title = named.text_frame.text
         else:
             # タイトルPH が無いビルダー: 上部 y<1.2in の最大フォントテキストをタイトルとみなす
             cands = []
