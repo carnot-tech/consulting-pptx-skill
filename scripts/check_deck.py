@@ -117,7 +117,16 @@ def check_ai_smell(pages):
     if hits:
         detail = "、".join(f"p{i}:「{'/'.join(ws[:3])}」" for i, ws in sorted(hits.items())[:6])
         warn(f"AI臭ワード検出: {detail}（§7.9 / ai-smell-lexicon.md。素の動詞・直球の言い方に置き換え）")
-    dash_pages = sorted({i for i, txt in pages if " — " in txt or "—" in txt})
+    # 非該当セルの「—」単独（§6）は連結ではないので除外する。行（文章塊）単位で、
+    # 「—」が他の文字と同じ塊に入っているものだけを数える（「ラベル — 説明」「A—B」）。
+    def _dash_joined(txt):
+        for line in txt.split("\n"):
+            t = line.strip()
+            if "—" not in t or re.fullmatch(r"—+(?:\s*[（(][^）)]*[）)])?", t):
+                continue
+            return True
+        return False
+    dash_pages = sorted({i for i, txt in pages if _dash_joined(txt)})
     if dash_pages:
         warn(f"ダッシュ「 — 」連結 p{dash_pages}（AI文体の典型。句点・「：」・括弧に置き換え。§7.9）")
 
@@ -363,7 +372,7 @@ def check_pptx(path):
         for n in sorted(names, key=lambda s: int(re.search(r"slide(\d+)", s).group(1))):
             xml = z.read(n).decode("utf8", "ignore")
             idx = int(re.search(r"slide(\d+)", n).group(1))
-            term_pages.append((idx, " ".join(re.findall(r"<a:t>(.*?)</a:t>", xml, re.S))))
+            term_pages.append((idx, "\n".join(re.findall(r"<a:t>(.*?)</a:t>", xml, re.S))))
             check_xml_validity(idx, xml)
             if XML_ONLY:
                 continue
@@ -479,7 +488,7 @@ def check_kicker_and_conclusion(html):
     if kick:
         warn(f"英字大文字の装飾キッカー ×{len(kick)}: {' / '.join(sorted(set(kick))[:4])}（§7.22: 日本語デッキでは右上タグチップで話題を示す）")
     # 左右2カラムの見出し（h3/h4/.hd）だけを見る。th・行見出し（.rh）は行軸で通して読めるので対象外（§4.49）
-    heads = [re.sub(r"<[^>]+>", "", t).strip() for t in re.findall(r"<(?:h3|h4|div class=\"(?:hd|colhd|col-h)[^\"]*\")[^>]*>(.*?)</", body, re.S)]
+    heads = [re.sub(r"<[^>]+>", "", t).strip() for t in re.findall(r"<(?:h3|h4|div class=\"(?:hd|colhd|colh|col-h)[^\"]*\")[^>]*>(.*?)</", body, re.S)]
     dakara = [t for t in heads if re.match(r"^(だから|なので|つまり)[、:：]?", t)]
     if dakara:
         warn(f"左右カラムの見出しが接続詞で始まる ×{len(dakara)}（§4.49: 2コンテンツの見出しは単独で読める名詞句に）")
@@ -584,11 +593,11 @@ def check_html(path):
         warn("`.slide` 要素が見つからない（タイトル検査スキップ）")
     if slides:
         check_terms([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
-        check_ai_smell([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
+        check_ai_smell([(i, re.sub(r"<[^>]+>", "\n", s)) for i, s in enumerate(slides, 1)])
         check_forbidden([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)], html)
     else:
         check_terms([(1, re.sub(r"<[^>]+>", " ", html))])
-        check_ai_smell([(1, re.sub(r"<[^>]+>", " ", html))])
+        check_ai_smell([(1, re.sub(r"<[^>]+>", "\n", html))])
     return titles
 
 
