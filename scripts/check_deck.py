@@ -104,6 +104,8 @@ AI_SMELL_WORDS = [
     "昨今", "変化の激しい", "という点において", "の観点から",
     "させていただきます", "いただけますと幸いです",
     "と言えるでしょう", "と考えられます", "することが可能です",
+    # 先送りの決まり文句（中身を書かずに後へ回す）
+    "詳細は別途", "別途ご説明", "追ってご連絡", "今後検討してまいります", "詳細は後日",
 ]
 
 
@@ -227,6 +229,8 @@ def check_title(idx, title, explicit_break=False):
         fail(f"p{idx}: タイトルに Step 連結（タグチップで表現）: 「{t}」")
     if re.search(r"^(この|その|ここまで)", t):
         fail(f"p{idx}: 他スライド参照語で始まるタイトル: 「{t}」")
+    if re.match(r"^(まずは|では|そして|さらに|次に|ちなみに)|^(まず|また)[、,]", t):
+        warn(f"p{idx}: タイトルが話し言葉の接続詞で始まる（主語から書く — slide-rules §2.18）: 「{t}」")
     if t.count("（") + t.count("(") >= 2:
         warn(f"p{idx}: タイトルに丸括弧が多い: 「{t}」")
     if not TEMPLATE_MODE and re.search(r"[◯○]{2,}|Text\s*\d|ラベル\s*\d|タイトル\s*\d|Source\s*\d|YYYY|ダミー|^資料名$|^会社名$", t):
@@ -365,6 +369,8 @@ def check_pptx(path):
             idx = int(re.search(r"slide(\d+)", n).group(1))
             term_pages.append((idx, " ".join(re.findall(r"<a:t>(.*?)</a:t>", xml, re.S))))
             check_xml_validity(idx, xml)
+            if re.search(r'<p:sld\b[^>]*\bshow="0"', xml):
+                warn(f"p{idx}: 非表示のスライド（使わないならファイルから消す。付録の控えとして意図して残すなら無視してよい — slide-rules §8）")
             if XML_ONLY:
                 continue
             # 角丸（高さ 0.4in=365760 EMU 以上の図形のみ）
@@ -540,6 +546,16 @@ def check_html(path):
     if re.search(r"\bth\s*{[^}]*color\s*:\s*#?(9[0-9a-f]{5}|a[0-9a-f]{5}|b[0-9a-f]{5}|c[0-9a-f]{5}|888|999|aaa|bbb|ccc|gr[ae]y)\b", html, re.I):
         warn("表ヘッダーが薄グレー（§6: 見出しは本文と同じ濃色）")
     check_kicker_and_conclusion(html)
+    # 制作メタ（社内ツール名・リポジトリ）がスライドに見えていないか（クライアントに出せる体裁）
+    visible = re.sub(r"<(script|style)[^>]*>.*?</\1>|<!--.*?-->", " ", html, flags=re.S)
+    visible = re.sub(r"<[^>]+>", " ", visible)
+    leak = re.search(r"consulting-pptx-skill|本資料は[^。<]{0,40}で作成", visible)
+    if leak:
+        fail(f"制作メタ情報がスライドに表示されている: 「{leak.group(0)}」（制作に使ったツール名は載せない）")
+    elif re.search(r"github\.com", visible):
+        warn("スライドに github.com が表示されている（制作メタなら消す。出典として公開リポジトリを示すなら可）")
+    if not re.search(r"<meta[^>]+charset\s*=\s*[\"']?utf-?8", html, re.I):
+        fail('<meta charset="utf-8"> が無い（Windows のブラウザで文字化けする — slide-rules §8）')
     if re.search(r"\bth\s*{[^}]*font-weight\s*:\s*(400|normal|300)", html):
         fail("表ヘッダーが細字")
     if re.search(r"tr:nth-child\((even|odd)\)", html):
