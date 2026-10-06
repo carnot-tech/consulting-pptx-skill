@@ -29,6 +29,14 @@ def run(html, *extra):
     return r.returncode, [l for l in r.stdout.splitlines() if l.startswith("FAIL")]
 
 
+def warns(html):
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "deck.html"
+        p.write_text(html, encoding="utf8")
+        r = subprocess.run([sys.executable, str(CHECK), str(p)], capture_output=True, text=True)
+    return [l for l in r.stdout.splitlines() if l.startswith("WARN")]
+
+
 def inject(old, new):
     assert old in GOOD, old
     return GOOD.replace(old, new, 1)
@@ -161,3 +169,18 @@ class EmptyArea(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DashAndHeads(unittest.TestCase):
+    """§6 非該当「—」は連結ではない／§4.49 基本パーツ集のカラム見出し .colh も対象"""
+    def test_label_dash_join_warns(self):
+        w = warns(inject("承認待ちは平均3日", "承認待ち — 平均3日"))
+        self.assertTrue(any("ダッシュ" in l for l in w), w)
+
+    def test_standalone_na_dash_is_ignored(self):
+        w = warns(inject("承認待ちは平均3日", "承認待ちは平均3日</p><p>—</p><p>—（関与しない）"))
+        self.assertFalse(any("ダッシュ" in l for l in w), w)
+
+    def test_colh_conjunction_head_warns(self):
+        w = warns(inject("承認待ちは平均3日", '承認待ちは平均3日<div class="colh">だから、全社展開を急ぐ</div>'))
+        self.assertTrue(any("接続詞" in l for l in w), w)
