@@ -90,6 +90,48 @@ class ForbiddenTerms(unittest.TestCase):
         self.assertEqual(code, 0)
 
 
+def run_out(html):
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "deck.html"
+        p.write_text(html, encoding="utf8")
+        r = subprocess.run([sys.executable, str(CHECK), str(p)], capture_output=True, text=True)
+    return r.stdout
+
+
+class Charset(unittest.TestCase):
+    def test_missing_charset_fires(self):
+        html = re.sub(r"<meta[^>]*charset[^>]*>", "", GOOD, count=1)
+        self.assertNotEqual(html, GOOD)
+        code, fails = run(html)
+        self.assertTrue(any("charset" in f for f in fails), fails)
+
+    def test_good_deck_has_charset(self):
+        code, fails = run(GOOD)
+        self.assertFalse(any("charset" in f for f in fails), fails)
+
+
+class TitleConnector(unittest.TestCase):
+    T = "<h1>1部門で2か月試行し、効果を確かめてから全社へ広げる</h1>"
+
+    def test_connector_start_warns(self):
+        out = run_out(inject(self.T, "<h1>まずは1部門で2か月試行し、効果を確かめてから全社へ広げる</h1>"))
+        self.assertIn("接続詞で始まる", out)
+
+    def test_word_starting_with_mata_does_not_warn(self):
+        out = run_out(inject(self.T, "<h1>またがる2部門で試行し、効果を確かめてから全社へ広げる</h1>"))
+        self.assertNotIn("接続詞で始まる", out)
+
+
+class ProductionMeta(unittest.TestCase):
+    def test_tool_name_fails(self):
+        code, fails = run(inject("</main>", "<p>本資料は consulting-pptx-skill で作成</p></main>"))
+        self.assertTrue(any("制作メタ" in f for f in fails), fails)
+
+    def test_github_url_as_source_only_warns(self):
+        code, fails = run(inject("</main>", "<p>出典: github.com/example/repo</p></main>"))
+        self.assertFalse(any("制作メタ" in f for f in fails), fails)
+
+
 def _has_playwright():
     return (ROOT / "node_modules" / "playwright").exists()
 

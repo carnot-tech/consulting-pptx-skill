@@ -189,6 +189,22 @@ def main():
 .slide .hdr .logo{{font-family:var(--font-serif);font-weight:600;font-size:30px;color:var(--navy);line-height:1.1}}
 .slide .hdr .date{{font-size:12.5px;letter-spacing:.15em;color:var(--muted)}}
 .slide .title{{margin-top:14px}}
+/* ===== 系統間の文字スケールも揃える（.s基準の実効サイズ: タイトル22pt・列見出し11.5pt・本文10.5pt。
+   .slide は zoom:0.8 なので authored px = 実効pt ÷ 0.6） ===== */
+.slide .title{{font-size:36.6px}}
+.slide .ism-col-label{{font-size:19.2px}}
+.slide .ism-issue, .slide .ism-solution-text{{font-size:17.5px}}
+/* ===== 画面表示は zoom でなく transform で縮小する =====
+   zoomの画面描画・ボックス寸法はエンジン/ビューア依存（deckedit等で .slide だけ大きく見える）。
+   画面では箱を .s と同じ 338.67mm に固定し、中身は1600×900座標系のまま0.8倍。
+   印刷は従来の zoom 方式のまま（transform＋1600px実レイアウトはChromeの印刷
+   shrink-to-fit を誘発して全ページが縮むため、printには適用しない） */
+@media not print{{
+  .slide{{width:338.67mm;height:190.5mm;zoom:1;aspect-ratio:auto}}
+  .slide .sinner{{inset:auto;left:0;top:0;width:1600px;height:900px;
+    padding:var(--margin-y) var(--margin-x);box-sizing:border-box;
+    transform:scale(0.8);transform-origin:top left}}
+}}
 </style></head><body>
 <main class="deck skin-warm">
 {chr(10).join(body)}
