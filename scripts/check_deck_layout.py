@@ -9,6 +9,10 @@
   squash   … 画像の縦横比が元と大きく違う（引き伸ばし）
 
 使い方: python3 scripts/check_deck_layout.py <pptx> [ページ番号...]
+
+結果はすべて WARN 扱い（終了コードは常に 0）。overflow は文字数からの見積もりなので
+実際の表示と差が出る。検出するのは「中身の無い箱」で、空のページ・空の表は対象外。
+HTML は対象外（HTML は check_layout.mjs）。
 """
 import math
 import sys
@@ -121,7 +125,9 @@ def check(path, pages=None):
                     issues.append((n, "overflow", f"『{t[:22]}』が箱から溢れている（必要{need/EMU_IN:.1f}in / 箱{h/EMU_IN:.1f}in）"))
             else:
                 # 文字も画像も無い箱（枠だけの強調は許容するので、塗りがあるものだけ）
-                if sh.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE and is_opaque(sh):
+                # 高さか幅が 0.05in 未満の図形は線（罫線・区切り）なので箱として扱わない
+                thin = min(w, h) < 0.05 * EMU_IN
+                if sh.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE and is_opaque(sh) and not thin:
                     # 画像の上の強調枠、または上に文字が載っている下地なら問題なし
                     on_pic = any(sh2.shape_type == MSO_SHAPE_TYPE.PICTURE and overlap(box, box2) > w * h * 0.5
                                  for sh2, box2 in items)

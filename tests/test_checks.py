@@ -184,3 +184,57 @@ class DashAndHeads(unittest.TestCase):
     def test_colh_conjunction_head_warns(self):
         w = warns(inject("承認待ちは平均3日", '承認待ちは平均3日<div class="colh">だから、全社展開を急ぐ</div>'))
         self.assertTrue(any("接続詞" in l for l in w), w)
+
+
+def _has_pptx():
+    try:
+        import pptx  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+@unittest.skipUnless(_has_pptx(), "python-pptx が入っていると実行される")
+class PptxLayout(unittest.TestCase):
+    """check_deck_layout.py: 図形に隠れた文字・中身の無い箱（線は箱と取り違えない）"""
+
+    def _deck(self, build):
+        from pptx import Presentation
+        from pptx.util import Inches
+        from pptx.enum.shapes import MSO_SHAPE
+        prs = Presentation()
+        prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
+        s = prs.slides.add_slide(prs.slide_layouts[6])
+        build(s, Inches, MSO_SHAPE)
+        d = tempfile.mkdtemp()
+        p = Path(d) / "deck.pptx"
+        prs.save(p)
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import check_deck_layout
+        return [k for _, k, _ in check_deck_layout.check(str(p))]
+
+    @staticmethod
+    def _solid(shape):
+        shape.fill.solid()
+        return shape
+
+    def test_text_under_opaque_box_fires(self):
+        def build(s, In, M):
+            tb = s.shapes.add_textbox(In(1), In(1), In(4), In(1))
+            tb.text_frame.text = "隠れている文字"
+            self._solid(s.shapes.add_shape(M.RECTANGLE, In(0.9), In(0.9), In(4.2), In(1.2)))
+        self.assertIn("hidden", self._deck(build))
+
+    def test_visible_text_and_thin_line_do_not_fire(self):
+        def build(s, In, M):
+            tb = s.shapes.add_textbox(In(1), In(1), In(4), In(1))
+            tb.text_frame.text = "見えている文字"
+            self._solid(s.shapes.add_shape(M.RECTANGLE, In(1), In(3), In(1.3), In(0.01)))
+        kinds = self._deck(build)
+        self.assertNotIn("hidden", kinds)
+        self.assertNotIn("empty", kinds)
+
+    def test_empty_filled_box_fires(self):
+        def build(s, In, M):
+            self._solid(s.shapes.add_shape(M.RECTANGLE, In(1), In(1), In(2), In(1)))
+        self.assertIn("empty", self._deck(build))
