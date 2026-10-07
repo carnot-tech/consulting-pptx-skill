@@ -208,6 +208,22 @@ class HouseDeck(unittest.TestCase):
         self.assertEqual(check(out, "--xml-only"), (0, []))
         self.assertEqual(check(potx, "--xml-only"), (0, []))
 
+    def test_body_layout_is_found_in_a_one_of_each_sample(self):
+        """表紙・章扉・本文を 1 枚ずつ並べた見本でも、本文のレイアウトを選ぶ（同点で表紙を選ばない）。"""
+        from pptx import Presentation
+        from measure_deck import measure
+        prs = Presentation()
+        prs.slide_width, prs.slide_height = 12192000, 6858000
+        for name in ("Title Slide", "Section Header", "Title and Content"):
+            s = prs.slides.add_slide(next(l for l in prs.slide_layouts if l.name == name))
+            s.shapes.title.text = f"{name} の見本"
+        sample = self.d / "one_of_each.pptx"
+        prs.save(str(sample))
+        self.assertEqual(measure(sample)["layout"], "Title and Content")
+        self.assertEqual(measure(sample, layout="Section Header")["layout"], "Section Header")   # 名前で指定もできる
+        with self.assertRaises(SystemExit):
+            measure(sample, layout="無いレイアウト")
+
     def test_line_break_in_shape_is_not_an_orphan(self):
         r = subprocess.run([sys.executable, str(CHECK), str(self.pages)], capture_output=True, text=True)
         self.assertNotIn("泣き別れ", r.stdout)   # 矢羽の中の段落内改行を 1 行と数えない
