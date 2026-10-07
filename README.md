@@ -62,6 +62,16 @@ pip3 install python-pptx
 - PDF 化は Chrome のヘッドレス印刷を使います（コマンドは次節）。
 - `package.json` は手順2の playwright を入れるためだけのものです。`node_modules/` は .gitignore 済みです。
 
+## 更新と自分用のカスタマイズ
+
+規約と機械チェックは使った人の指摘で頻繁に直ります。**週に 1 回を目安に最新を取り込んでください**。
+
+```bash
+cd ~/.claude/skills/consulting-pptx-skill && git pull
+```
+
+自分の組織の規約・禁止語・テンプレは `local/` に置きます（`local/README.md` 参照。git 管理外なので `git pull` で消えません）。スキルは本体の規約を読んだ後に `local/slide-rules.local.md` を読み、重なる規則はそちらを優先します。本体のファイルを直接書き換えると更新のたびに衝突するので、組織固有の規則は `local/` に、どの組織でも効く規則は PR にしてください。
+
 ## 手動で使う場合
 
 ```bash
@@ -127,6 +137,8 @@ python3 scripts/check_deck.py pages.pptx --house house.skin.json
 ## コントリビューション
 
 Issue・Pull Request を歓迎します。出し方（規約と機械チェックをセットで足す、機密を入れない、テストの書き方など）は [CONTRIBUTING.md](CONTRIBUTING.md) にまとめています。
+
+使っていて「この指摘は当社だけでなく誰にでも効く」と思ったら、それが一番よい PR の種です。スキル自身も、本体の規約の誤検知や新しい指摘に当たったとき「PR で出しませんか」と一度だけ聞くようになっています。`local/` に溜まった規則のうち顧客名の入っていないものを、月に 1 回見直して PR にするのがおすすめです。
 
 ## About
 

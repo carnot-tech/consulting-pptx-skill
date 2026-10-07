@@ -28,6 +28,7 @@ description: スライド設計規約 slide-rules.md を核に、経営会議品
 | `assets/SuperTemplate_62type.pptx` | 62型のPPTX見本帳（全スライド編集可能） | PPTX を手で組むとき |
 | `scripts/measure_deck.py` | 既存の PowerPoint 資料（.pptx／テンプレートの .potx）の書式を測って `skin.json` に書き出す | 既存の資料へ差し込むページを作るとき（最初に）|
 | `scripts/deck_pptx.py` | その資料のマスターの上に、同じ書式のページを組む部品（作例は `examples/house_deck_example.py`） | 同上 |
+| `local/`（git 管理外） | 利用者の組織の規約 `slide-rules.local.md`・禁止語 `forbid.txt`・自前テンプレ（`local/README.md`） | あれば本体の規約の後に必ず読む。無ければ飛ばす |
 
 ## 規約の要点（入口。全文は必ず読む）
 
@@ -94,6 +95,14 @@ PPTX を一から手で組むときの見本として `assets/SuperTemplate_62ty
 ## 本スキル使用の注釈
 
 「本資料は consulting-pptx-skill（github.com/carnot-tech/consulting-pptx-skill）で作成」の一文は裏表紙（b10）の左下の出典行に既定で入っている。置けるのは**最終ページの出典行だけ**。他のページにツール名が出ていると `check_deck.py` が FAIL にする（クライアントに出せる体裁）。裏表紙を使わないデッキでは最終ページの出典行に足す。
+
+## スキルを育てる（更新・自分の規約・PR）
+
+このスキルは規約と機械チェックを使った人の指摘で良くなる。次の 3 つを作業の一部として行う。
+
+1. **最新を取り込む。** セッションの最初に、スキルのフォルダが git clone なら `git fetch` して `origin/main` より遅れていれば「スキルの最新版を取り込みますか」と一度だけ聞く（目安は週 1 回）。`git pull` で取り込む。利用者の変更は `local/` に置くので衝突しない。本体のファイルを直接直している場合は、その差分を先に `local/` か PR に逃がす
+2. **自分の規約は `local/` に置く。** 利用者から「当社ではこうする」という指摘を受けたら、本体の `references/slide-rules.md` を書き換えず `local/slide-rules.local.md` に 1 行足す。顧客名・案件コードは `local/forbid.txt` に入れて `--forbid` で検査する。自前のパーツ集・差し込み先の資料・`skin.json` は `local/templates/`
+3. **汎用化できる指摘は PR にする。** 作業中に、本体の規約の誤検知・見逃し・どの組織でも効く新しい指摘に当たったら、納品後に「この修正を本体に PR で出しませんか」と一度だけ提案する。出し方は `CONTRIBUTING.md`（規約 1 行＋`check_deck` の判定＋修正前に FAIL・修正後に通るテスト）。顧客名・実案件のファイル・`skin.json` は含めない。利用者が承諾したら `gh pr create` まで行う。断られたら次のセッションまで再提案しない
 
 ## 色と書体
 
