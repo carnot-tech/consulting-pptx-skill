@@ -97,6 +97,14 @@ class NumberConsistency(unittest.TestCase):
         warns = run_warns(self.deck("承認者数は1.2万人", "承認者数 12,000人"))   # 桁の書き方が違っても値が同じなら可
         self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
 
+    def test_amount_with_scale_fires(self):
+        warns = run_warns(self.deck("売上高は120億円", "売上高 118億円"))   # 金額・割合など単位を問わず比べる
+        self.assertTrue(any("数値の平仄疑い" in w and "売上高" in w for w in warns), warns)
+
+    def test_same_amount_in_other_scale_passes(self):
+        warns = run_warns(self.deck("売上高は1.2億円", "売上高 120,000,000円"))
+        self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
+
     def test_different_year_passes(self):
         warns = run_warns(self.deck("2024年の承認者数は12人", "2026年の承認者数は15人"))   # 時点が違えば別の指標
         self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
