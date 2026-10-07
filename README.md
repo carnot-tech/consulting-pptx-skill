@@ -121,7 +121,7 @@ python3 scripts/check_deck.py pages.pptx --house house.skin.json
 ## カスタマイズ
 
 - 色・書体は両パーツ集の `<style>` 冒頭 `:root` トークンで差し替えます。ブランドに合わせるときは両ファイルを同じ値にします
-- 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈を入れます
+- 生成した資料に制作ツール名（「consulting-pptx-skill で作成」など）は載せません。表示テキストに残っていると `check_deck.py` が FAIL にします
 - PowerPoint（.pptx）が要るときは、HTML で仕上げてから `scripts/html_to_pptx.py` で変換します（上の「PowerPoint（.pptx）にする流れ」）。以前あった JSON から編集可能PPTXを書き出す仕組みは外しました（git タグ `pipeline-archived` の時点のリポジトリに残っています）
 
 ## About

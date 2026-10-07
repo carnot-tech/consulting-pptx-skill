@@ -109,6 +109,15 @@ AI_SMELL_WORDS = [
 ]
 
 
+def pptx_text(xml):
+    """スライド XML の表示テキストを段落（<a:p>）ごとに 1 行にして返す。
+    run（<a:t>）ごとに改行すると「ラベル」「 — 」「説明」のように run が分かれたダッシュ連結を見落とす。"""
+    paras = re.findall(r"<a:p\b.*?</a:p>", xml, re.S)
+    if not paras:
+        return "\n".join(re.findall(r"<a:t>(.*?)</a:t>", xml, re.S))
+    return "\n".join("".join(re.findall(r"<a:t>(.*?)</a:t>", p, re.S)) for p in paras)
+
+
 def check_ai_smell(pages):
     """slide-rules §7.9: AI臭の高確度語を検出（WARN。文脈上正当なら目視で無視してよい）"""
     hits = {}
@@ -238,7 +247,7 @@ def check_title(idx, title, explicit_break=False):
         fail(f"p{idx}: タイトルに Step 連結（タグチップで表現）: 「{t}」")
     if re.search(r"^(この|その|ここまで)", t):
         fail(f"p{idx}: 他スライド参照語で始まるタイトル: 「{t}」")
-    if re.match(r"^(まずは|では|そして|さらに|次に|ちなみに)|^(まず|また)[、,]", t):
+    if re.match(r"^(まずは|では|そして|さらに|ちなみに)|^(まず|また|次に)[、,]", t):
         warn(f"p{idx}: タイトルが話し言葉の接続詞で始まる（主語から書く — slide-rules §2.18）: 「{t}」")
     if t.count("（") + t.count("(") >= 2:
         warn(f"p{idx}: タイトルに丸括弧が多い: 「{t}」")
@@ -376,7 +385,7 @@ def check_pptx(path):
         for n in sorted(names, key=lambda s: int(re.search(r"slide(\d+)", s).group(1))):
             xml = z.read(n).decode("utf8", "ignore")
             idx = int(re.search(r"slide(\d+)", n).group(1))
-            term_pages.append((idx, "\n".join(re.findall(r"<a:t>(.*?)</a:t>", xml, re.S))))
+            term_pages.append((idx, pptx_text(xml)))
             check_xml_validity(idx, xml)
             if re.search(r'<p:sld\b[^>]*\bshow="0"', xml):
                 warn(f"p{idx}: 非表示のスライド（使わないならファイルから消す。付録の控えとして意図して残すなら無視してよい — slide-rules §8）")
@@ -558,7 +567,8 @@ def check_html(path):
     # 制作メタ（社内ツール名・リポジトリ）がスライドに見えていないか（クライアントに出せる体裁）
     visible = re.sub(r"<(script|style)[^>]*>.*?</\1>|<!--.*?-->", " ", html, flags=re.S)
     visible = re.sub(r"<[^>]+>", " ", visible)
-    leak = re.search(r"consulting-pptx-skill|本資料は[^。<]{0,40}で作成", visible)
+    # 「本資料は2026年9月時点の公開情報で作成」のような免責文は対象外。ツール・AI・生成の語を含むときだけ FAIL
+    leak = re.search(r"consulting-pptx-skill|本資料は[^。<]{0,40}(?:スキル|skill|ツール|tool|AI|Claude|ChatGPT|Copilot|Gemini|生成|自動作成)[^。<]{0,20}で作成", visible, re.I)
     if leak:
         fail(f"制作メタ情報がスライドに表示されている: 「{leak.group(0)}」（制作に使ったツール名は載せない）")
     elif re.search(r"github\.com", visible):

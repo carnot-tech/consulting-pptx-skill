@@ -195,7 +195,7 @@ def main():
 .slide .ism-col-label{{font-size:19.2px}}
 .slide .ism-issue, .slide .ism-solution-text{{font-size:17.5px}}
 /* ===== 画面表示は zoom でなく transform で縮小する =====
-   zoomの画面描画・ボックス寸法はエンジン/ビューア依存（deckedit等で .slide だけ大きく見える）。
+   zoomの画面描画・ボックス寸法はエンジン/ビューア依存（一部のビューアで .slide だけ大きく見える）。
    画面では箱を .s と同じ 338.67mm に固定し、中身は1600×900座標系のまま0.8倍。
    印刷は従来の zoom 方式のまま（transform＋1600px実レイアウトはChromeの印刷
    shrink-to-fit を誘発して全ページが縮むため、printには適用しない） */

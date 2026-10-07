@@ -175,6 +175,21 @@ class HouseDeck(unittest.TestCase):
         code, fails = check(bad, "--house", str(self.skin_path))
         self.assertTrue(any("タイトルがプレースホルダーに入っていない" in f for f in fails), fails)
 
+    def test_dash_join_split_across_runs_is_detected(self):
+        """「ラベル」「 — 」「説明」と run が分かれていても、段落単位で見てダッシュ連結を WARN する。"""
+        from pptx import Presentation
+        from pptx.util import Inches, Pt
+        prs = Presentation(str(self.house))
+        s = prs.slides[0]
+        tb = s.shapes.add_textbox(Inches(0.5), Inches(5), Inches(8), Inches(0.4))
+        for piece in ("承認待ち", " — ", "平均3日"):
+            r = tb.text_frame.paragraphs[0].add_run()
+            r.text, r.font.size = piece, Pt(14)
+        out = self.d / "dash_runs.pptx"
+        prs.save(str(out))
+        r = subprocess.run([sys.executable, str(CHECK), str(out)], capture_output=True, text=True)
+        self.assertIn("ダッシュ", r.stdout)
+
     def test_line_break_in_shape_is_not_an_orphan(self):
         r = subprocess.run([sys.executable, str(CHECK), str(self.pages)], capture_output=True, text=True)
         self.assertNotIn("泣き別れ", r.stdout)   # 矢羽の中の段落内改行を 1 行と数えない
