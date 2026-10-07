@@ -351,7 +351,8 @@ def check_pptx(path):
         from pptx.util import Emu
     except ImportError:
         sys.exit("python-pptx が必要: pip3 install python-pptx")
-    prs = Presentation(path)
+    from pptx_open import open_presentation
+    prs = open_presentation(path)
     want_w, want_h = (HOUSE["slide"]["emu"] if HOUSE else (EMU_W, EMU_H))   # 差し込むページは資料の大きさに合わせる（§1）
     if not XML_ONLY and (abs(prs.slide_width - want_w) > 2000 or abs(prs.slide_height - want_h) > 2000):
         fail(f"スライドサイズ {prs.slide_width}x{prs.slide_height} ≠ {'資料' if HOUSE else '16:9'} {want_w}x{want_h}")
@@ -615,7 +616,7 @@ def main():
     if not args:
         sys.exit(__doc__)
     p = args[0]
-    titles = check_pptx(p) if p.lower().endswith(".pptx") else check_html(p)
+    titles = check_pptx(p) if p.lower().endswith((".pptx", ".potx")) else check_html(p)
     if not TEMPLATE_MODE:
         check_title_variety(titles)
     print("=== タイトル一覧（上から通し読みしてストーリーが繋がるか確認） ===")
