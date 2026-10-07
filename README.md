@@ -149,4 +149,4 @@ Made by [Carnot AI](https://jinba.io/ja?utm_source=github&utm_medium=readme&utm_
 
 ## License
 
-MIT
+コード・文書は [MIT License](LICENSE) です。MIT License には商標を使う権利は含まれません。「Carnot」「Carnot AI」「Jinba」とロゴの扱いは [TRADEMARK.md](TRADEMARK.md)（事実としての言及・クレジット行・リンクは自由、製品名・ロゴ・公式を装う表現・改変版への商標使用は要許可）に従ってください。
