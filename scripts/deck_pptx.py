@@ -92,7 +92,7 @@ def P(text, sz=None, b=False, c=None, bullet=False, al="l", sb=None, sa=None):
 
 class Deck:
     def __init__(self, template=None, skin=None, keep_slides=False):
-        """template: 土台にする資料（.pptx）。skin: measure_deck.py の出力（パスか dict）。省くとその場で測る。
+        """template: 土台にする資料（.pptx／.potx）。skin: measure_deck.py の出力（パスか dict）。省くとその場で測る。
         keep_slides=True にすると土台のスライドを残したまま足す（差し込み位置は move_slides で決める）。"""
         if template is None:
             self.prs = Presentation()
@@ -102,7 +102,8 @@ class Deck:
             ph = next(l for l in self.prs.slide_layouts if l.name == "Title Only").placeholders[0]
             ph.left, ph.top, ph.width, ph.height = E(t["x"]), E(t["y"]), E(t["w"]), E(t["h"])
         else:
-            self.prs = Presentation(str(template))
+            from pptx_open import open_presentation
+            self.prs = open_presentation(template)   # .potx（テンプレート）も土台にできる。保存すると .pptx になる
             if skin is None:
                 from measure_deck import measure
                 skin = measure(template)

@@ -190,6 +190,24 @@ class HouseDeck(unittest.TestCase):
         r = subprocess.run([sys.executable, str(CHECK), str(out)], capture_output=True, text=True)
         self.assertIn("ダッシュ", r.stdout)
 
+    def test_potx_template_is_measured_and_built_on(self):
+        """社内書式が .potx（PowerPoint テンプレート）で配られても、測る・組む・検査するが通る。"""
+        from deck_pptx import Deck
+        from measure_deck import measure
+        potx = patched(self.house, self.d / "house.potx",
+                       "presentationml.presentation.main+xml", "presentationml.template.main+xml",
+                       part="[Content_Types].xml")
+        skin = measure(potx)
+        self.assertEqual((skin["layout"], skin["sizes"]["body"]), (self.skin["layout"], self.skin["sizes"]["body"]))
+        d = Deck(potx, skin)
+        d.slide("テンプレートの上に組んだページは、通常の pptx として保存される")
+        out = self.d / "from_potx.pptx"
+        d.save(out)
+        with zipfile.ZipFile(out) as z:
+            self.assertIn(b"presentationml.presentation.main+xml", z.read("[Content_Types].xml"))
+        self.assertEqual(check(out, "--xml-only"), (0, []))
+        self.assertEqual(check(potx, "--xml-only"), (0, []))
+
     def test_line_break_in_shape_is_not_an_orphan(self):
         r = subprocess.run([sys.executable, str(CHECK), str(self.pages)], capture_output=True, text=True)
         self.assertNotIn("泣き別れ", r.stdout)   # 矢羽の中の段落内改行を 1 行と数えない
