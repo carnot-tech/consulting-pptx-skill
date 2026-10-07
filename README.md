@@ -124,6 +124,10 @@ python3 scripts/check_deck.py pages.pptx --house house.skin.json
 - 生成した資料の**最終ページの出典行だけ**に「consulting-pptx-skill で作成」の注釈を入れます
 - PowerPoint（.pptx）が要るときは、HTML で仕上げてから `scripts/html_to_pptx.py` で変換します（上の「PowerPoint（.pptx）にする流れ」）。以前あった JSON から編集可能PPTXを書き出す仕組みは外しました（git タグ `pipeline-archived` の時点のリポジトリに残っています）
 
+## コントリビューション
+
+Issue・Pull Request を歓迎します。出し方（規約と機械チェックをセットで足す、機密を入れない、テストの書き方など）は [CONTRIBUTING.md](CONTRIBUTING.md) にまとめています。
+
 ## About
 
 Made by [Carnot AI](https://jinba.io/ja?utm_source=github&utm_medium=readme&utm_campaign=consulting-pptx-skill&utm_content=about) — AIエージェント基盤「Jinba」を開発・提供しています。
