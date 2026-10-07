@@ -4,6 +4,7 @@
 使い方:
   python3 measure_deck.py house.pptx                 # 要約を表示し、house.skin.json を同じフォルダに出力
   python3 measure_deck.py house.pptx -o skin.json
+  python3 measure_deck.py house.potx                 # PowerPoint テンプレート（.potx）も測れる
 
 出力は deck_pptx.py（その資料のマスターの上にページを組む）と check_deck.py --house（書式が合っているかの検査）が読む。
 測るのは、本文ページで最も使われているレイアウトとタイトル・副題の枠、文字の大きさ、書体を run に直指定しているか、
@@ -91,10 +92,10 @@ def top(counter, skip=(), n=1):
 
 def measure(path):
     from lxml import etree
-    from pptx import Presentation
     from pptx.enum.shapes import PP_PLACEHOLDER
+    from pptx_open import open_presentation
 
-    prs = Presentation(str(path))
+    prs = open_presentation(path)   # .potx（テンプレート）もそのまま測れる
     sw, sh = prs.slide_width, prs.slide_height
     slides = list(prs.slides)
     if not slides:
