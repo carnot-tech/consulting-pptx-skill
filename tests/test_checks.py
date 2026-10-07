@@ -113,6 +113,10 @@ class NumberConsistency(unittest.TestCase):
         warns = run_warns(self.deck("売上高は1.2億円", "売上高 120,000,000円"))
         self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
 
+    def test_float_rounding_does_not_fire(self):
+        warns = run_warns(self.deck("売上高は1.1億円", "売上高 110,000,000円"))   # 1.1×1e8 の float 誤差を食い違いにしない
+        self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
+
     def test_different_year_passes(self):
         warns = run_warns(self.deck("2024年の承認者数は12人", "2026年の承認者数は15人"))   # 時点が違えば別の指標
         self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)

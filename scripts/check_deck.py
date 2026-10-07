@@ -203,7 +203,7 @@ def _num_facts(text):
         label = (m["year"] + "年:" if m["year"] else "") + m["label"]
         base = _UNIT_ALIAS.get(m["base"], m["base"])
         try:
-            val = float(m["num"].replace(",", "")) * _MULT.get(m["unit"] or "", 1)
+            val = round(float(m["num"].replace(",", "")) * _MULT.get(m["unit"] or "", 1), 6)   # 1.1億 = 110,000,000 を float 誤差で食い違いにしない
         except ValueError:
             continue
         out.append(((label, base), val, m.group(0).strip()))

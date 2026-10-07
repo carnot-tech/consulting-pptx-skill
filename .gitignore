@@ -7,6 +7,7 @@ package-lock.json
 # Working decks and their measured styles (slide-rules §8.7). The house deck, the inserted
 # pages and skin.json (carries the source file name and theme colors) are customer material.
 *.pptx
+*.potx
 *.skin.json
 skin.json
 !assets/*.pptx
