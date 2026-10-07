@@ -5,6 +5,7 @@
   python3 measure_deck.py house.pptx                 # 要約を表示し、house.skin.json を同じフォルダに出力
   python3 measure_deck.py house.pptx -o skin.json
   python3 measure_deck.py house.potx                 # PowerPoint テンプレート（.potx）も測れる
+  python3 measure_deck.py house.pptx --layout "タイトルとコンテンツ"   # 本文ページのレイアウトを名前で指定する
 
 出力は deck_pptx.py（その資料のマスターの上にページを組む）と check_deck.py --house（書式が合っているかの検査）が読む。
 測るのは、本文ページで最も使われているレイアウトとタイトル・副題の枠、文字の大きさ、書体を run に直指定しているか、
@@ -90,7 +91,31 @@ def top(counter, skip=(), n=1):
     return (items[0] if items else None) if n == 1 else items[:n]
 
 
-def measure(path):
+def pick_body_layout(slides, with_title):
+    """本文ページのレイアウトを選ぶ。使われた回数が多い順。
+
+    表紙・章扉・本文を 1 枚ずつ並べた見本（テンプレート配布物に多い）では回数が同点になり、
+    先頭（表紙）が選ばれてしまう。同点のときは
+      1. タイトル枠が中央タイトル（ctrTitle＝表紙・章扉向け）でないレイアウト
+      2. 資料の後ろのほうで使われているレイアウト（表紙は先頭に来る）
+    の順で本文らしいほうを採る。
+    """
+    from pptx.enum.shapes import PP_PLACEHOLDER
+
+    use = collections.Counter(s.slide_layout.name for s in slides)
+    last = {s.slide_layout.name: i for i, s in enumerate(slides)}
+
+    def plain_title(name):
+        return any(ph.placeholder_format.type == PP_PLACEHOLDER.TITLE for ph in with_title[name].placeholders)
+
+    cands = [n for n in use if n in with_title]
+    if not cands:
+        return None
+    return max(cands, key=lambda n: (use[n], plain_title(n), last[n]))
+
+
+def measure(path, layout=None):
+    """layout: 本文ページのレイアウト名。省くと pick_body_layout で選ぶ。"""
     from lxml import etree
     from pptx.enum.shapes import PP_PLACEHOLDER
     from pptx_open import open_presentation
@@ -101,12 +126,17 @@ def measure(path):
     if not slides:
         sys.exit("スライドが 1 枚もない資料は測れない（書式は実際のページから読む）")
 
-    # ---- 本文ページで最も使われている、タイトル枠のあるレイアウト
+    # ---- 本文ページのレイアウト（タイトル枠のあるもの）。指定が無ければ使われ方から選ぶ
     use = collections.Counter(s.slide_layout.name for s in slides)
     with_title = {l.name: l for l in prs.slide_layouts
                   if any(ph.placeholder_format.type in (PP_PLACEHOLDER.TITLE, PP_PLACEHOLDER.CENTER_TITLE)
                          for ph in l.placeholders)}
-    layout_name = next((n for n, _ in use.most_common() if n in with_title), None)
+    if layout is not None:
+        if layout not in with_title:
+            sys.exit(f"レイアウト「{layout}」はタイトル枠を持つレイアウトに無い（候補: {', '.join(with_title)}）")
+        layout_name = layout
+    else:
+        layout_name = pick_body_layout(slides, with_title)
     title, subtitle = None, None
     if layout_name:
         lay = with_title[layout_name]
@@ -305,15 +335,19 @@ def summary(k):
 
 def main():
     args = sys.argv[1:]
-    out = None
+    out = layout = None
     if "-o" in args:
         i = args.index("-o")
         out = args[i + 1]
         del args[i:i + 2]
+    if "--layout" in args:
+        i = args.index("--layout")
+        layout = args[i + 1]
+        del args[i:i + 2]
     if not args:
         sys.exit(__doc__)
     src = Path(args[0])
-    skin = measure(src)
+    skin = measure(src, layout=layout)
     out = Path(out) if out else src.with_suffix(".skin.json")
     out.write_text(json.dumps(skin, ensure_ascii=False, indent=2), encoding="utf8")
     print(summary(skin))
