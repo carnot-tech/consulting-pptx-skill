@@ -90,7 +90,7 @@ SVG のチャートや画像は画像として貼られます（中の数値は�
 社内の標準デッキや作りかけの提案書に数ページ足す場合、変換した PPTX は書体・文字の大きさ・表の作りが元の資料と揃いません。このときは変換せず、**その資料のマスターの上に直接組みます**。
 
 ```bash
-python3 scripts/measure_deck.py house.pptx                      # 資料の書式を測る → house.skin.json（目で見て直す）
+python3 scripts/measure_deck.py house.pptx                      # 資料の書式を測る → house.skin.json（目で見て直す）。.potx も可
 python3 examples/house_deck_example.py house.pptx pages.pptx    # 作例。資料のマスターの上に 2 ページ組む
 python3 scripts/check_deck.py pages.pptx --house house.skin.json
 ```
