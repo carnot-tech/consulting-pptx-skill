@@ -174,6 +174,55 @@ def check_terms(pages):
         if hits_a and hits_b:
             warn(f"表記ゆれ疑い: 「{la}」p{hits_a} と「{lb}」p{hits_b} が混在（§7.6 1資料1用語。別概念なら可・目視確認）")
 
+# --- 数値の平仄（slide-rules §7.6）--------------------------------------------------
+# 同じ指標（数の直前の語）が、別のページで違う値で書かれていたら WARN。
+# 例:「売上高 120億円」(p3) と「売上高は約118億円」(p7)、「利用者数 4.2万人」と「利用者数 42,500人」。
+# 単位の桁（千・万・億・兆）は掛けて比べるので、書き方が違うだけで値が同じなら出さない。
+# 時点（2024年／2024年度）が直前にあれば指標名に含めて比べるので、年の違う同じ指標は食い違いにしない。
+NUM_UNITS = (r"円|ドル|ユーロ|人|名|件|社|団体|店舗|拠点|校|戸|世帯|台|個|本|枚|冊|回|倍|%|％|pt|ポイント|"
+             r"時間|日|か月|ヶ月|週|kWh|MWh|GWh|kW|MW|GW|kg|km|m3|㎥|m2|㎡|ha|ヘクタール|g|t|トン|m|L")
+NUM_LABEL = re.compile(
+    r"(?:(?P<year>(?:19|20)\d{2})年度?(?:の|時点の|末の|末時点の)?)?"
+    r"(?P<label>[一-龥々ァ-ヶー]{2,12})(?:は|が|の|：|:|＝|=)?\s*(?:約|およそ|計|合計)?\s*"
+    r"(?P<num>\d[\d,]*(?:\.\d+)?)\s*(?P<unit>万|億|兆|千)?(?P<base>" + NUM_UNITS + r")(?![A-Za-z])")
+_ZEN = str.maketrans("０１２３４５６７８９，．％：＝", "0123456789,.%:=")
+_MULT = {"千": 1e3, "万": 1e4, "億": 1e8, "兆": 1e12}
+_UNIT_ALIAS = {"名": "人", "％": "%", "ポイント": "pt", "ヶ月": "か月", "㎥": "m3", "㎡": "m2",
+               "ヘクタール": "ha", "トン": "t"}
+# 指標名にならない一般語（「以上 80%」「平均2.1%」など）は比べない
+_GENERIC_LABELS = {"以上", "以下", "未満", "超", "平均", "合計", "全体", "最大", "最小", "最高", "最低",
+                   "前年", "前年比", "同期", "うち", "残り", "目標", "実績", "約", "計"}
+
+
+def _num_facts(text):
+    """(指標名, 単位) -> 値 の組を拾う。値は単位の桁（万・億）を掛けた数で比べる。"""
+    out = []
+    for m in NUM_LABEL.finditer(text.translate(_ZEN)):
+        if m["label"] in _GENERIC_LABELS:
+            continue
+        label = (m["year"] + "年:" if m["year"] else "") + m["label"]
+        base = _UNIT_ALIAS.get(m["base"], m["base"])
+        try:
+            val = float(m["num"].replace(",", "")) * _MULT.get(m["unit"] or "", 1)
+        except ValueError:
+            continue
+        out.append(((label, base), val, m.group(0).strip()))
+    return out
+
+
+def check_number_consistency(pages):
+    """pages: [(idx, text), ...] 同じ指標がページ間で違う値なら WARN（別概念・別時点なら目視で無視してよい）"""
+    seen = {}
+    for i, t in pages:
+        for key, val, raw in _num_facts(t):
+            seen.setdefault(key, []).append((i, val, raw))
+    for (label, base), hits in seen.items():
+        vals = {v for _, v, _ in hits}
+        pages_hit = {i for i, _, _ in hits}
+        if len(vals) > 1 and len(pages_hit) > 1:
+            detail = " / ".join(f"p{i}「{raw}」" for i, _, raw in hits[:4])
+            warn(f"数値の平仄疑い: 「{label.replace(':', '')}」が {detail} で食い違う（§7.6 数値の平仄。別時点・別範囲なら注記して可）")
+
 # --- 本文のプレースホルダー残り（slide-rules §2.8 / README）-------------------------
 # タイトルだけでなく本文・表・カードに「Text N」「ラベル N」「YYYY」「パーツNN｜」が残っていたら FAIL。
 # 型名をそのままタイトルにしたページ（例:「軸のある表」）も FAIL。
@@ -513,6 +562,7 @@ def check_pptx(path):
                     if szs and max(szs) <= 12 and not any(r.font.bold for p in sh.text_frame.paragraphs for r in p.runs):
                         warn(f"p{i}: タイトル直下にサブタイトルらしき行: 「{txt}」")
     check_terms(term_pages)
+    check_number_consistency(term_pages)
     check_ai_smell(term_pages)
     return titles
 
@@ -636,6 +686,7 @@ def check_html(path):
     check_production_meta(slides if slides else [html])
     if slides:
         check_terms([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
+        check_number_consistency([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
         check_ai_smell([(i, re.sub(r"<[^>]+>", "\n", s)) for i, s in enumerate(slides, 1)])
         check_forbidden([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)], html)
     else:

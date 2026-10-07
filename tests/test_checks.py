@@ -83,6 +83,41 @@ class OneSentencePerBlock(unittest.TestCase):
         self.assertFalse(any("2文以上" in f for f in fails), fails)
 
 
+def run_warns(html):
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "deck.html"
+        p.write_text(html, encoding="utf8")
+        r = subprocess.run([sys.executable, str(CHECK), str(p)], capture_output=True, text=True)
+    return [l for l in r.stdout.splitlines() if l.startswith("WARN")]
+
+
+class NumberConsistency(unittest.TestCase):
+    """slide-rules §7.6 数値の平仄: 同じ指標がページ間で違う値なら WARN。"""
+
+    def deck(self, p2, p5):
+        return inject("承認待ちは平均3日", p2).replace("営業部", p5, 1)
+
+    def test_same_label_different_value_fires(self):
+        warns = run_warns(self.deck("承認者数は12人", "承認者数は15人"))
+        self.assertTrue(any("数値の平仄疑い" in w and "承認者数" in w for w in warns), warns)
+
+    def test_same_value_in_other_notation_passes(self):
+        warns = run_warns(self.deck("承認者数は1.2万人", "承認者数 12,000人"))   # 桁の書き方が違っても値が同じなら可
+        self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
+
+    def test_amount_with_scale_fires(self):
+        warns = run_warns(self.deck("売上高は120億円", "売上高 118億円"))   # 金額・割合など単位を問わず比べる
+        self.assertTrue(any("数値の平仄疑い" in w and "売上高" in w for w in warns), warns)
+
+    def test_same_amount_in_other_scale_passes(self):
+        warns = run_warns(self.deck("売上高は1.2億円", "売上高 120,000,000円"))
+        self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
+
+    def test_different_year_passes(self):
+        warns = run_warns(self.deck("2024年の承認者数は12人", "2026年の承認者数は15人"))   # 時点が違えば別の指標
+        self.assertFalse(any("数値の平仄疑い" in w for w in warns), warns)
+
+
 class ForbiddenTerms(unittest.TestCase):
     def test_term_in_body_fires_without_echoing_it(self):
         code, fails = run(inject("営業部", "サンプル商事の営業部"), "--forbid", "@terms.txt")
