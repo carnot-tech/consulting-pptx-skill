@@ -130,6 +130,45 @@ def check_terms(pages):
         if hits_a and hits_b:
             warn(f"表記ゆれ疑い: 「{la}」p{hits_a} と「{lb}」p{hits_b} が混在（§7.6 1資料1用語。別概念なら可・目視確認）")
 
+# --- 数値の平仄（slide-rules §7.6）--------------------------------------------------
+# 同じ指標（数の直前の語）が、別のページで違う値・違う単位の桁で書かれていたら WARN。
+# 例:「森林面積 2,505万ha」(p3) と「森林面積は約2,500万ha」(p7)。時点（2024年／2024年度）が
+# 直前にあれば指標名に含めて比べるので、年の違う同じ指標は食い違いにしない。
+NUM_LABEL = re.compile(
+    r"(?:(?P<year>(?:19|20)\d{2})年度?(?:の|時点の|末の|末時点の)?)?"
+    r"(?P<label>[一-龥々ァ-ヶー]{2,12})(?:は|が|の|：|:|＝|=)?\s*(?:約|およそ|計|合計)?\s*"
+    r"(?P<num>\d[\d,]*(?:\.\d+)?)\s*(?P<unit>万|億|兆|千)?(?P<base>ha|ヘクタール|m3|㎥|円|人|社|件|%|％|t|トン|戸|か所|箇所|団体)")
+_ZEN = str.maketrans("０１２３４５６７８９，．％：＝", "0123456789,.%:=")
+_MULT = {"千": 1e3, "万": 1e4, "億": 1e8, "兆": 1e12}
+
+
+def _num_facts(text):
+    """(指標名, 単位) -> 値 の組を拾う。値は単位の桁（万・億）を掛けた数で比べる。"""
+    out = []
+    for m in NUM_LABEL.finditer(text.translate(_ZEN)):
+        label = (m["year"] + "年:" if m["year"] else "") + m["label"]
+        base = {"ヘクタール": "ha", "㎥": "m3", "％": "%", "トン": "t", "箇所": "か所"}.get(m["base"], m["base"])
+        try:
+            val = float(m["num"].replace(",", "")) * _MULT.get(m["unit"] or "", 1)
+        except ValueError:
+            continue
+        out.append(((label, base), val, m.group(0).strip()))
+    return out
+
+
+def check_number_consistency(pages):
+    """pages: [(idx, text), ...] 同じ指標がページ間で違う値なら WARN（別概念・別時点なら目視で無視してよい）"""
+    seen = {}
+    for i, t in pages:
+        for key, val, raw in _num_facts(t):
+            seen.setdefault(key, []).append((i, val, raw))
+    for (label, base), hits in seen.items():
+        vals = {v for _, v, _ in hits}
+        pages_hit = {i for i, _, _ in hits}
+        if len(vals) > 1 and len(pages_hit) > 1:
+            detail = " / ".join(f"p{i}「{raw}」" for i, _, raw in hits[:4])
+            warn(f"数値の平仄疑い: 「{label.replace(':', '')}」が {detail} で食い違う（§7.6 数値の平仄。別時点・別範囲なら注記して可）")
+
 # --- 本文のプレースホルダー残り（slide-rules §2.8 / README）-------------------------
 # タイトルだけでなく本文・表・カードに「Text N」「ラベル N」「YYYY」「パーツNN｜」が残っていたら FAIL。
 # 型名をそのままタイトルにしたページ（例:「軸のある表」）も FAIL。
@@ -464,6 +503,7 @@ def check_pptx(path):
                     if szs and max(szs) <= 12 and not any(r.font.bold for p in sh.text_frame.paragraphs for r in p.runs):
                         warn(f"p{i}: タイトル直下にサブタイトルらしき行: 「{txt}」")
     check_terms(term_pages)
+    check_number_consistency(term_pages)
     check_ai_smell(term_pages)
     return titles
 
@@ -584,6 +624,7 @@ def check_html(path):
         warn("`.slide` 要素が見つからない（タイトル検査スキップ）")
     if slides:
         check_terms([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
+        check_number_consistency([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
         check_ai_smell([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
         check_forbidden([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)], html)
     else:
