@@ -245,6 +245,33 @@ class DashAndHeads(unittest.TestCase):
         self.assertTrue(any("接続詞" in l for l in w), w)
 
 
+class HarveyAndSummary(unittest.TestCase):
+    """¾ハーベイボールの中心点抜け（FAIL）／エグゼクティブサマリーの羅列（WARN）"""
+    BAD_Q3 = "<style>.hb.q3 i{clip-path:polygon(50% 0,100% 0,100% 100%,0 100%,0 50%)}</style>"
+    GOOD_Q3 = "<style>.hb.q3 i{clip-path:polygon(50% 50%,50% 0,100% 0,100% 100%,0 100%,0 50%)}</style>"
+
+    def test_q3_without_center_fails(self):
+        code, fails = run(GOOD.replace("</head>", self.BAD_Q3 + "</head>", 1))
+        self.assertTrue(any("ハーベイボール" in l for l in fails), fails)
+
+    def test_q3_with_center_passes(self):
+        code, fails = run(GOOD.replace("</head>", self.GOOD_Q3 + "</head>", 1))
+        self.assertFalse(any("ハーベイボール" in l for l in fails), fails)
+
+    FLAT = ('<section class="s"><h1>エグゼクティブサマリー</h1><ul><li>需要はある</li><li>利益は出る</li></ul>'
+            '<div class="foot"><span>9</span></div></section>')
+    NESTED = ('<section class="s"><h1>エグゼクティブサマリー</h1><ul><li>需要はある<ul><li>調査で確認</li>'
+              '<li>価格も通る</li></ul></li></ul><div class="foot"><span>9</span></div></section>')
+
+    def test_flat_summary_warns(self):
+        w = warns(GOOD.replace("</body>", self.FLAT + "</body>", 1))
+        self.assertTrue(any("エグゼクティブサマリー" in l for l in w), w)
+
+    def test_nested_summary_passes(self):
+        w = warns(GOOD.replace("</body>", self.NESTED + "</body>", 1))
+        self.assertFalse(any("入れ子のブレット" in l for l in w), w)
+
+
 def _has_pptx():
     try:
         import pptx  # noqa: F401

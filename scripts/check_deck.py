@@ -599,6 +599,14 @@ def _leaf_texts(fragment):
     return out
 
 
+def check_exec_summary(idx, title, fragment):
+    """§7.16 エグゼクティブサマリーはページタイトルの羅列にせず、主文＋インデントした詳細の階層ブレットで書く"""
+    if not re.search(r"エグゼクティブサマリー|エグゼクティブ・サマリー|Executive Summary", title, re.I):
+        return
+    if not re.search(r"<li\b(?:(?!</li>).)*?<(?:ul|ol)\b", fragment, re.S):
+        warn(f"p{idx}: エグゼクティブサマリーに入れ子のブレットが無い（§7.16: 各行を主文＋インデントした詳細2〜3本で書く。ページタイトルの羅列にしない）")
+
+
 def check_html(path):
     global STRICT_LEN
     STRICT_LEN = False
@@ -639,6 +647,9 @@ def check_html(path):
     if re.search(r"\bth\s*{[^}]*color\s*:\s*#?(9[0-9a-f]{5}|a[0-9a-f]{5}|b[0-9a-f]{5}|c[0-9a-f]{5}|888|999|aaa|bbb|ccc|gr[ae]y)\b", html, re.I):
         warn("表ヘッダーが薄グレー（§6: 見出しは本文と同じ濃色）")
     check_kicker_and_conclusion(html)
+    # ハーベイボール ¾ の描画（中心点の無い多角形は斜めに欠けた形になる）
+    if re.search(r"\.q3\s+i\s*{[^}]*clip-path\s*:\s*polygon\(\s*50%\s+0\s*,", html):
+        fail("ハーベイボール ¾ の clip-path に中心点（50% 50%）が無い。左上が斜めに欠けた形になる（polygon(50% 50%,50% 0,100% 0,100% 100%,0 100%,0 50%) に直す）")
     if not re.search(r"<meta[^>]+charset\s*=\s*[\"']?utf-?8", html, re.I):
         fail('<meta charset="utf-8"> が無い（Windows のブラウザで文字化けする — slide-rules §8）')
     if re.search(r"\bth\s*{[^}]*font-weight\s*:\s*(400|normal|300)", html):
@@ -679,6 +690,7 @@ def check_html(path):
         check_count_match(i, t, re.sub(r"<[^>]+>", " ", s))
         leaves = _leaf_texts(s)
         check_body_placeholders(i, leaves, t)
+        check_exec_summary(i, t, s)
         if "cover" not in (slide_classes[i - 1] if i - 1 < len(slide_classes) else ""):
             check_multi_sentence(i, leaves)
     if not slides:
