@@ -109,6 +109,30 @@ AI_SMELL_WORDS = [
 ]
 
 
+def check_production_meta(slides):
+    """制作メタ（本スキル名・リポジトリ）がスライドに見えていないか（SKILL.md「本スキル使用の注釈」）。
+    ツール名を置けるのは最終ページ（裏表紙）の出典行だけ。それ以外のページに出ていたら FAIL。
+    「本資料は…で作成」の文は免責文のこともあるので、最終ページ以外にあれば WARN で目視に回す。"""
+    def visible(s):
+        s = re.sub(r"<(script|style)[^>]*>.*?</\1>|<!--.*?-->", " ", s, flags=re.S)
+        return re.sub(r"<[^>]+>", " ", s)
+    if TEMPLATE_MODE:   # パーツ集は見本の並びなので裏表紙が最終ページにない
+        return
+    for i, s in enumerate(slides, 1):
+        if i == len(slides):
+            continue
+        v = visible(s)
+        m = re.search(r"consulting-pptx-skill", v)
+        if m:
+            fail(f"p{i}: 制作メタ情報がスライドに表示されている: 「{m.group(0)}」（ツール名を置けるのは最終ページの出典行だけ）")
+            continue
+        m = re.search(r"本資料は[^。<]{0,40}で作成", v)
+        if m:
+            warn(f"p{i}: 「{m.group(0)}」（制作クレジットなら最終ページの出典行へ。免責文なら可）")
+        elif re.search(r"github\.com", v):
+            warn(f"p{i}: スライドに github.com が表示されている（制作メタなら消す。出典として公開リポジトリを示すなら可）")
+
+
 def pptx_text(xml):
     """スライド XML の表示テキストを段落（<a:p>）ごとに 1 行にして返す。
     run（<a:t>）ごとに改行すると「ラベル」「 — 」「説明」のように run が分かれたダッシュ連結を見落とす。"""
@@ -564,15 +588,6 @@ def check_html(path):
     if re.search(r"\bth\s*{[^}]*color\s*:\s*#?(9[0-9a-f]{5}|a[0-9a-f]{5}|b[0-9a-f]{5}|c[0-9a-f]{5}|888|999|aaa|bbb|ccc|gr[ae]y)\b", html, re.I):
         warn("表ヘッダーが薄グレー（§6: 見出しは本文と同じ濃色）")
     check_kicker_and_conclusion(html)
-    # 制作メタ（社内ツール名・リポジトリ）がスライドに見えていないか（クライアントに出せる体裁）
-    visible = re.sub(r"<(script|style)[^>]*>.*?</\1>|<!--.*?-->", " ", html, flags=re.S)
-    visible = re.sub(r"<[^>]+>", " ", visible)
-    # 「本資料は2026年9月時点の公開情報で作成」のような免責文は対象外。ツール・AI・生成の語を含むときだけ FAIL
-    leak = re.search(r"consulting-pptx-skill|本資料は[^。<]{0,40}(?:スキル|skill|ツール|tool|AI|Claude|ChatGPT|Copilot|Gemini|生成|自動作成)[^。<]{0,20}で作成", visible, re.I)
-    if leak:
-        fail(f"制作メタ情報がスライドに表示されている: 「{leak.group(0)}」（制作に使ったツール名は載せない）")
-    elif re.search(r"github\.com", visible):
-        warn("スライドに github.com が表示されている（制作メタなら消す。出典として公開リポジトリを示すなら可）")
     if not re.search(r"<meta[^>]+charset\s*=\s*[\"']?utf-?8", html, re.I):
         fail('<meta charset="utf-8"> が無い（Windows のブラウザで文字化けする — slide-rules §8）')
     if re.search(r"\bth\s*{[^}]*font-weight\s*:\s*(400|normal|300)", html):
@@ -617,6 +632,7 @@ def check_html(path):
             check_multi_sentence(i, leaves)
     if not slides:
         warn("`.slide` 要素が見つからない（タイトル検査スキップ）")
+    check_production_meta(slides if slides else [html])
     if slides:
         check_terms([(i, re.sub(r"<[^>]+>", " ", s)) for i, s in enumerate(slides, 1)])
         check_ai_smell([(i, re.sub(r"<[^>]+>", "\n", s)) for i, s in enumerate(slides, 1)])

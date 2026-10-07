@@ -135,20 +135,28 @@ class TitleConnector(unittest.TestCase):
 
 
 class ProductionMeta(unittest.TestCase):
-    def test_tool_name_fails(self):
-        code, fails = run(inject("</main>", "<p>本資料は consulting-pptx-skill で作成</p></main>"))
+    """SKILL.md「本スキル使用の注釈」: ツール名は最終ページ（裏表紙）の出典行だけ。他ページは FAIL。"""
+    BODY = "承認待ちは平均3日"
+
+    def test_tool_name_on_content_page_fails(self):
+        code, fails = run(inject(self.BODY, self.BODY + "<p>本資料は consulting-pptx-skill で作成</p>"))
         self.assertTrue(any("制作メタ" in f for f in fails), fails)
 
-    def test_ai_tool_credit_fails(self):
-        code, fails = run(inject("</main>", "<p>本資料は生成AIツールで作成</p></main>"))
-        self.assertTrue(any("制作メタ" in f for f in fails), fails)
+    def test_tool_name_on_back_cover_passes(self):
+        code, fails = run(GOOD)   # fixture の裏表紙には出典行に注釈が入っている
+        self.assertFalse(any("制作メタ" in f for f in fails), fails)
 
-    def test_disclaimer_with_de_sakusei_passes(self):
-        code, fails = run(inject("</main>", "<p>本資料は2026年9月時点の公開情報で作成</p></main>"))   # 免責文は制作メタではない
+    def test_credit_sentence_on_content_page_only_warns(self):
+        html = inject(self.BODY, self.BODY + "<p>本資料は生成AIツールで作成</p>")
+        self.assertFalse(any("制作メタ" in f for f in run(html)[1]))
+        self.assertTrue(any("で作成" in w for w in warns(html)))
+
+    def test_disclaimer_with_de_sakusei_does_not_fail(self):
+        code, fails = run(inject(self.BODY, self.BODY + "<p>本資料は2026年9月時点の公開情報で作成</p>"))   # 免責文は制作メタではない
         self.assertFalse(any("制作メタ" in f for f in fails), fails)
 
     def test_github_url_as_source_only_warns(self):
-        code, fails = run(inject("</main>", "<p>出典: github.com/example/repo</p></main>"))
+        code, fails = run(inject(self.BODY, self.BODY + "<p>出典: github.com/example/repo</p>"))
         self.assertFalse(any("制作メタ" in f for f in fails), fails)
 
 
