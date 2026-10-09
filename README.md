@@ -147,6 +147,16 @@ Made by [Carnot AI](https://jinba.io/ja?utm_source=github&utm_medium=readme&utm_
 - **ブラウザだけで使いたい方へ**：このスキルと同じ仕組みを、チャットだけで使える形（[Jinba App](https://jinba.io/ja?utm_source=github&utm_medium=readme&utm_campaign=consulting-pptx-skill&utm_content=about_app)）でも提供しています。Claude Code や Python の準備は要りません。
 - **自社専用版を作りたい企業へ**：御社の既存資料とレビュー指摘から slide-rules.md とデザインを作り込み、社内のだれもが使える形で展開するご支援をしています。[ご相談はこちら](https://jinba.io/ja/contact-sales?utm_source=github&utm_medium=readme&utm_campaign=consulting-pptx-skill&utm_content=about_contact)
 
+## Star History
+
+<a href="https://www.star-history.com/?repos=carnot-tech%2Fconsulting-pptx-skill&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=carnot-tech/consulting-pptx-skill&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=carnot-tech/consulting-pptx-skill&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=carnot-tech/consulting-pptx-skill&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## License
 
 コード・文書は [MIT License](LICENSE) です。MIT License には商標を使う権利は含まれません。「Carnot」「Carnot AI」「Jinba」とロゴの扱いは [TRADEMARK.md](TRADEMARK.md)（事実としての言及・クレジット行・リンクは自由、製品名・ロゴ・公式を装う表現・改変版への商標使用は要許可）に従ってください。
